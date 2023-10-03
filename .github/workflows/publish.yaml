@@ -18,5 +18,5 @@ jobs:
                   arguments: publish --continue
                   gradle-version: wrapper
               env:
-                  MAVEN_USERNAME: ${{ secrets.NEXUS_USER }}
-                  MAVEN_PASSWORD: ${{ secrets.NEXUS_PASS }}
+                  cubyteUsername: ${{ secrets.NEXUS_USER }}
+                  cubytePassword: ${{ secrets.NEXUS_PASS }}
