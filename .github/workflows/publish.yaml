@@ -30,7 +30,7 @@ jobs:
             - name: Publish package
               uses: gradle/gradle-build-action@v2
               with:
-                  arguments: build
+                  arguments: build --continue
                   gradle-version: wrapper
               env:
                   MAVEN_USERNAME: ${{ secrets.NEXUS_USER }}
