@@ -27,12 +27,16 @@ description = pluginDescription
 
 val releasesRepoUrl = uri("https://maven.cubyte.org/repository/releases/")
 val snapshotsRepoUrl = uri("https://maven.cubyte.org/repository/snapshots/")
+val spongeReleasesRepoUrl = uri("https://repo.spongepowered.org/repository/maven-releases/")
+val spongeSnapshotsRepoUrl = uri("https://repo.spongepowered.org/repository/maven-snapshots/")
 
 // repos for modules **using** this convention
 repositories {
     mavenCentral()
     maven(releasesRepoUrl)
     maven(snapshotsRepoUrl)
+    maven(spongeReleasesRepoUrl)
+    maven(spongeSnapshotsRepoUrl)
     mavenLocal()
 }
 
