@@ -31,6 +31,7 @@ jobs:
               uses: gradle/gradle-build-action@v2
               with:
                   arguments: build
+                  gradle-version: wrapper
               env:
                   MAVEN_USERNAME: ${{ secrets.NEXUS_USER }}
                   MAVEN_PASSWORD: ${{ secrets.NEXUS_PASS }}
