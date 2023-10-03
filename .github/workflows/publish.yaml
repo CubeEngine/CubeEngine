@@ -6,27 +6,12 @@ jobs:
     publish:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/cache@v3
-              with:
-                  path: |
-                      ~/.gradle/caches
-                      ~/.gradle/wrapper
-                      ${{github.workspace}}/buildSrc/.gradle/
-                      ${{github.workspace}}/.gradle/
-                  key: "${{ runner.os }}-minecraft-${{ env.CACHE_REV }}-${{ hashFiles('**/*.gradle*') }}"
-                  restore-keys: |
-                      ${{ runner.os }}-minecraft-${{ env.CACHE_REV }}-
+            - uses: actions/checkout@v4
             - name: Set up JDK 17
               uses: actions/setup-java@v3
               with:
                   distribution: temurin
                   java-version: 17
-#                  server-id: cubeengine-repo
-#                  server-username: NEXUS_USERNAME
-#                  server-password: NEXUS_PASSWORD
-            - name: Validate Gradle Wrapper
-              uses: gradle/wrapper-validation-action@v1
             - name: Publish package
               uses: gradle/gradle-build-action@v2
               with:
