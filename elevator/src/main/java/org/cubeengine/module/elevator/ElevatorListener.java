@@ -129,6 +129,7 @@ public class ElevatorListener
                         loc.offer(Keys.SIGN_LINES, list);
 
                         i18n.send(ChatType.ACTION_BAR, player, POSITIVE, "Elevator created!");
+                        loc.blockEntity().get().offer(Keys.SIGN_WAXED, true);
                         updateSign(loc, null);
 
                         player.world().playSound(Sound.sound(SoundTypes.ENTITY_ENDER_EYE_DEATH, Source.PLAYER, 5f, 1), loc.position());
