@@ -211,8 +211,10 @@ publishing {
 }
 
 signing {
-    useGpgCmd()
-    sign(publishing.publications)
+    if (project.hasProperty("profile") && project.property("profile")  == "release") {
+        useGpgCmd()
+        sign(publishing.publications)
+    }
 }
 
 tasks.shadowJar {
