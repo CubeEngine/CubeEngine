@@ -1,3 +1,6 @@
+import groovy.util.Node
+import groovy.util.NodeList
+import groovy.xml.XmlParser
 import org.spongepowered.gradle.ore.task.PublishToOreTask
 import java.io.ByteArrayOutputStream
 
@@ -159,7 +162,7 @@ project.gradle.projectsEvaluated {
             projectId.set("cubeengine-$moduleId")
             createForumPost.set(oreCreateForumPost)
             versionBody.set(project.description) // TODO actually provide a changelog
-            channel.set(if (isSnapshot) "Dev" else "Release")
+            channel.set(if (isSnapshot()) "Dev" else "Release")
             publishArtifacts.from(tasks.shadowJar.map { it.outputs })
         }
     }
@@ -211,7 +214,7 @@ publishing {
 }
 
 signing {
-    if (project.hasProperty("profile") && project.property("profile")  == "release") {
+    if (project.findProperty("profile") == "release") {
         useGpgCmd()
         sign(publishing.publications)
     }
