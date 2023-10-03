@@ -15,5 +15,4 @@ dependencies {
     implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
     // Tracing
     implementation("io.opentracing:opentracing-api:0.33.0")
-    implementation("io.jaegertracing:jaeger-client:1.8.1")
 }
