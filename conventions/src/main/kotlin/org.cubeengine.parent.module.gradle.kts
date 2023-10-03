@@ -162,7 +162,7 @@ project.gradle.projectsEvaluated {
             projectId.set("cubeengine-$moduleId")
             createForumPost.set(oreCreateForumPost)
             versionBody.set(project.description) // TODO actually provide a changelog
-            channel.set(if (isSnapshot()) "Dev" else "Release")
+            channel.set(if (project.isSnapshot()) "Dev" else "Release")
             publishArtifacts.from(tasks.shadowJar.map { it.outputs })
         }
     }
