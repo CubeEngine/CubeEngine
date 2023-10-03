@@ -11,6 +11,7 @@ plugins {
     id("org.cadixdev.licenser")
     id("com.github.johnrengelman.shadow")
     id("org.spongepowered.gradle.ore")
+    id("org.spongepowered.gradle.repository")
 }
 
 val pluginGroupId: String by project.properties
@@ -30,16 +31,14 @@ description = pluginDescription
 
 val releasesRepoUrl = uri("https://maven.cubyte.org/repository/releases")
 val snapshotsRepoUrl = uri("https://maven.cubyte.org/repository/snapshots")
-val spongeReleasesRepoUrl = uri("https://repo.spongepowered.org/repository/maven-releases")
-val spongeSnapshotsRepoUrl = uri("https://repo.spongepowered.org/repository/maven-snapshots")
 
 // repos for modules **using** this convention
 repositories {
     mavenCentral()
     maven(releasesRepoUrl)
     maven(snapshotsRepoUrl)
-    maven(spongeReleasesRepoUrl)
-    maven(spongeSnapshotsRepoUrl)
+    sponge.releases()
+    sponge.snapshots()
     mavenLocal()
 }
 
@@ -55,6 +54,7 @@ dependencies {
     val junitVersion = "5.9.1"
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.slf4j:slf4j-simple:2.0.3")
     testImplementation("org.spongepowered:spongeapi:$spongeVersion")
 
