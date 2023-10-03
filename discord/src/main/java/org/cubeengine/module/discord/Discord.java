@@ -17,6 +17,17 @@
  */
 package org.cubeengine.module.discord;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import discord4j.common.util.Snowflake;
@@ -33,20 +44,21 @@ import discord4j.core.object.entity.channel.TextChannel;
 import discord4j.core.object.presence.ClientActivity;
 import discord4j.core.object.presence.ClientPresence;
 import discord4j.core.shard.MemberRequestFilter;
+import discord4j.core.spec.WebhookExecuteSpec;
 import discord4j.gateway.intent.Intent;
 import discord4j.gateway.intent.IntentSet;
 import discord4j.rest.util.AllowedMentions;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.cubeengine.libcube.InjectService;
 import org.cubeengine.libcube.service.command.annotation.ModuleCommand;
 import org.cubeengine.libcube.service.filesystem.ModuleConfig;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.task.TaskManager;
 import org.cubeengine.libcube.util.ComponentUtil;
-import org.cubeengine.libcube.util.Pair;
 import org.cubeengine.processor.Module;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
@@ -57,20 +69,9 @@ import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.event.lifecycle.StoppingEngineEvent;
 import org.spongepowered.api.event.message.PlayerChatEvent;
-import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.plugin.PluginContainer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static discord4j.rest.util.AllowedMentions.Type.USER;
 import static net.kyori.adventure.text.event.ClickEvent.openUrl;
@@ -89,9 +90,6 @@ public class Discord {
     private static final Pattern EMOJI_FROM_DISCORD = Pattern.compile("<(:[^: ]+:)\\d+>");
     private static final Pattern EMOJI_FROM_MINECRAFT = Pattern.compile(":([^: ]+):");
     private static final Pattern MENTION_PATTERN = Pattern.compile("<@!(\\d+)>");
-
-    @InjectService
-    private PermissionService ps;
 
     @ModuleConfig
     private DiscordConfig config;
@@ -127,11 +125,13 @@ public class Discord {
                 .subscribe(this::clientConnected);
     }
 
-    public DiscordConfig getConfig() {
+    public DiscordConfig getConfig()
+    {
         return config;
     }
 
-    private static String toPlainString(Component component) {
+    private static String toPlainString(Component component)
+    {
         return PlainTextComponentSerializer.plainText().serialize(component);
     }
 
@@ -151,27 +151,33 @@ public class Discord {
     }
 
     @Listener
-    public void onRegisterData(RegisterDataEvent event) {
+    public void onRegisterData(RegisterDataEvent event)
+    {
         DiscordData.register(event);
     }
 
     @Listener
-    public void onServerStop(StoppingEngineEvent<Server> event) {
+    public void onServerStop(StoppingEngineEvent<Server> event)
+    {
         server.set(null);
         GatewayDiscordClient client = this.client.getAndSet(null);
-        if (client != null) {
-            client.logout();
+        if (client != null)
+        {
+            client.logout().block(Duration.ofMillis(500));
         }
     }
 
     @Listener(order = Order.LAST)
-    public void onMinecraftChat(PlayerChatEvent event, @Root ServerPlayer player) {
-        if (player.get(DiscordData.MUTED).orElse(false)) {
+    public void onMinecraftChat(PlayerChatEvent.Submit event, @Root ServerPlayer player)
+    {
+        if (player.get(DiscordData.MUTED).orElse(false))
+        {
             return;
         }
         // stripLegacy() should be done by a chat plugin, not by us: https://github.com/SpongePowered/SpongeAPI/issues/2259
         final String strippedMessage = stripLegacy(toPlainString(event.originalMessage()));
-        if (strippedMessage.isEmpty()) {
+        if (strippedMessage.isEmpty())
+        {
             return;
         }
 
@@ -182,43 +188,52 @@ public class Discord {
 
                 String content = replaceWithCallback(EMOJI_FROM_MINECRAFT, strippedMessage, match -> {
                     final String emojiId = emojiLookup.get(match.group(1));
-                    if (emojiId != null) {
+                    if (emojiId != null)
+                    {
                         return "<" + match.group() + emojiId + ">";
                     }
                     return match.group();
                 });
 
-                return w.executeAndWait(spec -> spec
-                        .setContent(content)
-                        .setUsername(toPlainString(player.displayName().get()))
-                        .setAvatarUrl("https://crafatar.com/avatars/" + player.uniqueId().toString() + "?overlay")
-                        .setAllowedMentions(AllowedMentions.builder().parseType(USER).build())
-                );
+                final var spec = WebhookExecuteSpec.builder()
+                                      .content(content)
+                                      .username(toPlainString(player.displayName().get()))
+                                      .avatarUrl("https://crafatar.com/avatars/" + player.uniqueId().toString() + "?overlay")
+                                      .allowedMentions(AllowedMentions.builder().parseType(USER).build())
+                                      .build();
+                return w.executeAndWait(spec);
             }).subscribe();
         });
     }
 
-    private void onDiscordChat(MessageCreateEvent event) {
+    private void onDiscordChat(MessageCreateEvent event)
+    {
         final Message message = event.getMessage();
         final Snowflake guildId = event.getGuildId().orElse(null);
-        if (guildId == null) {
+        if (guildId == null)
+        {
             return;
         }
         final Member author = event.getMember().orElse(null);
-        if (author == null) {
+        if (author == null)
+        {
             return;
         }
 
         final String content;
-        if (config.replaceEmoji) {
+        if (config.replaceEmoji)
+        {
             content = replace(message.getContent(), config.forwardEmojiReplacePattern, config.emojiMapping);
-        } else {
+        }
+        else
+        {
             content = message.getContent();
         }
 
         displayNameForMember(author).subscribe(userName -> {
             final Server server = this.server.get();
-            if (server != null) {
+            if (server != null)
+            {
                 final Component attachmentStrings = message.getAttachments().stream().reduce((Component) Component.empty(), (component, attachment) ->
                                 Component.empty()
                                         .append(Component.text("[")
@@ -232,8 +247,8 @@ public class Discord {
 
                 Flux.fromIterable(event.getMessage().getUserMentions())
                         .flatMap(user -> user.asMember(guildId))
-                        .flatMap(member -> displayNameForMember(member).map(name -> new Pair<>(member.getId().asString(), (Component) Component.text("@", NamedTextColor.BLUE).append(name))))
-                        .collectMap(Pair::getLeft, Pair::getRight)
+                        .flatMap(MemberDisplay::of)
+                        .collectMap(MemberDisplay::id, MemberDisplay::component)
                         .subscribe(mentions -> {
                             String contentWithEmoji = EMOJI_FROM_DISCORD.matcher(content).replaceAll("$1");
                             Component contentWithMentions = replaceMentions(contentWithEmoji, mentions);
@@ -244,46 +259,68 @@ public class Discord {
         });
     }
 
-    private Component replaceMentions(String input, Map<String, Component> replacements) {
+    private record MemberDisplay(String id, Component component)
+    {
+        private static Mono<MemberDisplay> of(Member member)
+        {
+            return colorFromMember(member).map(color -> {
+                final String id = member.getId().toString();
+                final TextComponent display = Component.text(member.getNickname().orElse(member.getDisplayName()), color);
+                return new MemberDisplay(id, display);
+            });
+
+        }
+    }
+
+    private Component replaceMentions(String input, Map<String, Component> replacements)
+    {
         final Matcher matcher = MENTION_PATTERN.matcher(input);
         int offset = 0;
         List<Component> parts = new ArrayList<>();
-        while (matcher.find()) {
+        while (matcher.find())
+        {
             int start = matcher.start();
-            if (offset != start) {
+            if (offset != start)
+            {
                 parts.add(Component.text(input.substring(offset, start)));
             }
             final Component mention = replacements.get(matcher.group(1));
-            if (mention != null) {
-                parts.add(mention);
-            } else {
-                parts.add(Component.text(matcher.group()));
-            }
+            parts.add(Objects.requireNonNullElseGet(mention, () -> Component.text(matcher.group())));
             offset = matcher.end();
         }
-        if (offset < input.length()) {
+        if (offset < input.length())
+        {
             parts.add(Component.text(input.substring(offset)));
         }
-        return Component.join(Component.empty(), parts);
+
+        return Component.join(JoinConfiguration.noSeparators(), parts);
     }
 
-    private Mono<Component> displayNameForMember(Member member) {
-        return colorFromMember(member).map(color -> Component.text(member.getDisplayName(), color));
+    private Mono<Component> displayNameForMember(Member member)
+    {
+        return colorFromMember(member).map(color -> Component.text(member.getNickname().orElse(member.getDisplayName()), color));
     }
 
-    private Mono<TextColor> colorFromMember(Member member) {
+    private static Mono<TextColor> colorFromMember(Member member)
+    {
         return member.getColor().map(color -> {
-            if (color == Role.DEFAULT_COLOR) {
+            if (color == Role.DEFAULT_COLOR)
+            {
                 return NamedTextColor.GRAY;
-            } else {
+            }
+            else
+            {
                 return TextColor.color(color.getRed(), color.getGreen(), color.getBlue());
             }
         });
     }
 
-    private void broadcastMessage(Server server, String template, Component name, Component message, Component attachments) {
-        for (ServerPlayer onlinePlayer : server.onlinePlayers()) {
-            if (!onlinePlayer.get(DiscordData.MUTED).orElse(false)) {
+    private void broadcastMessage(Server server, String template, Component name, Component message, Component attachments)
+    {
+        for (ServerPlayer onlinePlayer : server.onlinePlayers())
+        {
+            if (!onlinePlayer.get(DiscordData.MUTED).orElse(false))
+            {
                 Component content = attachments.append(autoLink(message, i18n.translate(onlinePlayer, "Open Link")));
 
                 Map<String, Component> replacements = new HashMap<>();
@@ -295,11 +332,13 @@ public class Discord {
         }
     }
 
-    private static String replace(String input, Pattern pattern, Map<String, String> replacements) {
+    private static String replace(String input, Pattern pattern, Map<String, String> replacements)
+    {
         return replaceWithCallback(pattern, input, match -> {
             final String s = match.group();
             String replacement = replacements.get(s);
-            if (replacement != null) {
+            if (replacement != null)
+            {
                 return replacement;
             }
             return s;

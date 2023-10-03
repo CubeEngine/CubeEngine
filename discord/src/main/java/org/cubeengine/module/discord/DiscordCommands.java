@@ -32,8 +32,9 @@ import static org.cubeengine.libcube.service.i18n.formatter.MessageType.*;
 @Singleton
 public class DiscordCommands extends DispatcherCommand
 {
+    public static final String DISCORD_OAUTH_URL = "https://discord.com/api/oauth2/authorize";
     private final Discord module;
-    private I18n i18n;
+    private final I18n i18n;
 
     @Inject
     public DiscordCommands(Discord module, I18n i18n)
@@ -46,12 +47,13 @@ public class DiscordCommands extends DispatcherCommand
     public void join(CommandCause context)
     {
         final String appId = module.getConfig().applicationId;
-        if (appId == null) {
+        if (appId == null)
+        {
             i18n.send(context, NEGATIVE, "No application ID has been configured. Without that, I can't help you.");
             return;
         }
 
-        String url = "https://discord.com/api/oauth2/authorize?client_id=" + appId + "&permissions=0&scope=bot";
+        String url = DISCORD_OAUTH_URL + "?client_id=" + appId + "&permissions=0&scope=bot";
 
         i18n.send(context, POSITIVE, "Open this link to add the bot to your Discord Server: {url}", url);
     }
@@ -61,10 +63,13 @@ public class DiscordCommands extends DispatcherCommand
     public void mute(CommandCause context, @Default ServerPlayer player)
     {
         final boolean isMuted = player.get(DiscordData.MUTED).orElse(false);
-        if (isMuted) {
+        if (isMuted)
+        {
             player.offer(DiscordData.MUTED, false);
             i18n.send(context, POSITIVE, "You will now see messages from Discord again!");
-        } else {
+        }
+        else
+        {
             player.offer(DiscordData.MUTED, true);
             i18n.send(context, POSITIVE, "You will no longer see any Discord messages until you run this command again.");
         }
