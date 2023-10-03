@@ -28,10 +28,10 @@ group = pluginGroupId
 version = "$spongeMajorVersion.$pluginVersion$snapshotVersion"
 description = pluginDescription
 
-val releasesRepoUrl = uri("https://maven.cubyte.org/repository/releases/")
-val snapshotsRepoUrl = uri("https://maven.cubyte.org/repository/snapshots/")
-val spongeReleasesRepoUrl = uri("https://repo.spongepowered.org/repository/maven-releases/")
-val spongeSnapshotsRepoUrl = uri("https://repo.spongepowered.org/repository/maven-snapshots/")
+val releasesRepoUrl = uri("https://maven.cubyte.org/repository/releases")
+val snapshotsRepoUrl = uri("https://maven.cubyte.org/repository/snapshots")
+val spongeReleasesRepoUrl = uri("https://repo.spongepowered.org/repository/maven-releases")
+val spongeSnapshotsRepoUrl = uri("https://repo.spongepowered.org/repository/maven-snapshots")
 
 // repos for modules **using** this convention
 repositories {
@@ -134,13 +134,14 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
+
 project.gradle.projectsEvaluated {
-    val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
     publishing {
         repositories {
             maven {
                 name = "cubyte"
-                url = if (isSnapshot) snapshotsRepoUrl else releasesRepoUrl
+                url = if (project.isSnapshot()) snapshotsRepoUrl else releasesRepoUrl
                 credentials(PasswordCredentials::class)
             }
         }
@@ -230,6 +231,27 @@ tasks.build {
 
 tasks.publish {
     dependsOn(tasks.check)
+
+    val outputFile = project.layout.buildDirectory.file("jar-url.txt").get().asFile
+
+    outputs.file(outputFile)
+
+    doLast {
+        val repoUrl = if (project.isSnapshot()) snapshotsRepoUrl else releasesRepoUrl
+
+        val versionUrl = "$repoUrl/${project.group.toString().replace('.', '/')}/${project.name}/${project.version}"
+        val parsed = XmlParser().parse("$versionUrl/maven-metadata.xml")
+
+        fun Node.children(name: String): NodeList = get(name) as NodeList
+        fun Node.children(name: String, n: Int): Node = (get(name) as NodeList)[n] as Node
+        fun Node.child(name: String): Node = children(name).first() as Node
+        fun Node.firstStringValue() = (value() as Iterable<*>).iterator().next() as String
+
+        val lastSnapshot = parsed.child("versioning").children("snapshotVersions", 0).child("snapshotVersion").child("value").firstStringValue()
+        val jarUrl = "$versionUrl/${project.name}-${lastSnapshot}.jar"
+        println("Project ${project.name}: ${project.version} \t$jarUrl")
+        outputFile.writeText(jarUrl)
+    }
 }
 
 tasks.withType<PublishToOreTask>().configureEach {
