@@ -11,13 +11,14 @@ pluginManagement {
         mavenLocal()
     }
 
-//    val conventionPluginVersion: String by settings
-//    plugins {
-//        id("org.cubeengine.parent.module") version (conventionPluginVersion)
-//    }
+    val conventionPluginVersion: String by settings
+    plugins {
+        id("org.cubeengine.parent.module") version (conventionPluginVersion)
+    }
 }
 
-include("core",
+include(
+        "core",
         "conomy",
         "docs",
         "kickban",
