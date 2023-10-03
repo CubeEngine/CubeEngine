@@ -15,19 +15,3 @@ dependencies {
     // Other stuff
     implementation("org.ocpsoft.prettytime:prettytime")
 }
-
-tasks.register("cleanAll") {
-    group = "build"
-    description = "Clean both libcube and conventions."
-
-    dependsOn(tasks.clean)
-    dependsOn(gradle.includedBuild("conventions").task(":clean"))
-}
-
-tasks.register("publishAll") {
-    group = "publishing"
-    description = "Publish both libcube and conventions."
-
-    dependsOn(tasks.publish)
-    dependsOn(gradle.includedBuild("conventions").task(":publish"))
-}
