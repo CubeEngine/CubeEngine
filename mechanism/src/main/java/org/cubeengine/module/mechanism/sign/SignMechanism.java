@@ -43,6 +43,7 @@ public interface SignMechanism
             return this.initLines(lines);
         });
         sign.offer(MechanismData.MECHANISM, this.getName());
+        sign.offer(Keys.SIGN_WAXED, true);
     }
 
     default List<Component> initLines(List<Component> lines) {

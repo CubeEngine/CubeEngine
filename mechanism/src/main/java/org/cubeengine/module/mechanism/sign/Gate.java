@@ -73,6 +73,7 @@ public class Gate extends PermissionContainer implements SignMechanism
         signStack.offer(Keys.CUSTOM_NAME, Component.text("[Mechanism]", NamedTextColor.GOLD).append(Component.space()).append(Component.text(NAME, NamedTextColor.DARK_AQUA)));
         signStack.offer(MechanismData.MECHANISM, NAME);
         signStack.offer(Keys.LORE, Arrays.asList(Component.text(NAME, NamedTextColor.YELLOW)));
+        signStack.offer(Keys.SIGN_LINES, List.of(Component.text("GATE")));
         return signStack;
     }
 

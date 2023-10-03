@@ -18,6 +18,7 @@
 package org.cubeengine.module.mechanism.sign;
 
 import java.util.Arrays;
+import java.util.List;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.sound.Sound;
@@ -62,6 +63,7 @@ public class HiddenButton extends PermissionContainer implements SignMechanism
         signStack.offer(Keys.CUSTOM_NAME, Component.text("[Mechanism]", NamedTextColor.GOLD).append(Component.text(HiddenButton.NAME, NamedTextColor.DARK_AQUA)));
         signStack.offer(MechanismData.MECHANISM, HiddenButton.NAME);
         signStack.offer(Keys.LORE, Arrays.asList(Component.text(NAME, NamedTextColor.YELLOW)));
+        signStack.offer(Keys.SIGN_LINES, List.of(Component.text("HIDDEN_BUTTON")));
         return signStack;
     }
 
