@@ -215,9 +215,9 @@ publishing {
 }
 
 signing {
-    if (project.findProperty("profile") == "release") {
+    if (project.findProperty("cubeengine-profile") == "release") {
         useGpgCmd()
-        sign(publishing.publications)
+        sign(publishing.publications["cubyte"])
     }
 }
 
