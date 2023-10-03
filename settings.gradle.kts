@@ -1,6 +1,7 @@
-rootProject.name = "extra-aggregator"
+rootProject.name = "cubeengine"
 
 pluginManagement {
+    includeBuild("conventions")
     repositories {
         mavenCentral()
         gradlePluginPortal()
@@ -10,13 +11,30 @@ pluginManagement {
         mavenLocal()
     }
 
-    val conventionPluginVersion: String by settings
-    plugins {
-        id("org.cubeengine.parent.module") version (conventionPluginVersion)
-    }
+//    val conventionPluginVersion: String by settings
+//    plugins {
+//        id("org.cubeengine.parent.module") version (conventionPluginVersion)
+//    }
 }
 
-include("bigdata",
+include("core",
+        "conomy",
+        "docs",
+        "kickban",
+        "locker",
+        "multiverse",
+        "netherportals",
+        "portals",
+        "protector",
+        "roles",
+        "sql",
+        "teleport",
+        "travel",
+        "vanillaplus",
+        "worldcontrol",
+        "worlds",
+        "zoned",
+        "bigdata",
         "chat",
         "chopchop",
         "discord",
