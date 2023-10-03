@@ -1,0 +1,10 @@
+features:
+  - Configurable chat line
+  - Subject options support
+  - Whisper chat commands
+  - AFK detection
+  - Chat colors
+pages:
+    Usage: usage
+config:
+  - org.cubeengine.module.chat.ChatConfig

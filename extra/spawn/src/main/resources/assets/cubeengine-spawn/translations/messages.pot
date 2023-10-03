@@ -1,0 +1,89 @@
+# This file is part of CubeEngine.
+# CubeEngine is licensed under the GNU General Public License Version 3.
+# 
+# CubeEngine is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# CubeEngine is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: org.cubeengine.module:spawn:1.0.0-SNAPSHOT\n"
+"Report-Msgid-Bugs-To: development@cubeisland.de\n"
+"POT-Creation-Date: 2017-11-19 11:19:27+0100\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en_US\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Extracted by:
+#. 1. Annotation
+#. 	Name: org.cubeengine.butler.parametric.Command:desc
+#: org/cubeengine/module/spawn/SpawnCommands.java:57
+msgid "Changes the respawnpoint"
+msgstr ""
+
+#. Extracted by:
+#. 1. Annotation
+#. 	Name: org.cubeengine.butler.parametric.Command:desc
+#: org/cubeengine/module/spawn/SpawnCommands.java:79
+msgid "Teleports a player to the configured rolespawn"
+msgstr ""
+
+#. Extracted by:
+#. 1. Method
+#. 	Name: org.cubeengine.libcube.service.i18n.I18nTranslate#send(org.spongepowered.api.text.channel.MessageReceiver, org.spongepowered.api.text.format.TextFormat, java.lang.String, java.lang.Object[])
+#: org/cubeengine/module/spawn/SpawnCommands.java:93
+msgid "No rolespawn set for {name} in {ctx}"
+msgstr ""
+
+#. Extracted by:
+#. 1. Method
+#. 	Name: org.cubeengine.libcube.service.i18n.I18nTranslate#send(org.spongepowered.api.text.channel.MessageReceiver, org.spongepowered.api.text.format.TextFormat, java.lang.String, java.lang.Object[])
+#: org/cubeengine/module/spawn/SpawnCommands.java:105
+msgid "Teleport failed!"
+msgstr ""
+
+#. Extracted by:
+#. 1. Method
+#. 	Name: org.cubeengine.libcube.service.i18n.I18nTranslate#send(org.spongepowered.api.text.channel.MessageReceiver, org.spongepowered.api.text.format.TextFormat, java.lang.String, java.lang.Object[])
+#: org/cubeengine/module/spawn/SpawnCommands.java:110
+msgid "Teleported {user} to the spawn of the role {name#role} in {ctx}"
+msgstr ""
+
+#. Extracted by:
+#. 1. Method
+#. 	Name: org.cubeengine.libcube.service.i18n.I18nTranslate#send(org.spongepowered.api.text.channel.MessageReceiver, org.spongepowered.api.text.format.TextFormat, java.lang.String, java.lang.Object[])
+#: org/cubeengine/module/spawn/SpawnCommands.java:61
+msgid "The spawn in {world} for the role {name#role} is now set to {vector}"
+msgstr ""
+
+#. Extracted by:
+#. 1. Method
+#. 	Name: org.cubeengine.libcube.service.i18n.I18nTranslate#send(org.spongepowered.api.text.channel.MessageReceiver, org.spongepowered.api.text.format.TextFormat, java.lang.String, java.lang.Object[])
+#: org/cubeengine/module/spawn/SpawnCommands.java:118
+msgid "You are now standing at the spawn of {name#role} in {ctx}!"
+msgstr ""
+
+#. Extracted by:
+#. 1. Method
+#. 	Name: org.cubeengine.libcube.service.i18n.I18nTranslate#send(org.spongepowered.api.text.channel.MessageReceiver, org.spongepowered.api.text.format.TextFormat, java.lang.String, java.lang.Object[])
+#: org/cubeengine/module/spawn/SpawnCommands.java:114
+msgid "You are now standing at your role's spawn in {ctx}!"
+msgstr ""
+
+#. Extracted by:
+#. 1. Method
+#. 	Name: org.cubeengine.libcube.service.i18n.I18nTranslate#send(org.spongepowered.api.text.channel.MessageReceiver, org.spongepowered.api.text.format.TextFormat, java.lang.String, java.lang.Object[])
+#: org/cubeengine/module/spawn/SpawnCommands.java:100
+msgid "You cannot teleport an offline player to spawn!"
+msgstr ""

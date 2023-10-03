@@ -1,0 +1,32 @@
+build/
+dist/
+nbproject/
+target/
+dependency-reduced-pom.xml
+.gradle/
+*/out/
+*/src/main/generated/
+
+# Netbeans
+nb-configuration.xml
+nb-actions.xml
+
+# Eclipse
+.settings/
+.project/
+.classpath
+.externalToolBuilders/
+maven-eclipse.xml
+
+# IntelliJ IDEA
+.idea/*
+!.idea/codeStyleSettings.xml
+*.iml
+# Atlassian connector
+/atlassian-ide-plugin.xml
+
+# Unit Tests
+test-data/
+
+# Nope, utility scripts are not supposed to be here!
+/*.py

@@ -1,0 +1,8 @@
+on-ore: CubeEngine---ChopChop
+features:
+  - Craftable with custom recipe
+  - Destroys entire trees
+pages:
+  Usage: usage
+config:
+  - org.cubeengine.module.chopchop.ChopchopConfig
