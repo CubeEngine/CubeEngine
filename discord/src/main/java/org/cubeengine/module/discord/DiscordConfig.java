@@ -68,6 +68,7 @@ public class DiscordConfig extends ReflectedYaml {
         this.emojiMapping.put("🙆", "\\o/");
         this.emojiMapping.put("😈", "}:-)");
         this.emojiMapping.put("😁", "xD");
+        this.emojiMapping.put("\uD83E\uDD37", "¯\\_(ツ)_/¯");
     }
 
 
