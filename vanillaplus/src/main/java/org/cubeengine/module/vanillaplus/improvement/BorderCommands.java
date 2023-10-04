@@ -138,7 +138,7 @@ public class BorderCommands extends DispatcherCommand
     {
         if (seconds == null)
         {
-            world.setBorder(world.border().toBuilder().targetDiameter(size).build());
+            world.setBorder(world.border().toBuilder().initialDiameter(size).targetDiameter(size).build());
             i18n.send(context, POSITIVE, "Set world border of {world} to {} blocks wide", world, size);
             return;
         }
