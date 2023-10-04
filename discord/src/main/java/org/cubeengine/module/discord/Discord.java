@@ -195,12 +195,13 @@ public class Discord {
                     return match.group();
                 });
 
-                return w.executeAndWait(spec -> spec
-                                            .setContent(content)
-                                            .setUsername(toPlainString(player.displayName().get()))
-                                            .setAvatarUrl("https://crafatar.com/avatars/" + player.uniqueId().toString() + "?overlay")
-                                            .setAllowedMentions(AllowedMentions.builder().parseType(USER).build())
-                                       );
+                final var spec = WebhookExecuteSpec.builder()
+                                                   .content(content)
+                                                   .username(toPlainString(player.displayName().get()))
+                                                   .avatarUrl("https://crafatar.com/avatars/" + player.uniqueId().toString() + "?overlay")
+                                                   .allowedMentions(AllowedMentions.builder().parseType(USER).build())
+                                                   .build();
+                return w.executeAndWait(spec);
             }).subscribe();
         });
     }
