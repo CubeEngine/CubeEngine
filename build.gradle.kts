@@ -10,8 +10,11 @@ val dumpUrls by tasks.registering {
         val nameWidth = project.subprojects.maxOfOrNull { it.name.length } ?: 0
         val versionWidth = project.subprojects.maxOfOrNull { it.version.toString().length } ?: 0
         for (subproject in project.subprojects) {
-            subproject.layout.buildDirectory.file("jar-url.txt").orNull?.asFile?.let {
-                println("${subproject.name.padStart(nameWidth)}: ${subproject.version.toString().padStart(versionWidth)} ${it.readText()}")
+            subproject.tasks.named("publish").orNull?.let {
+                it.dependsOn(this)
+                subproject.layout.buildDirectory.file("jar-url.txt").orNull?.asFile?.let {
+                    println("${subproject.name.padStart(nameWidth)}: ${subproject.version.toString().padStart(versionWidth)} ${it.readText()}")
+                }
             }
         }
     }
