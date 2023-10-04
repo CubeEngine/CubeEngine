@@ -58,5 +58,6 @@ include(
         "terra",
         "traders",
         "vigil",
-        "writer"
+        "writer",
+        "launch",
 )
