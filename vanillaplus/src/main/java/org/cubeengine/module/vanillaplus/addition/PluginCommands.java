@@ -53,6 +53,9 @@ import static org.spongepowered.api.Platform.Component.IMPLEMENTATION;
 @Singleton
 public class PluginCommands extends PermissionContainer
 {
+    private static final String ID_PREFIX = "cubeengine-";
+    public static final String NAME_PREFIX = "CubeEngine - ";
+
     private I18n i18n;
     private ModuleManager mm;
 
@@ -69,26 +72,28 @@ public class PluginCommands extends PermissionContainer
     @Command(desc = "Lists all loaded plugins")
     public void plugins(CommandCause context)
     {
+        final PluginContainer game = Sponge.game().platform().container(GAME);
+        final PluginContainer api = Sponge.game().platform().container(API);
+        final PluginContainer impl = Sponge.game().platform().container(IMPLEMENTATION);
+
         List<PluginContainer> plugins = new ArrayList<>(Sponge.pluginManager().plugins());
         List<PluginContainer> modules = new ArrayList<>(mm.getModulePlugins().values());
         plugins.removeAll(modules);
+        plugins.remove(game);
+        plugins.remove(api);
+        plugins.remove(impl);
+
         PluginContainer core = mm.getPlugin(LibCube.class).get();
         modules.remove(core);
 
         PaginationList.Builder builder = PaginationList.builder().header(i18n
-                .translate(context, NEUTRAL, "Plugin-List ({amount})", plugins.size() + 1));
+                .translate(context, NEUTRAL, "Plugin-List ({amount})", plugins.size()));
 
         context.sendMessage(Identity.nil(), Component.empty());
 
         // TODO no pagination for console and hover id for player
         List<Component> list = new ArrayList<>();
 
-        final PluginContainer game = Sponge.game().platform().container(GAME);
-        final PluginContainer api = Sponge.game().platform().container(API);
-        final PluginContainer impl = Sponge.game().platform().container(IMPLEMENTATION);
-        plugins.remove(game);
-        plugins.remove(api);
-        plugins.remove(impl);
         Collections.sort(plugins, Comparator.comparing(p -> p.metadata().name().orElse(p.metadata().id())));
         Collections.sort(modules, Comparator.comparing(p -> p.metadata().name().orElse(p.metadata().id())));
 
@@ -97,15 +102,13 @@ public class PluginCommands extends PermissionContainer
             final PluginMetadata meta = plugin.metadata();
             list.add(Component.text(" - ").append(Component.text(meta.name().orElse(meta.id()), NamedTextColor.GREEN))
                          .append(Component.space())
-                         .append(Component.text(meta.id(), NamedTextColor.GRAY))
+                         .append(Component.text(simplifyCEId(meta.id()), NamedTextColor.GRAY))
                          .append(Component.text(" (" + getVersionOf(plugin) + ")")));
         }
 
         list.add(Component.empty());
 
         list.add(Component.text(" - ").append(Component.text("CubeEngine", NamedTextColor.GREEN))
-                     .append(Component.space())
-                     .append(Component.text(core.metadata().id(), NamedTextColor.GRAY))
                      .append(Component.space())
                      .append(Component.text("(" + getVersionOf(core) + ")"))
                      .append(i18n.translate(context, NEUTRAL, " with {amount} Modules:", modules.size())));
@@ -115,7 +118,7 @@ public class PluginCommands extends PermissionContainer
             final PluginMetadata meta = module.metadata();
             list.add(Component.text("  - ").append(Component.text(simplifyCEName(meta.name().orElse(meta.id())), NamedTextColor.YELLOW))
                          .append(Component.space())
-                         .append(Component.text(meta.id(), NamedTextColor.GRAY))
+                         .append(Component.text(simplifyCEId(meta.id()), NamedTextColor.GRAY))
                          .append(Component.space())
                          .append(Component.text("(" + getVersionOf(module) + ")")));
         }
@@ -125,11 +128,20 @@ public class PluginCommands extends PermissionContainer
 
     private String simplifyCEName(String name)
     {
-        if (name.startsWith("CubeEngine - "))
+        if (name.startsWith(NAME_PREFIX))
         {
-            name = name.substring(13);
+            name = name.substring(NAME_PREFIX.length());
         }
         return name;
+    }
+
+    private String simplifyCEId(String id)
+    {
+        if (id.startsWith(ID_PREFIX))
+        {
+            id = id.substring(ID_PREFIX.length());
+        }
+        return id;
     }
 
     private String getVersionOf(PluginContainer core)
