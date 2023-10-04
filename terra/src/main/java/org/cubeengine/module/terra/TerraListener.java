@@ -461,6 +461,7 @@ public class TerraListener
         final Builder newBorder = w.border().toBuilder();
         newBorder.center(spawn.x(), spawn.z());
         newBorder.targetDiameter(16 * 17);
+        newBorder.initialDiameter(16 * 17);
         w.setBorder(newBorder.build());
     }
 
