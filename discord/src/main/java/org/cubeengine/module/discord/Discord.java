@@ -89,7 +89,7 @@ public class Discord {
 
     private static final Pattern EMOJI_FROM_DISCORD = Pattern.compile("<(:[^: ]+:)\\d+>");
     private static final Pattern EMOJI_FROM_MINECRAFT = Pattern.compile(":([^: ]+):");
-    private static final Pattern MENTION_PATTERN = Pattern.compile("<@!(\\d+)>");
+    private static final Pattern MENTION_PATTERN = Pattern.compile("<@(\\d+)>");
 
     @ModuleConfig
     private DiscordConfig config;
@@ -247,8 +247,8 @@ public class Discord {
 
                 Flux.fromIterable(event.getMessage().getUserMentions())
                         .flatMap(user -> user.asMember(guildId))
-                        .flatMap(MemberDisplay::of)
-                        .collectMap(MemberDisplay::id, MemberDisplay::component)
+                        .flatMap(MemberMention::of)
+                        .collectMap(MemberMention::id, MemberMention::component)
                         .subscribe(mentions -> {
                             String contentWithEmoji = EMOJI_FROM_DISCORD.matcher(content).replaceAll("$1");
                             Component contentWithMentions = replaceMentions(contentWithEmoji, mentions);
@@ -259,14 +259,14 @@ public class Discord {
         });
     }
 
-    private record MemberDisplay(String id, Component component)
+    private record MemberMention(String id, Component component)
     {
-        private static Mono<MemberDisplay> of(Member member)
+        private static Mono<MemberMention> of(Member member)
         {
             return colorFromMember(member).map(color -> {
-                final String id = member.getId().toString();
-                final TextComponent display = Component.text(member.getNickname().orElse(member.getDisplayName()), color);
-                return new MemberDisplay(id, display);
+                final String id = member.getId().asString();
+                final TextComponent display = Component.text("@").append(Component.text(member.getNickname().orElse(member.getDisplayName()))).color(color);
+                return new MemberMention(id, display);
             });
 
         }
