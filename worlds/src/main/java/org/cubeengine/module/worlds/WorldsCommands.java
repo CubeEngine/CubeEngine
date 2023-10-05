@@ -50,6 +50,7 @@ import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.datapack.DataPacks;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
+import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.world.DefaultWorldKeys;
 import org.spongepowered.api.world.gamerule.GameRule;
 import org.spongepowered.api.world.server.ServerLocation;
@@ -126,10 +127,15 @@ public class WorldsCommands extends DispatcherCommand
         });
     }
 
+    // TODO create world template based on level? "import" command
+
     @Command(desc = "Loads a world")
     public void load(CommandCause context, ServerWorldProperties world)
     {
-        final CompletableFuture<ServerWorld> futureWorld = Sponge.server().worldManager().loadWorld(world.key());
+        var template = Sponge.server().dataPackManager().load(DataPacks.WORLD, world.key()).join()
+              .orElseGet(() -> WorldTemplate.builder().from(WorldTemplate.overworld()).key(world.key()).build());
+        // TODO create template from existing properties?
+        final CompletableFuture<ServerWorld> futureWorld = Sponge.server().worldManager().loadWorld(template);
         if (futureWorld.isDone())
         {
             i18n.send(context, NEGATIVE, "The world {world} is already loaded!", futureWorld.join());
@@ -255,24 +261,27 @@ public class WorldsCommands extends DispatcherCommand
 
         final WorldManager wm = Sponge.server().worldManager();
         wm.worldKeys().stream().sorted(Comparator.comparing(ResourceKey::asString)).forEach(worldKey -> {
-            Component builder =
-                Component.text(" - ").append(Component.text(worldKey.asString(), NamedTextColor.GOLD)) // TODO worldname
-                .append(Component.space())
-                .append(Component.text(worldKey.asString(), NamedTextColor.DARK_AQUA));
+            final Optional<ServerWorld> loadedWorld = wm.world(worldKey);
+            final TextComponent hoverName = Component.text(worldKey.asString(), NamedTextColor.GRAY);
 
-            final TextComponent infoText = Component.text("(?)", NamedTextColor.YELLOW)
-                                                    .clickEvent(ClickEvent.runCommand("/worlds info" + worldKey.asString()))
+            var name = loadedWorld.map(ServerWorld::properties).map(p -> p.displayName().orElse(Component.text(p.name())))
+                .orElse(wm.loadProperties(worldKey).join().map(p -> p.displayName().orElse(Component.text(p.name()))).orElse(Component.text(worldKey.value())))
+                .color(NamedTextColor.GOLD)
+                .hoverEvent(HoverEvent.showText(hoverName));
+
+
+            final TextComponent infoBtn = Component.text("(?)", NamedTextColor.YELLOW)
+                                                    .clickEvent(ClickEvent.runCommand("/worlds info " + worldKey.asString()))
                                                     .hoverEvent(HoverEvent.showText(i18n.translate(context, "Click to show world info")));
 
-            if (!wm.world(worldKey).isPresent())
+            Component suffix = Component.empty();
+            if (!loadedWorld.isPresent())
             {
-                builder.append(Component.space());
-
                 final TextComponent loadText = loadWorldText(context, worldKey);
-                builder.append(tNotEnabled.color(NamedTextColor.RED).append(Component.space()).append(loadText));
+                suffix = Component.space().append(tNotEnabled.color(NamedTextColor.RED).append(Component.space()).append(loadText));
             }
-            builder.append(Component.space()).append(infoText);
-            context.sendMessage(Identity.nil(), builder);
+
+            context.sendMessage(Identity.nil(), Component.text("- ").append(infoBtn).append(Component.space()).append(name).append(suffix));
         });
     }
 
@@ -288,7 +297,7 @@ public class WorldsCommands extends DispatcherCommand
         context.sendMessage(Identity.nil(), Component.empty());
         i18n.send(context, POSITIVE, "World information for {world}:", world);
 
-        if (!Sponge.server().worldManager().world(world.key()).isPresent())
+        if (Sponge.server().worldManager().world(world.key()).isEmpty())
         {
             Component load = loadWorldText(context, world.key());
             i18n.send(context, NEGATIVE, "This world is not loaded. {txt#load}", load);
@@ -298,7 +307,7 @@ public class WorldsCommands extends DispatcherCommand
             i18n.send(context, NEUTRAL, "This world has not been initialized.");
         }
         i18n.send(context, NEUTRAL, "Gamemode: {text}", world.gameMode().asComponent());
-        i18n.send(context, NEUTRAL, "DimensionType: {input}", world.worldType());
+        i18n.send(context, NEUTRAL, "DimensionType: {input}", world.worldType().key(RegistryTypes.WORLD_TYPE).asString());
 //        if (world.worldGenerationConfig().generateFeatures())
 //        {
 //            i18n.send(context, NEUTRAL, "WorldType: {input} with features", world.getGeneratorType().getName());
