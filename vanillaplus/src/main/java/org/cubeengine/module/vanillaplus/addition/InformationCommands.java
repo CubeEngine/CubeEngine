@@ -356,17 +356,18 @@ public class InformationCommands extends PermissionContainer
 
     }
 
-    @Command(desc = "Displays all loaded worlds", alias = {"worldlist","worlds"})
-    public void listWorlds(CommandCause context)
-    {
-        i18n.send(context, POSITIVE, "Loaded worlds:");
-        for (ServerWorld world : Sponge.server().worldManager().worlds())
-        {
-            Component text = Component.space().append(Component.text("- ", NamedTextColor.WHITE))
-                     .append(world.properties().displayName().orElse(Component.text(world.key().value())).color(NamedTextColor.GOLD))
-                     .append(Component.text(": ", NamedTextColor.WHITE))
-                     .append(Component.text(world.key().asString(), NamedTextColor.BLUE));
-            context.sendMessage(Identity.nil(), text);
-        }
-    }
+    // TODO only load when cubeengine-worlds is not present
+//    @Command(desc = "Displays all loaded worlds", alias = {"worldlist","worlds"})
+//    public void listWorlds(CommandCause context)
+//    {
+//        i18n.send(context, POSITIVE, "Loaded worlds:");
+//        for (ServerWorld world : Sponge.server().worldManager().worlds())
+//        {
+//            Component text = Component.space().append(Component.text("- ", NamedTextColor.WHITE))
+//                     .append(world.properties().displayName().orElse(Component.text(world.key().value())).color(NamedTextColor.GOLD))
+//                     .append(Component.text(": ", NamedTextColor.WHITE))
+//                     .append(Component.text(world.key().asString(), NamedTextColor.BLUE));
+//            context.sendMessage(Identity.nil(), text);
+//        }
+//    }
 }
