@@ -17,6 +17,10 @@
  */
 package org.cubeengine.module.worlds;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -376,45 +380,57 @@ public class WorldsCommands extends DispatcherCommand
     @Command(desc = "Loads all chunks for a moment")
     public void touchChunks(CommandCause context, @Default ServerWorld world)
     {
-        if (this.touchChunkFuture == null || this.touchChunkFuture.isDone())
-        {
-            List<Vector3i> chunks = new ArrayList<>();
-            world.chunkManager().regionFiles().forEach((rPos, p) -> {
-                final Vector3i min = world.chunkManager().minChunkFromRegion(rPos);
-                final Vector3i max = world.chunkManager().maxChunkFromRegion(rPos);
-                IntStream.range(min.x() + 1, max.x() - 1)
-                         .mapToObj(x -> IntStream.range(min.z() + 1, max.z() - 1).
-                             mapToObj(z -> new Vector3i(x,0,z)))
-                         .flatMap(Function.identity())
-                         .forEach(chunks::add);
-            });
-
-            i18n.send(context, POSITIVE, "Touching {integer} chunks...", chunks.size());
-
-            AtomicInteger cnt = new AtomicInteger();
-            this.touchChunkFuture = CompletableFuture.runAsync(() -> {
-                for (final Vector3i chunk : chunks)
-                {
-                    if (this.touchChunkFuture.isCancelled())
-                    {
-                        return;
-                    }
-                    world.chunk(chunk);
-                    final int i = cnt.incrementAndGet();
-                    if (i % 1000 == 0)
-                    {
-                        i18n.send(context, POSITIVE, "{integer}/{integer} chunks touched", i, chunks.size());
-                        logger.info("{}/{} chunks touched", i, chunks.size());
-                    }
-                }
-                this.touchChunkFuture = null;
-            });
-        }
-        else
+        if (!(this.touchChunkFuture == null || this.touchChunkFuture.isDone()))
         {
             this.touchChunkFuture.cancel(true);
             logger.info("Canceled Touching chunks");
             i18n.send(context, POSITIVE, "Canceled Touching chunks");
+            return;
         }
+
+        List<Vector3i> chunks = new ArrayList<>();
+        try (DirectoryStream<Path> regionFiles = Files.newDirectoryStream(world.directory().resolve("region"), "*.mca"))
+        {
+            regionFiles.forEach(rPos -> {
+                final int chunksPerRegionDim = 32;
+                // files are named r.<X>.<Z>.mca
+                final String[] nameParts = rPos.getFileName().toString().split("\\.");
+                final Vector3i regionPos = new Vector3i(Integer.parseInt(nameParts[1]), 0, Integer.parseInt(nameParts[2]));
+                final Vector3i min = regionPos.div(chunksPerRegionDim);
+                final Vector3i max = min.add(chunksPerRegionDim, 0, chunksPerRegionDim);
+                IntStream.range(min.x(), max.x())
+                         .mapToObj(x -> IntStream.range(min.z(), max.z()).
+                             mapToObj(z -> new Vector3i(x,0, z)))
+                         .flatMap(Function.identity())
+                         .forEach(chunks::add);
+            });
+        }
+        catch (IOException e)
+        {
+            logger.error("Failed to look for region files!", e);
+            i18n.send(context, NEGATIVE, "Failed to look for region files!");
+            return;
+        }
+
+        i18n.send(context, POSITIVE, "Touching {integer} chunks...", chunks.size());
+
+        AtomicInteger cnt = new AtomicInteger();
+        this.touchChunkFuture = CompletableFuture.runAsync(() -> {
+            for (final Vector3i chunk : chunks)
+            {
+                if (this.touchChunkFuture.isCancelled())
+                {
+                    return;
+                }
+                world.chunk(chunk);
+                final int i = cnt.incrementAndGet();
+                if (i % 1000 == 0)
+                {
+                    i18n.send(context, POSITIVE, "{integer}/{integer} chunks touched", i, chunks.size());
+                    logger.info("{}/{} chunks touched", i, chunks.size());
+                }
+            }
+            this.touchChunkFuture = null;
+        });
     }
 }
