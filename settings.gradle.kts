@@ -23,6 +23,7 @@ plugins {
 
 include(
         "core",
+        "bluemapplus",
         "conomy",
         "docs",
         "kickban",
@@ -59,5 +60,5 @@ include(
         "traders",
         "vigil",
         "writer",
-        "launch",
+        "launch"
 )
