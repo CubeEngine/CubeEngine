@@ -17,11 +17,16 @@
  */
 package org.cubeengine.module.worlds;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.IntStream;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.identity.Identity;
@@ -30,6 +35,7 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.apache.logging.log4j.Logger;
 import org.cubeengine.libcube.service.command.DispatcherCommand;
 import org.cubeengine.libcube.service.command.annotation.Alias;
 import org.cubeengine.libcube.service.command.annotation.Command;
@@ -74,12 +80,15 @@ import static org.cubeengine.libcube.service.i18n.formatter.MessageType.*;
 public class WorldsCommands extends DispatcherCommand
 {
     private I18n i18n;
+    private final Logger logger;
+    private CompletableFuture<Void> touchChunkFuture;
 
     @Inject
-    public WorldsCommands(I18n i18n, WorldsModifyCommands modify, WorldsTemplateCommands template)
+    public WorldsCommands(I18n i18n, WorldsModifyCommands modify, WorldsTemplateCommands template, Logger logger)
     {
         super(modify, template);
         this.i18n = i18n;
+        this.logger = logger;
     }
 
     @Command(desc = "Renames a world")
@@ -352,6 +361,51 @@ public class WorldsCommands extends DispatcherCommand
         for (ServerPlayer player : players)
         {
             context.sendMessage(Identity.nil(), Component.text(" - ", NamedTextColor.YELLOW).append(Component.text(player.name(), NamedTextColor.DARK_GREEN)));
+        }
+    }
+
+    @Command(desc = "Loads all chunks for a moment")
+    public void touchChunks(CommandCause context, @Default ServerWorld world)
+    {
+        if (this.touchChunkFuture == null || this.touchChunkFuture.isDone())
+        {
+            List<Vector3i> chunks = new ArrayList<>();
+            world.chunkManager().regionFiles().forEach((rPos, p) -> {
+                final Vector3i min = world.chunkManager().minChunkFromRegion(rPos);
+                final Vector3i max = world.chunkManager().maxChunkFromRegion(rPos);
+                IntStream.range(min.x() + 1, max.x() - 1)
+                         .mapToObj(x -> IntStream.range(min.z() + 1, max.z() - 1).
+                             mapToObj(z -> new Vector3i(x,0,z)))
+                         .flatMap(Function.identity())
+                         .forEach(chunks::add);
+            });
+
+            i18n.send(context, POSITIVE, "Touching {integer} chunks...", chunks.size());
+
+            AtomicInteger cnt = new AtomicInteger();
+            this.touchChunkFuture = CompletableFuture.runAsync(() -> {
+                for (final Vector3i chunk : chunks)
+                {
+                    if (this.touchChunkFuture.isCancelled())
+                    {
+                        return;
+                    }
+                    world.chunk(chunk);
+                    final int i = cnt.incrementAndGet();
+                    if (i % 1000 == 0)
+                    {
+                        i18n.send(context, POSITIVE, "{integer}/{integer} chunks touched", i, chunks.size());
+                        logger.info("{}/{} chunks touched", i, chunks.size());
+                    }
+                }
+                this.touchChunkFuture = null;
+            });
+        }
+        else
+        {
+            this.touchChunkFuture.cancel(true);
+            logger.info("Canceled Touching chunks");
+            i18n.send(context, POSITIVE, "Canceled Touching chunks");
         }
     }
 }
