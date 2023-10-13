@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.identity.Identity;
@@ -388,34 +389,10 @@ public class WorldsCommands extends DispatcherCommand
             return;
         }
 
-        List<Vector3i> chunks = new ArrayList<>();
-        try (DirectoryStream<Path> regionFiles = Files.newDirectoryStream(world.directory().resolve("region"), "*.mca"))
-        {
-            regionFiles.forEach(rPos -> {
-                final int chunksPerRegionDim = 32;
-                // files are named r.<X>.<Z>.mca
-                final String[] nameParts = rPos.getFileName().toString().split("\\.");
-                final Vector3i regionPos = new Vector3i(Integer.parseInt(nameParts[1]), 0, Integer.parseInt(nameParts[2]));
-                final Vector3i min = regionPos.div(chunksPerRegionDim);
-                final Vector3i max = min.add(chunksPerRegionDim, 0, chunksPerRegionDim);
-                IntStream.range(min.x(), max.x())
-                         .mapToObj(x -> IntStream.range(min.z(), max.z()).
-                             mapToObj(z -> new Vector3i(x,0, z)))
-                         .flatMap(Function.identity())
-                         .forEach(chunks::add);
-            });
-        }
-        catch (IOException e)
-        {
-            logger.error("Failed to look for region files!", e);
-            i18n.send(context, NEGATIVE, "Failed to look for region files!");
-            return;
-        }
-
-        i18n.send(context, POSITIVE, "Touching {integer} chunks...", chunks.size());
-
         AtomicInteger cnt = new AtomicInteger();
         this.touchChunkFuture = CompletableFuture.runAsync(() -> {
+            final List<Vector3i> chunks = world.chunkPositions().toList();
+            i18n.send(context, POSITIVE, "Touching {integer} chunks...", chunks.size());
             for (final Vector3i chunk : chunks)
             {
                 if (this.touchChunkFuture.isCancelled())
