@@ -44,7 +44,6 @@ import io.leangen.geantyref.TypeToken;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.builder.AbstractBuilder;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.util.Buildable;
 import org.cubeengine.libcube.ModuleManager;
 import org.cubeengine.libcube.service.command.annotation.Alias;
 import org.cubeengine.libcube.service.command.annotation.Command;
@@ -141,8 +140,7 @@ public class AnnotationCommandBuilder
             builder.addChild(builder().executor(helpExecutor).build(), "?");
 
             final Parameterized build = builder.build();
-            helpExecutor.init(build, null,
-                              String.join(".", Arrays.asList(getBasePerm(plugin), "command", name)));
+            helpExecutor.init(build, String.join(".", Arrays.asList(getBasePerm(plugin), "command", name)));
 
             final CommandMapping mapping = event.register(plugin, build, name, holderAnnotation.alias()).mapping();
             moduleCommands.put(mapping, build);
@@ -267,7 +265,7 @@ public class AnnotationCommandBuilder
                     builder.addChild(helpChild, "?");
 
                     final Parameterized build = builder.build();
-                    helpExecutor.init(build, null, String.join(".", permNodes));
+                    helpExecutor.init(build, String.join(".", permNodes));
                     dispatcher.addChild(build, alias);
 
                     final Alias aliasAnnotation = subHolder.getClass().getAnnotation(Alias.class);
@@ -313,6 +311,7 @@ public class AnnotationCommandBuilder
 
     private boolean isDelegateMethod(Object holder, String name)
     {
+        // TODO is this not the same as @Command#dispatcher()?
         final Delegate annotation = holder.getClass().getAnnotation(Delegate.class);
         return annotation != null && annotation.value().equals(name);
     }
@@ -414,7 +413,7 @@ public class AnnotationCommandBuilder
             extractors.add(
                 this.buildParameter(i, params, namedParameter, parameter, type, annotations, types.length - 1, requirements, injector, permNodes));
         }
-        final CubeEngineCommand executor = new CubeEngineCommand(holder, method, extractors, injector);
+        final CubeEngineCommand executor = new CubeEngineCommand(holder, method, extractors, injector, i18n);
         buildParams(builder, params, namedParameter, executor);
         requirements.addPermission(String.join(".", permNodes) + ".use");
         requirements.add(method.getAnnotation(Restricted.class));
@@ -422,16 +421,17 @@ public class AnnotationCommandBuilder
         builder.shortDescription(Component.text(annotation.desc()));
 //        builder.setExtendedDescription()
         builder.executor(executor);
-        final HelpExecutor helpExecutor = new HelpExecutor(i18n);
-        builder.addChild(builder().executor(helpExecutor).build(), "?");
+        builder.addChild(builder().executor(executor.helpExecutor()).build(), "?");
         final Parameterized build = builder.build();
-        helpExecutor.init(build, executor, String.join(".", permNodes));
+        executor.helpExecutor().init(build, String.join(".", permNodes));
+
         return build;
     }
 
     private <T> void buildParams(Builder builder, List<org.spongepowered.api.util.Builder<? extends Parameter, ?>> params, Map<Named, org.spongepowered.api.util.Builder<? extends Parameter, ?>> namedParams,
                                  CubeEngineCommand executor)
     {
+        int required = 0;
         for (int i = 0; i < params.size(); i++)
         {
             final org.spongepowered.api.util.Builder<? extends Parameter, ?> param = params.get(i);
@@ -450,9 +450,17 @@ public class AnnotationCommandBuilder
                     ((SequenceBuilder)param).terminal();
                 }
             }
-            builder.addParameter(param.build());
+            final Parameter buildParam = param.build();
+            if (!buildParam.isOptional())
+            {
+                required++;
+            }
+            builder.addParameter(buildParam);
         }
-
+        if (required> 0)
+        {
+            builder.terminal(true); // TODO does this work, probably need to modify executor
+        }
         Map<Named, org.spongepowered.api.command.Command.Builder> namedSubCommands = new LinkedHashMap<>();
         for (Entry<Named, org.spongepowered.api.util.Builder<? extends Parameter, ?>> namedParam : namedParams.entrySet())
         {
@@ -641,9 +649,9 @@ public class AnnotationCommandBuilder
         }
     }
 
-    private static class SimpleContextExtractor<T> implements ContextExtractor<T>
+    public static class SimpleContextExtractor<T> implements ContextExtractor<T>
     {
-        private Parameter.Key<T> key;
+        Parameter.Key<T> key;
         boolean optional;
         private DefaultParameterProvider<T> defaultParameterProvider;
 
