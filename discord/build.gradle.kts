@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    implementation("com.discord4j:discord4j-core:3.3.0-M2")
+    implementation("com.discord4j:discord4j-core:3.3.0-RC1")
 }
