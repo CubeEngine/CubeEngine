@@ -155,7 +155,7 @@ public class KickBanCommands
                 bc.broadcastTranslatedWithPerm(NEGATIVE, "{user} was banned from the server by {sender}!",
                                                perms.BAN_RECEIVEMESSAGE.getId(), player, context);
                 bc.broadcastMessageWithPerm(Style.empty(), reason, perms.BAN_RECEIVEMESSAGE.getId());
-                bc.broadcastTranslatedWithPerm(NEGATIVE, "And with it kicked: {text}!",
+                bc.broadcastTranslatedWithPerm(NEGATIVE, "And with it kicked: {txt}!",
                                                perms.BAN_RECEIVEMESSAGE.getId(),
                                                Component.join(Component.text(",", NamedTextColor.RED), bannedUsers.stream().map(u -> Component.text(u, NamedTextColor.DARK_GREEN)).collect(Collectors.toList())));
             }
@@ -245,7 +245,7 @@ public class KickBanCommands
             bc.broadcastMessageWithPerm(Style.empty(), reason, perms.BAN_RECEIVEMESSAGE.getId());
             if (!bannedUsers.isEmpty())
             {
-                bc.broadcastTranslatedWithPerm(NEGATIVE, "And with it kicked: {text}!",
+                bc.broadcastTranslatedWithPerm(NEGATIVE, "And with it kicked: {txt}!",
                                                perms.BAN_RECEIVEMESSAGE.getId(),
                                                Component.join(Component.text(",", NamedTextColor.RED), bannedUsers.stream().map(u -> Component.text(u, NamedTextColor.DARK_GREEN)).collect(Collectors.toList())));
             }
@@ -384,7 +384,7 @@ public class KickBanCommands
         i18n.send(context, POSITIVE, "The following {amount} IPs are banned from this server", ipbans.size());
         // TODO paging
         ipbans.forEach(ipban -> {
-            i18n.send(context, NEUTRAL, " - {name} was banned by {text}: {text#reason}",
+            i18n.send(context, NEUTRAL, " - {name} was banned by {txt}: {text#reason}",
                       ipban.address().toString(),
                       ipban.banSource().orElse(Component.text("Server")),
                       ipban.reason().orElse(Component.empty()));
@@ -411,7 +411,7 @@ public class KickBanCommands
                                userBans.size());
         // TODO paging
         userBans.forEach(userban -> {
-            i18n.send(context, NEUTRAL, " - {name} was banned by {text}: {text#reason}",
+            i18n.send(context, NEUTRAL, " - {name} was banned by {txt}: {text#reason}",
                       userban.profile().name(),
                       userban.banSource().orElse(Component.text("Server")),
                       userban.reason().orElse(Component.empty()));

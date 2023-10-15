@@ -72,6 +72,7 @@ import static org.cubeengine.libcube.service.i18n.formatter.MessageType.*;
  *
  * TODO alias for worlds?
  * TODO recreate cmd
+ * TODO create world template based on level? "import" command
  */
 @Singleton
 @Command(name = "worlds", desc = "Worlds commands")
@@ -82,9 +83,9 @@ public class WorldsCommands extends DispatcherCommand
     private CompletableFuture<Void> touchChunkFuture;
 
     @Inject
-    public WorldsCommands(I18n i18n, WorldsModifyCommands modify, WorldsTemplateCommands template, Logger logger)
+    public WorldsCommands(I18n i18n, WorldsModifyCommands modify, WorldsTemplateCommands template, WorldsTypeCommands type, Logger logger)
     {
-        super(modify, template);
+        super(modify, template, type);
         this.i18n = i18n;
         this.logger = logger;
     }
@@ -123,8 +124,6 @@ public class WorldsCommands extends DispatcherCommand
             }
         });
     }
-
-    // TODO create world template based on level? "import" command
 
     @Command(desc = "Loads a world")
     public void load(CommandCause context, ServerWorldProperties world)
@@ -303,18 +302,18 @@ public class WorldsCommands extends DispatcherCommand
         {
             i18n.send(context, NEUTRAL, "This world has not been initialized.");
         }
-        i18n.send(context, NEUTRAL, "Gamemode: {text}", world.gameMode().asComponent());
-        i18n.send(context, NEUTRAL, "DimensionType: {input}", world.worldType().key(RegistryTypes.WORLD_TYPE).asString());
-//        if (world.worldGenerationConfig().generateFeatures())
-//        {
-//            i18n.send(context, NEUTRAL, "WorldType: {input} with features", world.getGeneratorType().getName());
-//        }
-//        else
-//        {
-//            i18n.send(context, NEUTRAL, "WorldType: {input} no features", world.getGeneratorType().getName());
-//        }
+        i18n.send(context, NEUTRAL, "Gamemode: {txt}", world.gameMode().asComponent());
+        final String worldType = world.worldType().key(RegistryTypes.WORLD_TYPE).asString();
+        if (world.worldGenerationConfig().generateStructures())
+        {
+            i18n.send(context, NEUTRAL, "DimensionType: {input} with structures", worldType);
+        }
+        else
+        {
+            i18n.send(context, NEUTRAL, "DimensionType: {input} no structures", worldType);
+        }
 
-        i18n.send(context, NEUTRAL, "Difficulty {text}", world.difficulty().asComponent());
+        i18n.send(context, NEUTRAL, "Difficulty {txt}", world.difficulty().asComponent());
         if (world.hardcore())
         {
             i18n.send(context, NEUTRAL, "Hardcoremode active");

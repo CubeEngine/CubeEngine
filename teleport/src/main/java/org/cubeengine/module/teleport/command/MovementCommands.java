@@ -271,7 +271,6 @@ public class MovementCommands
     @Restricted
     public void place(ServerPlayer context, ServerPlayer player)
     {
-        // TODO this is broken atm. as blockrays were removed
         ServerLocation block = LocationUtil.getBlockInSight(context);
         if (block == null)
         {

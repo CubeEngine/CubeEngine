@@ -17,10 +17,15 @@
  */
 package org.cubeengine.module.worlds;
 
+import java.util.Optional;
 import java.util.Random;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
 import org.cubeengine.libcube.service.command.DispatcherCommand;
 import org.cubeengine.libcube.service.command.annotation.Alias;
 import org.cubeengine.libcube.service.command.annotation.Command;
@@ -28,6 +33,7 @@ import org.cubeengine.libcube.service.command.annotation.Default;
 import org.cubeengine.libcube.service.command.annotation.Flag;
 import org.cubeengine.libcube.service.command.annotation.Option;
 import org.cubeengine.libcube.service.i18n.I18n;
+import org.cubeengine.libcube.service.matcher.TimeMatcher;
 import org.cubeengine.libcube.util.ComponentUtil;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
@@ -42,7 +48,10 @@ import org.spongepowered.api.world.WorldTypes;
 import org.spongepowered.api.world.difficulty.Difficulties;
 import org.spongepowered.api.world.difficulty.Difficulty;
 import org.spongepowered.api.world.generation.ChunkGenerator;
+import org.spongepowered.api.world.generation.ConfigurableChunkGenerator;
+import org.spongepowered.api.world.generation.config.ChunkGeneratorConfig;
 import org.spongepowered.api.world.generation.config.WorldGenerationConfig;
+import org.spongepowered.api.world.server.ServerWorld;
 import org.spongepowered.api.world.server.WorldManager;
 import org.spongepowered.api.world.server.WorldTemplate;
 import org.spongepowered.api.world.server.WorldTemplate.Builder;
@@ -58,7 +67,7 @@ import static org.cubeengine.libcube.service.i18n.formatter.MessageType.POSITIVE
 @Alias("wtemplate")
 public class WorldsTemplateCommands extends DispatcherCommand
 {
-    private I18n i18n;
+    private final I18n i18n;
 
     @Inject
     public WorldsTemplateCommands(I18n i18n)
@@ -232,4 +241,54 @@ public class WorldsTemplateCommands extends DispatcherCommand
             i18n.send(context, CRITICAL, "Custom ChunkGenerators not available yet!");
         }
     }
+
+
+    @Command(desc = "Show info about a world template")
+    public void info(CommandCause context, WorldTemplate template)
+    {
+
+        final Optional<ServerWorld> onlineWorld = Sponge.server().worldManager().world(template.key());
+
+        Component worldType = Component.text(template.worldType().key(RegistryTypes.WORLD_TYPE).asString())
+                               .hoverEvent(HoverEvent.showText(i18n.translate(context, Style.style(NamedTextColor.GRAY), "Click to show world type info")))
+                               .clickEvent(ClickEvent.runCommand("/worlds type info " + template.worldType().key(RegistryTypes.WORLD_TYPE).asString()));
+        i18n.send(context, POSITIVE, "Template {name} is of type {txt}", template.key().asString(), worldType);
+        if (onlineWorld.isPresent())
+        {
+            i18n.send(context, POSITIVE, "Its corresponding world is currently loaded!");
+        }
+        template.displayName().ifPresent(display -> i18n.send(context, NEUTRAL, "- Display Name: {txt}", display));
+        template.gameMode().ifPresent(gm -> i18n.send(context, NEUTRAL, "- Game Mode: {txt}", gm.asComponent()));
+        template.difficulty().ifPresent(diff -> i18n.send(context, NEUTRAL, "- Difficulty: {txt}", diff.asComponent()));
+        template.serializationBehavior().ifPresent(sb -> i18n.send(context, NEUTRAL, "- Serialization: {input}", sb.name()));
+        template.viewDistance().ifPresent(vd -> i18n.send(context, NEUTRAL, "- View Distance: {integer}", vd));
+        // template.spawnPosition();
+        // template.performsSpawnLogic()
+        template.hardcore().ifPresent(hardcore -> {
+            if (hardcore)
+            {
+                i18n.send(context, NEUTRAL, "- Hardcore");
+            }
+        });
+        template.commands().ifPresent(cmd -> {
+            if (cmd)
+            {
+                i18n.send(context, NEUTRAL, "- Commands allowed");
+            }
+        });
+        template.pvp().ifPresent(pvp -> {
+            if (!pvp)
+            {
+                i18n.send(context, NEUTRAL, "- PVP disabled");
+            }
+        });
+        template.seed().ifPresent(seed -> i18n.send(context, NEUTRAL, "- Seed: {integer}", seed));
+
+        final ChunkGenerator generator = template.generator();
+        // generator.biomeProvider()
+        if (generator instanceof ConfigurableChunkGenerator<?> confGenerator) {
+            final ChunkGeneratorConfig config = confGenerator.config();
+        }
+    }
+
 }
