@@ -19,13 +19,12 @@ package org.cubeengine.libcube.service.matcher;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import com.google.common.base.Functions;
-import com.google.common.collect.Ordering;
 import com.google.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,7 +52,6 @@ public class StringMatcher
             return new TreeMap<>();
         }
         Map<String, Integer> matches = new HashMap<>();
-        Ordering<String> comparator = Ordering.natural().onResultOf(Functions.forMap(matches)).compound(Ordering.natural());
         for (String target : in)
         {
             int distance = target.length() - search.length();
@@ -74,7 +72,7 @@ public class StringMatcher
                 matches.put(target, distance);
             }
         }
-        TreeMap<String, Integer> result = new TreeMap<>(comparator);
+        TreeMap<String, Integer> result = new TreeMap<>(Comparator.comparing(matches::get, Integer::compareTo));
         result.putAll(matches);
         return result;
     }

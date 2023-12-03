@@ -26,12 +26,12 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.event.HoverEvent.Action;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.i18n.I18nTranslate.ChatType;
 import org.cubeengine.module.chat.Chat;
 import org.cubeengine.module.chat.ChatConfig;
 import org.cubeengine.module.chat.ChatPerm;
-import org.jetbrains.annotations.NotNull;
 import org.spongepowered.api.adventure.ChatTypes;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
@@ -117,7 +117,7 @@ public class ChatFormatListener
         event.setChatType(ChatTypes.CUSTOM_CHAT);
     }
 
-    @NotNull
+    @NonNull
     private Map<String, Component> getReplacements(ServerPlayer player, Subject subject)
     {
         String name = player.name();

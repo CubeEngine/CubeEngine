@@ -17,6 +17,7 @@
  */
 package org.cubeengine.module.chat.command;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,9 +25,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.function.Function;
-
-import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.audience.Audience;
@@ -51,7 +49,6 @@ import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 
-import static java.util.stream.Collectors.toList;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.*;
 import static org.cubeengine.libcube.util.ComponentUtil.fromLegacy;
 
@@ -264,11 +261,20 @@ public class ChatCommands
     }
 
     private static <T> void renderLines(List<T> entries, int entriesPerLine, Builder builder, Function<T, Component> render) {
-        final UnmodifiableIterator<List<T>> lines = Iterators.partition(entries.iterator(), entriesPerLine);
-        while (lines.hasNext()) {
-            final List<Component> components = lines.next().stream()
-                    .map(render)
-                    .collect(toList());
+
+        final List<Component> components = new ArrayList<>();
+        for (final T entry : entries)
+        {
+            components.add(render.apply(entry));
+            if (components.size() >= entriesPerLine)
+            {
+                builder.append(Component.join(Component.text("   "), components));
+                builder.append(Component.newline());
+                components.clear();
+            }
+        }
+        if (!components.isEmpty())
+        {
             builder.append(Component.join(Component.text("   "), components));
             builder.append(Component.newline());
         }

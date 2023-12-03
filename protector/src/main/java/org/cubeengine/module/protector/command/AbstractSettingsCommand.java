@@ -20,7 +20,6 @@ package org.cubeengine.module.protector.command;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEGATIVE;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.POSITIVE;
 
-import com.google.common.collect.ImmutableSet;
 import org.cubeengine.libcube.service.command.DispatcherCommand;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.module.protector.listener.SettingsListener;
@@ -30,6 +29,7 @@ import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.util.Tristate;
+import java.util.Set;
 
 public abstract class AbstractSettingsCommand extends DispatcherCommand
 {
@@ -54,7 +54,7 @@ public abstract class AbstractSettingsCommand extends DispatcherCommand
                 return;
             }
             Subject subject = ps.groupSubjects().loadSubject(role).join();
-            subject.subjectData().setPermission(ImmutableSet.of(region.getContext()), perm, set);
+            subject.subjectData().setPermission(Set.of(region.getContext()), perm, set);
             i18n.send(context, POSITIVE, "Bypass permissions set for the role {name}!", role);
         });
     }

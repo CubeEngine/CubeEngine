@@ -17,6 +17,7 @@
  */
 package org.cubeengine.libcube.util;
 
+import org.apache.commons.lang3.Validate;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -25,16 +26,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.common.base.Strings;
 
 /**
  * This class contains some utilities to work with Strings.
@@ -441,7 +437,7 @@ public final class StringUtils
 
     public static String randomString(Random random, int length, String charset)
     {
-        checkArgument(length > 0, "The length must be greater than zero!");
+        Validate.validState(length > 0, "The length must be greater than zero!");
 
         int upperLimit = charset.length();
         StringBuilder sb = new StringBuilder();
@@ -456,7 +452,7 @@ public final class StringUtils
 
     public static boolean isNumeric(String string)
     {
-        checkNotNull(string, "The string must not be null!");
+        Validate.notNull(string, "The string must not be null!");
         final int len = string.length();
         if (len == 0)
         {

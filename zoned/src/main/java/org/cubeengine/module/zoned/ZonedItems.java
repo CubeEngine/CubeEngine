@@ -20,9 +20,9 @@ package org.cubeengine.module.zoned;
 import java.util.Arrays;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.cubeengine.libcube.util.math.shape.Cuboid;
 import org.cubeengine.module.zoned.config.ZoneConfig;
-import org.jetbrains.annotations.NotNull;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.Keys;
@@ -106,7 +106,7 @@ public interface ZonedItems
         return newTool;
     }
 
-    @NotNull
+    @NonNull
     static ItemStack savedSelection()
     {
         final ItemStack newTool = ItemStack.of(ItemTypes.ENDER_EYE);

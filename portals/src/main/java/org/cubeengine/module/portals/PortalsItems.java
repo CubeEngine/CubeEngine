@@ -20,7 +20,7 @@ package org.cubeengine.module.portals;
 import java.util.Arrays;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.jetbrains.annotations.NotNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
@@ -49,7 +49,7 @@ public interface PortalsItems
         }
     }
 
-    @NotNull
+    @NonNull
     static ItemStack portalExit()
     {
         final ItemStack newTool = ItemStack.of(ItemTypes.ARMOR_STAND);
