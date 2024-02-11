@@ -22,6 +22,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,7 +33,6 @@ import org.jooq.Result;
 import org.jooq.ResultQuery;
 import org.jooq.exception.DataAccessException;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Abstract Database implementing most of the database methods.
  * Extend this class and complement it to use the database.
@@ -163,7 +163,7 @@ public abstract class AbstractDatabase implements Database
     @Override
     public PreparedStatement prepareStatement(Connection connection, String statement) throws SQLException
     {
-        checkNotNull(statement, "The statement must not be null!");
+        Objects.requireNonNull(statement, "The statement must not be null!");
         return connection.prepareStatement(statement, PreparedStatement.RETURN_GENERATED_KEYS);
     }
 }
