@@ -17,9 +17,17 @@
  */
 package org.cubeengine.module.headvillager;
 
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,6 +35,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.sound.Sound;
@@ -34,7 +43,9 @@ import net.kyori.adventure.sound.Sound.Source;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.apache.logging.log4j.Logger;
+import org.cubeengine.libcube.service.filesystem.FileManager;
 import org.cubeengine.libcube.util.EventUtil;
+import org.cubeengine.libcube.util.StringUtils;
 import org.cubeengine.processor.Module;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.data.Keys;
@@ -69,22 +80,54 @@ public class HeadVillager
 {
     private static final String mcHeadUrl = "https://minecraft-heads.com/scripts/api.php?tags=true&cat=";
     @Inject Logger logger;
+    @Inject private FileManager fm;
+
 
     @Listener
     public void onStartUp(StartedEngineEvent<Server> event)
     {
         final Gson gson = new Gson();
-        for (Category category : Category.values())
+
+        final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(500)).build();
+
+        try
         {
-            try
+            final Path cachePath = fm.getModulePath(HeadVillager.class).resolve("headcache");
+            Files.createDirectories(cachePath);
+
+            for (Category category : Category.values())
             {
-                // TODO local cache
-                final InputStreamReader isr = new InputStreamReader(new URL(mcHeadUrl + category).openStream());
-                for (Head head : gson.fromJson(isr, Head[].class))
+
+                try
+                {
+                    Path categoryFile = cachePath.resolve(category.name() + ".json");
+                    if (!Files.exists(categoryFile))
+                    {
+                        logger.info("Fetching {} heads from {} ...", category, mcHeadUrl + category);
+                        final HttpRequest request = HttpRequest.newBuilder(new URI(mcHeadUrl + category)).timeout(Duration.ofMillis(2000)).build();
+                        final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+                        final String body = response.body();
+                        Files.writeString(categoryFile, body);
+                        logger.info("done Fetching {} heads...", category);
+                    }
+                }
+                catch (IOException | URISyntaxException | InterruptedException e)
+                {
+                    logger.warn("Could not get heads for {}", category.name(), e);
+                }
+            }
+
+            int catCount = 0;
+            int headCount = 0;
+            for (final Path file : Files.newDirectoryStream(cachePath, "*.json"))
+            {
+                catCount++;
+                for (Head head : gson.fromJson(new FileReader(file.toFile()), Head[].class))
                 {
                     try
                     {
-                        head.init(category);
+                        headCount++;
+                        head.init(Category.valueOf(StringUtils.stripFileExtension(file.getFileName().toString())));
                     }
                     catch (Exception e)
                     {
@@ -92,10 +135,11 @@ public class HeadVillager
                     }
                 }
             }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
+            logger.info("Successfully loaded {} heads in {} categories", headCount, catCount);
+        }
+        catch (IOException ignored)
+        {
+            logger.warn("Could not cache Heads Data");
         }
     }
 
