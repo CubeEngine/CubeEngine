@@ -23,9 +23,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Ordering;
 import net.kyori.adventure.text.Component;
 import org.cubeengine.module.vigil.Receiver;
 import org.cubeengine.module.vigil.report.Action;
@@ -41,13 +38,12 @@ import org.spongepowered.api.event.item.inventory.container.ClickContainerEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.BlockCarrier;
 import org.spongepowered.api.item.inventory.Container;
-import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.inventory.query.QueryTypes;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.item.inventory.type.CarriedInventory;
 
-import static org.spongepowered.api.item.inventory.ItemStackComparators.*;
+import static org.spongepowered.api.item.inventory.ItemStackComparators.ITEM_DATA;
+import static org.spongepowered.api.item.inventory.ItemStackComparators.TYPE;
 
 /* TODO
 inventory
@@ -62,7 +58,7 @@ public class ChangeInventoryReport extends InventoryReport<ChangeInventoryEvent>
     public static final String ORIGINAL = "original";
     public static final String REPLACEMENT = "replacement";
     public static final String SLOT_INDEX = "slot-index";
-    private static final Comparator<ItemStack> COMPARATOR = Ordering.compound(ImmutableList.of(TYPE.get(), ITEM_DATA.get()));
+    private static final Comparator<ItemStack> COMPARATOR = TYPE.get().thenComparing(ITEM_DATA.get());
 
     @Override
     public void showReport(List<Action> actions, Receiver receiver)
