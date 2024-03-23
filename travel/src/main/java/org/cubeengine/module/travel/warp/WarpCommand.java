@@ -46,6 +46,7 @@ import org.spongepowered.api.SystemSubject;
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
+import org.spongepowered.api.world.server.ServerLocation;
 
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.*;
 
@@ -90,7 +91,7 @@ public class WarpCommand extends DispatcherCommand
         {
             return;
         }
-        sender.setTransform(w.transform);
+        sender.setLocationAndRotation(w.world.getWorld().location(w.transform.position()), w.transform.rotation());
         if (w.welcomeMsg != null)
         {
             sender.sendMessage(Identity.nil(), Component.text(w.welcomeMsg));
