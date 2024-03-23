@@ -94,7 +94,7 @@ public class WarpCommand extends DispatcherCommand
         sender.setLocationAndRotation(w.world.getWorld().location(w.transform.position()), w.transform.rotation());
         if (w.welcomeMsg != null)
         {
-            sender.sendMessage(Identity.nil(), Component.text(w.welcomeMsg));
+            sender.sendMessage(Component.text(w.welcomeMsg));
             return;
         }
         if (w.isOwner(sender.user()))
@@ -164,7 +164,7 @@ public class WarpCommand extends DispatcherCommand
         {
             i18n.send(sender, POSITIVE, "The welcome message for the warp {name} of {user} is now set to:", w.name, w.getOwner());
         }
-        sender.sendMessage(Identity.nil(), Component.text(w.welcomeMsg));
+        sender.sendMessage(Component.text(w.welcomeMsg));
     }
 
     @Restricted
@@ -272,11 +272,11 @@ public class WarpCommand extends DispatcherCommand
 
             if (warp.isOwner(context))
             {
-                context.sendMessage(Identity.nil(), Component.text("  " + warp.name + " ", NamedTextColor.YELLOW).append(teleport));
+                context.sendMessage(Component.text("  " + warp.name + " ", NamedTextColor.YELLOW).append(teleport));
             }
             else
             {
-                context.sendMessage(Identity.nil(), Component.text("  "+ warp.getOwner().name() + ":" + warp.name + " ", NamedTextColor.YELLOW).append(teleport));
+                context.sendMessage(Component.text("  "+ warp.getOwner().name().orElse(warp.getOwner().uuid().toString()) + ":" + warp.name + " ", NamedTextColor.YELLOW).append(teleport));
             }
         }
     }
