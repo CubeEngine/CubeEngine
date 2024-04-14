@@ -29,8 +29,6 @@ group = pluginGroupId
 version = "$spongeMajorVersion.$pluginVersion$snapshotVersion"
 description = pluginDescription
 
-val publishUrl = uri("https://maven.pkg.github.com/cubeengine/cubeengine")
-
 // repos for modules **using** this convention
 repositories {
     mavenCentral()
@@ -127,16 +125,6 @@ tasks.withType<Test> {
 fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
 
 project.gradle.projectsEvaluated {
-    publishing {
-        repositories {
-            maven {
-                name = "github"
-                url = publishUrl
-                credentials(PasswordCredentials::class)
-            }
-        }
-    }
-
     oreDeployment {
         val moduleId: String by project.properties
         val oreStaging = project.properties["oreStaging"]?.toString()?.toBoolean() ?: false
@@ -159,51 +147,6 @@ project.gradle.projectsEvaluated {
     }
 }
 
-
-publishing {
-    publications {
-        publications.create<MavenPublication>("github") {
-            project.shadow.component(this)
-            artifact(tasks.getByName("sourcesJar"))
-            pom {
-                name.set(project.name)
-                description.set(project.description)
-                url.set("https://cubeengine.org")
-                licenses {
-                    license {
-                        name.set("GNU General Public License Version 3")
-                        url.set("https://www.gnu.org/licenses/gpl-3.0.txt")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("pschichtel")
-                        name.set("Phillip Schichtel")
-                        email.set("phillip@schich.tel")
-                    }
-                    developer {
-                        id.set("faithcaio")
-                        name.set("Anselm Brehme")
-                    }
-                    developer {
-                        id.set("boeserwolf91")
-                        name.set("Stefan Wolf")
-                    }
-                    developer {
-                        id.set("totokaka")
-                        name.set("Tobias Laundal")
-                    }
-                }
-                scm {
-                    url.set("https://github.com/CubeEngine/core")
-                    connection.set("scm:git:https://github.com/CubeEngine/core")
-                    developerConnection.set("scm:git:git@github.com:CubeEngine/core")
-                }
-            }
-        }
-    }
-}
-
 signing {
     if (project.findProperty("cubeengine-profile") == "release") {
         useGpgCmd()
@@ -219,30 +162,30 @@ tasks.build {
     dependsOn(tasks.shadowJar)
 }
 
-tasks.publish {
-    dependsOn(tasks.check)
-
-    val outputFile = project.layout.buildDirectory.file("jar-url.txt").get().asFile
-
-    outputs.file(outputFile)
-
-    doLast {
-        val repoUrl = publishUrl
-
-        val versionUrl = "$repoUrl/${project.group.toString().replace('.', '/')}/${project.name}/${project.version}"
-        val parsed = XmlParser().parse("$versionUrl/maven-metadata.xml")
-
-        fun Node.children(name: String): NodeList = get(name) as NodeList
-        fun Node.children(name: String, n: Int): Node = (get(name) as NodeList)[n] as Node
-        fun Node.child(name: String): Node = children(name).first() as Node
-        fun Node.firstStringValue() = (value() as Iterable<*>).iterator().next() as String
-
-        val lastSnapshot = parsed.child("versioning").children("snapshotVersions", 0).child("snapshotVersion").child("value").firstStringValue()
-        val jarUrl = "$versionUrl/${project.name}-${lastSnapshot}.jar"
-        println("Project ${project.name}: ${project.version} \t$jarUrl")
-        outputFile.writeText(jarUrl)
-    }
-}
+//tasks.publish {
+//    dependsOn(tasks.check)
+//
+//    val outputFile = project.layout.buildDirectory.file("jar-url.txt").get().asFile
+//
+//    outputs.file(outputFile)
+//
+//    doLast {
+//        val repoUrl = publishUrl
+//
+//        val versionUrl = "$repoUrl/${project.group.toString().replace('.', '/')}/${project.name}/${project.version}"
+//        val parsed = XmlParser().parse("$versionUrl/maven-metadata.xml")
+//
+//        fun Node.children(name: String): NodeList = get(name) as NodeList
+//        fun Node.children(name: String, n: Int): Node = (get(name) as NodeList)[n] as Node
+//        fun Node.child(name: String): Node = children(name).first() as Node
+//        fun Node.firstStringValue() = (value() as Iterable<*>).iterator().next() as String
+//
+//        val lastSnapshot = parsed.child("versioning").children("snapshotVersions", 0).child("snapshotVersion").child("value").firstStringValue()
+//        val jarUrl = "$versionUrl/${project.name}-${lastSnapshot}.jar"
+//        println("Project ${project.name}: ${project.version} \t$jarUrl")
+//        outputFile.writeText(jarUrl)
+//    }
+//}
 
 tasks.withType<PublishToOreTask>().configureEach {
     dependsOn(tasks.build)

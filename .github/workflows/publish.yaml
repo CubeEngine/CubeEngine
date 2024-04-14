@@ -15,4 +15,4 @@ jobs:
             - name: Setup Gradle
               uses: gradle/actions/setup-gradle@v3
             - name: Publish package
-              run: ./gradlew publish dumpUrls --continue --parallel -PgithubUsername=${{ github.actor }} -PgithubPassword=${{ secrets.GITHUB_TOKEN }}
+              run: ./gradlew build dumpUrls --continue --parallel
