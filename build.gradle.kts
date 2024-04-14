@@ -93,6 +93,7 @@ val updateGithubRelease by tasks.registering {
     doLast {
         val files = project.subprojects
             .asSequence()
+            .filterNot { it.findProperty("pluginPublished") == "false" }
             .flatMap { it.tasks.withType<Jar>() }
             .filter { it.didWork }
             .mapNotNull { it.archiveFile.orNull }
