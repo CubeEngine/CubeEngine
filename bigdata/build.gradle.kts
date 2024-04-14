@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    api("org.mongodb:mongodb-driver-sync:4.2.0")
+    api("org.mongodb:mongodb-driver-sync:5.0.1")
 }
