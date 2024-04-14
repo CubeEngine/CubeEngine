@@ -1,5 +1,5 @@
 plugins {
-    id("org.cubeengine.parent.module")
+    id("org.cubeengine.parent.core")
 }
 
 dependencies {
