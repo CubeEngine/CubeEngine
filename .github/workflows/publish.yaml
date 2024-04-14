@@ -15,8 +15,5 @@ jobs:
             - name: Publish package
               uses: gradle/gradle-build-action@v2.9.0
               with:
-                  arguments: publish dumpUrls --continue --parallel -PcubyteUsername=${{ secrets.NEXUS_USER }} -PcubytePassword=${{ secrets.NEXUS_PASS }}
+                  arguments: publish dumpUrls --continue --parallel -PgithubUsername=${{ github.actor }} -PgithubPassword=${{ secrets.GITHUB_TOKEN }}
                   gradle-version: wrapper
-              env:
-                  cubyteUsername: ${{ secrets.NEXUS_USER }}
-                  cubytePassword: ${{ secrets.NEXUS_PASS }}
