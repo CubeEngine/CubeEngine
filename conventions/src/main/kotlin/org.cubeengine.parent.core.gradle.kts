@@ -29,14 +29,11 @@ group = pluginGroupId
 version = "$spongeMajorVersion.$pluginVersion$snapshotVersion"
 description = pluginDescription
 
-val releasesRepoUrl = uri("https://maven.cubyte.org/repository/releases")
-val snapshotsRepoUrl = uri("https://maven.cubyte.org/repository/snapshots")
+val publishUrl = uri("https://maven.pkg.github.com/cubeengine/cubeengine")
 
 // repos for modules **using** this convention
 repositories {
     mavenCentral()
-    //maven(releasesRepoUrl)
-    //maven(snapshotsRepoUrl)
     sponge.releases()
     sponge.snapshots()
     mavenLocal()
@@ -133,8 +130,8 @@ project.gradle.projectsEvaluated {
     publishing {
         repositories {
             maven {
-                name = "cubyte"
-                url = if (project.isSnapshot()) snapshotsRepoUrl else releasesRepoUrl
+                name = "github"
+                url = publishUrl
                 credentials(PasswordCredentials::class)
             }
         }
@@ -165,7 +162,7 @@ project.gradle.projectsEvaluated {
 
 publishing {
     publications {
-        publications.create<MavenPublication>("cubyte") {
+        publications.create<MavenPublication>("github") {
             project.shadow.component(this)
             artifact(tasks.getByName("sourcesJar"))
             pom {
@@ -210,7 +207,7 @@ publishing {
 signing {
     if (project.findProperty("cubeengine-profile") == "release") {
         useGpgCmd()
-        sign(publishing.publications["cubyte"])
+        sign(publishing.publications["github"])
     }
 }
 
@@ -230,7 +227,7 @@ tasks.publish {
     outputs.file(outputFile)
 
     doLast {
-        val repoUrl = if (project.isSnapshot()) snapshotsRepoUrl else releasesRepoUrl
+        val repoUrl = publishUrl
 
         val versionUrl = "$repoUrl/${project.group.toString().replace('.', '/')}/${project.name}/${project.version}"
         val parsed = XmlParser().parse("$versionUrl/maven-metadata.xml")
