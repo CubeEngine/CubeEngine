@@ -16,7 +16,6 @@ group = "org.cubeengine"
 version = "1.0.0-SNAPSHOT"
 
 description = "CubeEngine Project"
-
 data class IdResponse(val id: Int?)
 data class AssetResponse(val id: Int?, val name: String)
 
@@ -50,13 +49,20 @@ inline fun <reified T> ObjectMapper.decoding(): BodyHandler<T> {
     }
 }
 
-fun authenticatedRequest(): HttpRequest.Builder {
+fun authenticatedRequest(to: String): HttpRequest.Builder {
     val builder = HttpRequest.newBuilder()
+    builder.uri(URI(to))
     val token = project.findProperty("githubApiToken") ?: System.getenv("GITHUB_API_TOKEN")?.ifBlank { null }
     if (token != null) {
         builder.setHeader("Authorization", "Bearer $token")
     }
     return builder
+}
+
+inline fun <reified T : Any> HttpClient.getFrom(url: String, objectMapper: ObjectMapper): T {
+    val req = authenticatedRequest(url).GET().build()
+
+    return send(req, objectMapper.decoding<T>()).body()
 }
 
 fun <T> ObjectMapper.encoding(value: T): BodyPublisher {
@@ -109,34 +115,29 @@ val updateGithubRelease by tasks.registering {
             .build()
 
         val tagName = "snapshots-$spongeApiVersion"
-        val releaseCommitish = "tag"
-        val releaseName = "Snapshots for Sponge $spongeApiVersion"
-        val releaseDescription = "..."
-
-        val releaseData = CreateReleaseBody(tagName, releaseCommitish, releaseName, releaseDescription)
-
         val objectMapper = ObjectMapper().also {
             it.registerKotlinModule()
             it.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         }
 
-        val req = authenticatedRequest().uri(URI("$apiBaseUrl/tags/$tagName")).GET().build()
-
-        var response = httpClient.send(req, objectMapper.decoding<IdResponse>()).body()
-        if (response.id == null) {
-            val createRelease = authenticatedRequest().uri(URI(apiBaseUrl)).POST(objectMapper.encoding(releaseData)).build()
-             response = httpClient.send(createRelease, objectMapper.decoding<IdResponse>()).body()
-        }
-        if (response.id == null) {
+        val releaseId = httpClient.getFrom<IdResponse>("$apiBaseUrl/tags/$tagName", objectMapper).id
+            ?: run {
+                val releaseCommitish = "tag"
+                val releaseName = "Snapshots for Sponge $spongeApiVersion"
+                val releaseDescription = "..."
+                val releaseData = CreateReleaseBody(tagName, releaseCommitish, releaseName, releaseDescription)
+                val createRelease = authenticatedRequest(apiBaseUrl).POST(objectMapper.encoding(releaseData)).build()
+                httpClient.send(createRelease, objectMapper.decoding<IdResponse>()).body().id
+            }
+        if (releaseId == null) {
             error("Could not Create Release! :(")
         }
 
         withLimitedConcurrency(2) {
-            val listAssets = authenticatedRequest().uri(URI("$apiBaseUrl/${response.id}/assets?per_page=100")).GET().build()
-            httpClient.send(listAssets, objectMapper.decoding<List<AssetResponse>>()).body()
+            httpClient.getFrom<List<AssetResponse>>("$apiBaseUrl/${releaseId}/assets?per_page=100", objectMapper)
                 .parallelStream()
                 .forEach { asset ->
-                    val deleteAsset = authenticatedRequest().uri(URI("$apiBaseUrl/assets/${asset.id}")).DELETE().build()
+                    val deleteAsset = authenticatedRequest("$apiBaseUrl/assets/${asset.id}").DELETE().build()
                     val deleteResponse = httpClient.send(deleteAsset, BodyHandlers.discarding())
                     if (deleteResponse.statusCode() != 204) {
                         error("Could not delete Asset for $name")
@@ -145,7 +146,7 @@ val updateGithubRelease by tasks.registering {
 
 
             files.toList().parallelStream().forEach { (name, path) ->
-                val uploadAsset = authenticatedRequest().uri(URI("$uploadsBaseUrl/${response.id}/assets?name=${name}"))
+                val uploadAsset = authenticatedRequest("$uploadsBaseUrl/${releaseId}/assets?name=${name}")
                     .setHeader("Content-Type", "application/octet-stream")
                     .POST(BodyPublishers.ofFile(path)).build()
                 val assetResponse = httpClient.send(uploadAsset, objectMapper.decoding<IdResponse>()).body()
