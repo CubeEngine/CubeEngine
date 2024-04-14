@@ -15,4 +15,4 @@ jobs:
             - name: Setup Gradle
               uses: gradle/actions/setup-gradle@v3
             - name: Publish package
-              run: ./gradlew build dumpUrls --continue --parallel
+              run: ./gradlew build updateGithubRelease --continue --parallel -PgithubApiToken=${{ secrets.GITHUB_TOKEN }}

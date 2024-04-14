@@ -1,6 +1,3 @@
-import groovy.util.Node
-import groovy.util.NodeList
-import groovy.xml.XmlParser
 import org.spongepowered.gradle.ore.task.PublishToOreTask
 import java.io.ByteArrayOutputStream
 
