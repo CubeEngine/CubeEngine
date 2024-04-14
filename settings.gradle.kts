@@ -24,7 +24,6 @@ plugins {
 include(
         "core",
         "bluemapplus",
-        //"conomy",
         "docs",
         "kickban",
         "locker",
@@ -33,7 +32,6 @@ include(
         "portals",
         "protector",
         "roles",
-        //"sql",
         "teleport",
         "travel",
         "vanillaplus",
