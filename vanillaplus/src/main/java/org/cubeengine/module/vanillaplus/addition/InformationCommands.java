@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -62,6 +63,8 @@ import org.spongepowered.api.entity.living.Living;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.EventContextKeys;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.network.EngineConnectionState;
+import org.spongepowered.api.network.ServerConnectionState;
 import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.biome.Biome;
@@ -296,8 +299,16 @@ public class InformationCommands extends PermissionContainer
         boolean ping = context.context().get(EventContextKeys.COMMAND).get().toLowerCase().startsWith("/ping");
         if (context.subject() instanceof ServerPlayer)
         {
-            i18n.send(context, MessageType.NEUTRAL, (ping ? "pong" : "ping") + "! Your latency: {integer#ping}",
-                      ((ServerPlayer)context.subject()).connection().latency());
+            final Optional<EngineConnectionState> state = ((ServerPlayer)context.subject()).connection().state();
+            // TODO check is this working?
+            state.ifPresent(s -> {
+                if (s instanceof ServerConnectionState.Game gameState)
+                {
+                    i18n.send(context, MessageType.NEUTRAL, (ping ? "pong" : "ping") + "! Your latency: {integer#ping}",
+                              gameState.latency());
+                }
+            });
+
             return;
         }
         i18n.send(context, NEUTRAL, (ping ? "ping" : "pong") + " in the console?");
