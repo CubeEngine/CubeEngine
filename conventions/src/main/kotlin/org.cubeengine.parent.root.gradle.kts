@@ -14,6 +14,15 @@ java {
     }
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(
+        listOf(
+            "-Xlint:deprecation",
+            "-Xlint:unchecked",
+        )
+    )
+}
+
 // repos for modules **using** this convention
 repositories {
     mavenCentral()
