@@ -38,6 +38,9 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.registry.RegistryTypes;
 
+import static net.kyori.adventure.text.Component.newline;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
+
 public class ReportUtil
 {
     public static Component name(BlockSnapshot snapshot, Receiver receiver)
@@ -93,7 +96,7 @@ public class ReportUtil
         Optional<List<Component>> sign = snapshot.get(Keys.SIGN_LINES);
         if (sign.isPresent())
         {
-            builder.append(Component.space()).append(Component.text("[I]").hoverEvent(HoverEvent.showText(Component.join(Component.newline(), sign.get()))));
+            builder.append(Component.space()).append(Component.text("[I]").hoverEvent(HoverEvent.showText(Component.join(separator(newline()), sign.get()))));
         }
 
         return builder.build();

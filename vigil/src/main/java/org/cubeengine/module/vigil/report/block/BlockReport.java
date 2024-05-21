@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bson.Document;
@@ -42,6 +42,8 @@ import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.world.server.ServerLocation;
 
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static org.cubeengine.module.vigil.report.ReportUtil.name;
 import static org.spongepowered.api.block.BlockTypes.AIR;
 
@@ -122,11 +124,12 @@ public class BlockReport extends BaseBlockReport<ChangeBlockEvent.Post>
                 replacements.add(name(repl1, receiver));
             }
             Collections.reverse(replacements);
-            final TextComponent separator = Component.text("↴", NamedTextColor.GRAY).append(Component.newline());
+            final JoinConfiguration separator = separator(text("↴", NamedTextColor.GRAY).append(newline()));
 
             if (repl.isPresent() && !repl.get().state().type().isAnyOf(AIR))
             {
-                Component replacementText = name(repl.get(), receiver).append(Component.text("...").hoverEvent(HoverEvent.showText(Component.join(separator, replacements))));
+                Component replacementText = name(repl.get(), receiver).append(
+                    text("...").hoverEvent(HoverEvent.showText(join(separator, replacements))));
                 if (orig.isPresent() && !orig.get().state().type().equals(AIR.get()))
                 {
                     if (repl.get().equals(orig.get()))
@@ -146,12 +149,14 @@ public class BlockReport extends BaseBlockReport<ChangeBlockEvent.Post>
             }
             if (repl.get().equals(orig.get()))
             {
-                final Component origText = name(orig.get(), receiver).append(Component.text("...").hoverEvent(HoverEvent.showText(Component.join(separator, replacements))));
+                final Component origText = name(orig.get(), receiver).append(text("...").hoverEvent(HoverEvent.showText(
+                    join(separator, replacements))));
                     receiver.sendReport(this, actions, "{txt} ended up leaving {txt}", cause, origText);
             }
             else
             {
-                final Component origText = name(orig.get(), receiver).append(Component.text("...").hoverEvent(HoverEvent.showText(Component.join(separator, replacements))));
+                final Component origText = name(orig.get(), receiver).append(text("...").hoverEvent(HoverEvent.showText(
+                    join(separator, replacements))));
                     receiver.sendReport(this, actions, "{txt} ended up breaking {txt}", cause, origText);
             }
 

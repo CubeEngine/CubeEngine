@@ -43,6 +43,8 @@ import org.spongepowered.api.service.pagination.PaginationList.Builder;
 import org.spongepowered.api.util.locale.LocaleSource;
 import org.spongepowered.api.world.server.ServerLocation;
 
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.*;
 
 public class Receiver
@@ -63,10 +65,10 @@ public class Receiver
     // TODO translate msgs on this method
     public void sendReport(Report report, List<Action> actions, String msg, Object... args)
     {
-        Component reports = Component.text(report.getClass().getSimpleName());
+        Component reports = text(report.getClass().getSimpleName());
         if (report instanceof Report.ReportGrouping)
         {
-            reports = Component.text(((Report.ReportGrouping) report).getReportsList().stream().map(Class::getSimpleName).collect(Collectors.joining("/")));
+            reports = text(((Report.ReportGrouping) report).getReportsList().stream().map(Class::getSimpleName).collect(Collectors.joining("/")));
         }
         Component trans = i18n.translate(cmdSource, NEUTRAL, msg, args).hoverEvent(HoverEvent.showText(reports));
         sendReport(actions, trans);
@@ -74,10 +76,10 @@ public class Receiver
 
     public void sendReport(Report report, List<Action> actions, int size, String msgSingular, String msgPlural, Object... args)
     {
-        Component reports = Component.text(report.getClass().getSimpleName());
+        Component reports = text(report.getClass().getSimpleName());
         if (report instanceof Report.ReportGrouping)
         {
-            reports = Component.text(((Report.ReportGrouping) report).getReportsList().stream().map(Class::getSimpleName).collect(Collectors.joining("/")));
+            reports = text(((Report.ReportGrouping) report).getReportsList().stream().map(Class::getSimpleName).collect(Collectors.joining("/")));
         }
         Component trans = i18n.translateN(cmdSource, NEUTRAL, size, msgSingular, msgPlural, args).hoverEvent(HoverEvent.showText(reports));
         sendReport(actions, trans);
@@ -88,7 +90,7 @@ public class Receiver
     private static final SimpleDateFormat timeLong = new SimpleDateFormat("HH:mm:ss");
     private static final SimpleDateFormat timeShort = new SimpleDateFormat("HH:mm");
 
-    private static final Component RED_SEPARATOR = Component.text(" - ", NamedTextColor.RED);
+    private static final Component RED_SEPARATOR = text(" - ", NamedTextColor.RED);
 
     private void sendReport(List<Action> actions, Component trans)
     {
@@ -101,7 +103,7 @@ public class Receiver
         {
             lines.add(
                 date.append(Component.space()).append(i18n.translate(cmdSource, "at"))
-                    .append(Component.space()).append(loc).append(Component.newline()).append(Component.text("  ")).append(trans));
+                    .append(Component.space()).append(loc).append(Component.newline()).append(text("  ")).append(trans));
         }
         else
         {
@@ -138,9 +140,10 @@ public class Receiver
         if (singleAction || singleLocation)
         {
             ServerLocation location = Recall.location(firstAction);
-            final Component worldName = location.world().properties().displayName().orElse(Component.text(location.worldKey().asString()));
-            final TextComponent text = Component.join(Component.text(":", NamedTextColor.WHITE),
-                                                      Component.text(location.blockX()), Component.text(location.blockY()), Component.text(location.blockZ()))
+            final Component worldName = location.world().properties().displayName().orElse(
+                text(location.worldKey().asString()));
+            final Component text = Component.join(separator(text(":", NamedTextColor.WHITE)),
+                                                  text(location.blockX()), text(location.blockY()), text(location.blockZ()))
                                                 .hoverEvent(HoverEvent.showText(i18n.translate(cmdSource, NEUTRAL, "Click to teleport to the location in {txt#world}", worldName)))
                                                 .clickEvent(SpongeComponents.executeCallback(c -> showTeleport(location)));
             if (lookup.getSettings().isFullLocation())
@@ -149,7 +152,7 @@ public class Receiver
             }
             return text;
         }
-        return Component.text("range"); // TODO
+        return text("range"); // TODO
     }
 
     private void showTeleport(ServerLocation loc)
@@ -172,7 +175,7 @@ public class Receiver
             String dLong = dateLong.format(date);
             boolean sameDay = dateLong.format(new Date()).equals(dLong);
             String tLong = timeLong.format(date);
-            Component full = Component.text(dLong, NamedTextColor.GRAY).append(Component.space()).append(Component.text(tLong));
+            Component full = text(dLong, NamedTextColor.GRAY).append(Component.space()).append(text(tLong));
             if (lookup.getSettings().isFullDate())
             {
                 return full;
@@ -180,11 +183,12 @@ public class Receiver
             String tShort = timeShort.format(date);
             if (sameDay) // Today?
             {
-                return Component.text(tShort, NamedTextColor.GRAY).hoverEvent(HoverEvent.showText(full));
+                return text(tShort, NamedTextColor.GRAY).hoverEvent(HoverEvent.showText(full));
             }
             else
             {
-                return Component.text(dateShort.format(date), NamedTextColor.GRAY).append(Component.space()).append(Component.text(tShort)).hoverEvent(HoverEvent.showText(full));
+                return text(dateShort.format(date), NamedTextColor.GRAY).append(Component.space()).append(
+                    text(tShort)).hoverEvent(HoverEvent.showText(full));
             }
         }
         else
@@ -196,18 +200,18 @@ public class Receiver
             String ldLong = dateLong.format(lastDate);
             boolean isSameDay = fdLong.equals(ldLong);
             boolean isToday = dateLong.format(new Date()).equals(fdLong);
-            final TextComponent ftLong = Component.text(timeLong.format(firstDate));
-            final TextComponent ltLong = Component.text(timeLong.format(lastDate));
-            final Component fFull = Component.text(fdLong, NamedTextColor.GRAY).append(Component.space()).append(ftLong);
-            final Component lFull = Component.text(ldLong, NamedTextColor.GRAY).append(Component.space()).append(ltLong);
-            final TextComponent dash = Component.text(" - ", NamedTextColor.WHITE);
+            final TextComponent ftLong = text(timeLong.format(firstDate));
+            final TextComponent ltLong = text(timeLong.format(lastDate));
+            final Component fFull = text(fdLong, NamedTextColor.GRAY).append(Component.space()).append(ftLong);
+            final Component lFull = text(ldLong, NamedTextColor.GRAY).append(Component.space()).append(ltLong);
+            final TextComponent dash = text(" - ", NamedTextColor.WHITE);
             if (lookup.getSettings().isFullDate())
             {
                 return fFull.append(dash).append(lFull);
             }
-            final Component fdShort = Component.text(dateShort.format(firstDate), NamedTextColor.GRAY);
-            final Component ftShort = Component.text(timeShort.format(firstDate), NamedTextColor.GRAY).hoverEvent(HoverEvent.showText(fFull));
-            final Component ltShort = Component.text(timeShort.format(lastDate), NamedTextColor.GRAY).hoverEvent(HoverEvent.showText(lFull));
+            final Component fdShort = text(dateShort.format(firstDate), NamedTextColor.GRAY);
+            final Component ftShort = text(timeShort.format(firstDate), NamedTextColor.GRAY).hoverEvent(HoverEvent.showText(fFull));
+            final Component ltShort = text(timeShort.format(lastDate), NamedTextColor.GRAY).hoverEvent(HoverEvent.showText(lFull));
             if (isSameDay)
             {
                 if (isToday)
@@ -218,7 +222,7 @@ public class Receiver
             }
             else
             {
-                final Component ldShort = Component.text(dateShort.format(lastDate), NamedTextColor.GRAY);
+                final Component ldShort = text(dateShort.format(lastDate), NamedTextColor.GRAY);
                 return fdShort.append(Component.space()).append(ftShort).append(dash).append(ldShort).append(Component.space()).append(ltShort);
             }
         }
@@ -237,7 +241,7 @@ public class Receiver
             return;
         }
 
-        cmdSource.sendMessage(Component.text(StringUtils.repeat("-", 53), NamedTextColor.GOLD));
+        cmdSource.sendMessage(text(StringUtils.repeat("-", 53), NamedTextColor.GOLD));
         for (ReportActions reportAction : reportActions)
         {
             reportAction.showReport(this);
@@ -248,8 +252,9 @@ public class Receiver
         Component titleTimings = i18n.translate(cmdSource, NEUTRAL, "Query: {input#time} Report: {input#time}",
                                                 TimeUtil.formatDuration(lookup.timing(Lookup.LookupTiming.LOOKUP)),
                                                 TimeUtil.formatDuration(lookup.timing(Lookup.LookupTiming.REPORT)));
-        final Component titleLine = titleLineAmount.append(Component.space()).append(Component.text(titleLineSort, NamedTextColor.YELLOW)).hoverEvent(HoverEvent.showText(titleTimings));
-        builder.title(titleLine).padding(Component.text("-"))
+        final Component titleLine = titleLineAmount.append(Component.space()).append(
+            text(titleLineSort, NamedTextColor.YELLOW)).hoverEvent(HoverEvent.showText(titleTimings));
+        builder.title(titleLine).padding(text("-"))
                // TODO reverse order setting
                .contents(lines).linesPerPage(6 + Math.min(lines.size() * 2, 14)).sendTo(cmdSource);
         // TODO remove linesPerPage when Sponge puts the lines to the bottom
