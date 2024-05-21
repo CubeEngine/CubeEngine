@@ -106,7 +106,7 @@ tasks.withType<JavaCompile>().configureEach {
     )
 }
 
-val projectJvmTarget = "17"
+val projectJvmTarget = "21"
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(projectJvmTarget))
