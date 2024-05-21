@@ -59,7 +59,7 @@ public class OnlinePlayersObserver {
     }
 
     @Listener
-    public void onDisconnect(ServerSideConnectionEvent.Disconnect e) {
+    public void onDisconnect(ServerSideConnectionEvent.Leave e) {
         updateWorldPlayerCount(e.player().world());
         updatePlayerCount();
     }

@@ -105,7 +105,7 @@ public class MultiverseListener
 
 
     @Listener
-    public void onQuit(ServerSideConnectionEvent.Disconnect event)
+    public void onQuit(ServerSideConnectionEvent.Leave event)
     {
         ServerPlayer player = event.player();
         final Map<String, DataView> data = player.get(MultiverseData.DATA).orElse(null);

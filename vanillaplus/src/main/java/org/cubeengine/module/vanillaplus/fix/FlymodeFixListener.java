@@ -34,7 +34,7 @@ public class FlymodeFixListener
     }
 
     @Listener
-    public void quit(final ServerSideConnectionEvent.Disconnect event)
+    public void quit(final ServerSideConnectionEvent.Leave event)
     {
         event.player().offer(SafeLoginData.FLYMODE, event.player().get(Keys.IS_FLYING).orElse(false));
     }

@@ -29,10 +29,10 @@ import org.spongepowered.api.event.EventContext;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.network.ServerSideConnectionEvent;
 
-public class QuitReport extends BaseReport<ServerSideConnectionEvent.Disconnect> implements Report.Readonly, Report.ReportGrouping
+public class QuitReport extends BaseReport<ServerSideConnectionEvent.Leave> implements Report.Readonly, Report.ReportGrouping
 {
     @Override
-    protected Action observe(ServerSideConnectionEvent.Disconnect event)
+    protected Action observe(ServerSideConnectionEvent.Leave event)
     {
         Action action = newReport();
         action.addData(CAUSE, Observe.causes(Cause.of(EventContext.empty(), event.player())));
@@ -47,7 +47,7 @@ public class QuitReport extends BaseReport<ServerSideConnectionEvent.Disconnect>
     }
 
     @Listener
-    public void onQuit(ServerSideConnectionEvent.Disconnect event)
+    public void onQuit(ServerSideConnectionEvent.Leave event)
     {
         report(observe(event));
     }
