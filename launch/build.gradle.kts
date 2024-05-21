@@ -1,34 +1,20 @@
 plugins {
-    java
+    id("org.cubeengine.parent.root")
     application
 }
 
-// repos for modules **using** this convention
-repositories {
-    mavenCentral()
-    maven(uri("https://repo.spongepowered.org/repository/maven-releases"))
-}
-
-// TODO why is this needed now?
-tasks.named("startScripts") {
-    dependsOn(project(":core").tasks.named("shadowJar"))
-    dependsOn(project(":discord").tasks.named("shadowJar"))
-}
-
+val spongeVersion: String by project.properties
 
 dependencies {
-    implementation("org.spongepowered:spongevanilla:1.20.6-11.0.0-RC1613:universal") {
-        exclude("org.spongepowered:spongeapi")
-    }
-    // TODO not entirely sure why this is needed
-    implementation("org.yaml:snakeyaml:1.33")
+    implementation("org.spongepowered:spongevanilla:1.20.6-11.0.0-RC1613:universal")
+    implementation("org.spongepowered:spongeapi:$spongeVersion")
     implementation(project(":core"))
     implementation(project(":vanillaplus"))
     implementation(project(":discord"))
 }
 
 tasks.withType<JavaExec>().configureEach {
-    mainClass.set("org.spongepowered.vanilla.installer.VersionCheckingMain")
+    mainClass.set("org.spongepowered.vanilla.installer.InstallerMain")
     workingDir = file(projectDir.resolve("server"))
     standardInput = System.`in`
 

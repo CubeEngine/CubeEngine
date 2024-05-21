@@ -1,5 +1,6 @@
 plugins {
     id("org.cubeengine.parent.module")
+    id("org.cubeengine.parent.shadowing")
 }
 
 val prometheusVersion: String by project.properties;
@@ -13,9 +14,4 @@ dependencies {
     implementation("io.prometheus:simpleclient:$prometheusVersion")
     implementation("io.prometheus:simpleclient_common:$prometheusVersion")
     implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
-}
-
-// TODO why is this needed now?
-tasks.named("test") {
-    dependsOn(project(":core").tasks.named("shadowJar"))
 }

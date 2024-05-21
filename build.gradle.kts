@@ -102,10 +102,20 @@ val updateGithubRelease by tasks.registering {
             .filterNot { it.findProperty("pluginPublished") == "false" }
             .flatMap { it.tasks.withType<Jar>() }
             .filter { it.didWork }
+            .filter {
+                // artifacts of interest are always those without a classifier
+                it.archiveClassifier.get().isEmpty()
+            }
             .mapNotNull { it.archiveFile.orNull }
             .map { it.asFile }
-            .distinct()
             .associate { it.name to it.toPath() }
+
+        if (project.findProperty("githubPublishDryRun") == "true") {
+            for ((name, file) in files) {
+                println("File for $name: $file")
+            }
+            return@doLast
+        }
 
         val basePath = "/repos/CubeEngine/CubeEngine/releases"
         val apiBaseUrl = "https://api.github.com$basePath"

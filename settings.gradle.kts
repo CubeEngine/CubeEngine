@@ -58,5 +58,5 @@ include(
         "traders",
         "vigil",
         "writer",
-        "launch"
+        "launch",
 )

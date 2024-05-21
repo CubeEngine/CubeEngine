@@ -2,13 +2,12 @@ import org.spongepowered.gradle.ore.task.PublishToOreTask
 import java.io.ByteArrayOutputStream
 
 plugins {
+    id("org.cubeengine.parent.root")
     `java-library`
-    `maven-publish`
+    publishing
     signing
     id("org.cadixdev.licenser")
-    id("com.github.johnrengelman.shadow")
     id("org.spongepowered.gradle.ore")
-    id("org.spongepowered.gradle.repository")
 }
 
 val pluginGroupId: String by project.properties
@@ -26,14 +25,6 @@ group = pluginGroupId
 version = "$spongeMajorVersion.$pluginVersion$snapshotVersion"
 description = pluginDescription
 
-// repos for modules **using** this convention
-repositories {
-    mavenCentral()
-    sponge.releases()
-    sponge.snapshots()
-    mavenLocal()
-}
-
 dependencies {
     // sponge
     compileOnly("org.spongepowered:spongeapi:$spongeVersion")
@@ -49,20 +40,6 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.slf4j:slf4j-simple:2.0.3")
     testImplementation("org.spongepowered:spongeapi:$spongeVersion")
-
-    shadow("org.cubeengine:reflect-yaml")
-    shadow("org.cubeengine:i18n")
-    shadow("org.cubeengine:dirigent")
-    shadow("org.ocpsoft.prettytime:prettytime")
-
-    constraints {
-        listOf(configurations.shadow, configurations.implementation).forEach { config ->
-            add(config.name, "org.cubeengine:reflect-yaml:3.0.1")
-            add(config.name, "org.cubeengine:i18n:1.0.4")
-            add(config.name, "org.cubeengine:dirigent:5.0.2")
-            add(config.name, "org.ocpsoft.prettytime:prettytime:5.0.4.Final")
-        }
-    }
 }
 
 tasks.test {
@@ -106,14 +83,6 @@ tasks.withType<JavaCompile>().configureEach {
     )
 }
 
-val projectJvmTarget = "21"
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(projectJvmTarget))
-        vendor.set(JvmVendorSpec.ADOPTIUM)
-    }
-}
-
 tasks.withType<Test> {
     useJUnitPlatform()
 }
@@ -138,7 +107,7 @@ project.gradle.projectsEvaluated {
             createForumPost.set(oreCreateForumPost)
             versionBody.set(project.description) // TODO actually provide a changelog
             channel.set(if (project.isSnapshot()) "Dev" else "Release")
-            publishArtifacts.from(tasks.shadowJar.map { it.outputs })
+            publishArtifacts.setFrom(tasks.jar.map { it.outputs })
         }
     }
 }
@@ -150,41 +119,8 @@ signing {
     }
 }
 
-tasks.shadowJar {
-    archiveClassifier.set("")
-}
-
-tasks.build {
-    dependsOn(tasks.shadowJar)
-}
-
-//tasks.publish {
-//    dependsOn(tasks.check)
-//
-//    val outputFile = project.layout.buildDirectory.file("jar-url.txt").get().asFile
-//
-//    outputs.file(outputFile)
-//
-//    doLast {
-//        val repoUrl = publishUrl
-//
-//        val versionUrl = "$repoUrl/${project.group.toString().replace('.', '/')}/${project.name}/${project.version}"
-//        val parsed = XmlParser().parse("$versionUrl/maven-metadata.xml")
-//
-//        fun Node.children(name: String): NodeList = get(name) as NodeList
-//        fun Node.children(name: String, n: Int): Node = (get(name) as NodeList)[n] as Node
-//        fun Node.child(name: String): Node = children(name).first() as Node
-//        fun Node.firstStringValue() = (value() as Iterable<*>).iterator().next() as String
-//
-//        val lastSnapshot = parsed.child("versioning").children("snapshotVersions", 0).child("snapshotVersion").child("value").firstStringValue()
-//        val jarUrl = "$versionUrl/${project.name}-${lastSnapshot}.jar"
-//        println("Project ${project.name}: ${project.version} \t$jarUrl")
-//        outputFile.writeText(jarUrl)
-//    }
-//}
-
 tasks.withType<PublishToOreTask>().configureEach {
-    dependsOn(tasks.build)
+    dependsOn(tasks.jar)
 }
 
 tasks.classes.configure {

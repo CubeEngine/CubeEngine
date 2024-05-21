@@ -1,17 +1,18 @@
 plugins {
     id("org.cubeengine.parent.core")
+    id("org.cubeengine.parent.shadowing")
 }
 
 dependencies {
     // Configurations
-    implementation("org.cubeengine:reflect-yaml") {
+    api("org.cubeengine:reflect-yaml:3.0.1") {
         // we use the version pulled by minecraft
         exclude("org.yaml", "snakeyaml")
     }
     // Translations
-    implementation("org.cubeengine:i18n")
+    api("org.cubeengine:i18n:1.0.4")
     // Message formatting
-    implementation("org.cubeengine:dirigent")
+    api("org.cubeengine:dirigent:5.0.2")
     // Other stuff
-    implementation("org.ocpsoft.prettytime:prettytime")
+    api("org.ocpsoft.prettytime:prettytime:5.0.4.Final")
 }
