@@ -14,3 +14,8 @@ dependencies {
     implementation("io.prometheus:simpleclient_common:$prometheusVersion")
     implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
 }
+
+// TODO why is this needed now?
+tasks.named("test") {
+    dependsOn(project(":core").tasks.named("shadowJar"))
+}

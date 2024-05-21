@@ -9,8 +9,15 @@ repositories {
     maven(uri("https://repo.spongepowered.org/repository/maven-releases"))
 }
 
+// TODO why is this needed now?
+tasks.named("startScripts") {
+    dependsOn(project(":core").tasks.named("shadowJar"))
+    dependsOn(project(":discord").tasks.named("shadowJar"))
+}
+
+
 dependencies {
-    implementation("org.spongepowered:spongevanilla:1.20.2-11.0.0-RC1384:universal") {
+    implementation("org.spongepowered:spongevanilla:1.20.6-11.0.0-RC1613:universal") {
         exclude("org.spongepowered:spongeapi")
     }
     // TODO not entirely sure why this is needed
