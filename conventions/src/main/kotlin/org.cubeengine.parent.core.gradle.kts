@@ -3,7 +3,6 @@ import java.io.ByteArrayOutputStream
 
 plugins {
     id("org.cubeengine.parent.root")
-    `java-library`
     publishing
     signing
     id("org.cadixdev.licenser")

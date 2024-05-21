@@ -2,7 +2,7 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
 
 plugins {
-    java
+    `java-library`
     id("org.spongepowered.gradle.repository")
 }
 
