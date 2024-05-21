@@ -23,7 +23,6 @@ import org.cubeengine.module.vigil.report.Action;
 import org.cubeengine.module.vigil.report.BaseReport;
 import org.cubeengine.module.vigil.report.Observe;
 import org.cubeengine.module.vigil.report.Recall;
-import org.cubeengine.module.vigil.report.Report;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.data.persistence.DataQuery;
 import org.spongepowered.api.event.Event;

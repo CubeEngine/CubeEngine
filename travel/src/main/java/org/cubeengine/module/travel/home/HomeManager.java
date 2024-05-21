@@ -158,6 +158,7 @@ public class HomeManager
     }
 
 
+    @SuppressWarnings("unchecked")
     @Listener(order = EARLY)
     public void rightClickBed(InteractBlockEvent.Secondary event, @First ServerPlayer player)
     {

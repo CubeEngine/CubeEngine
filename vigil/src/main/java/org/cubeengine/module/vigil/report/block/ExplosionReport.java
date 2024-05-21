@@ -20,18 +20,10 @@ package org.cubeengine.module.vigil.report.block;
 import java.util.List;
 import org.cubeengine.module.vigil.Receiver;
 import org.cubeengine.module.vigil.report.Action;
-import org.cubeengine.module.vigil.report.Observe;
 import org.cubeengine.module.vigil.report.Recall;
 import org.cubeengine.module.vigil.report.Report;
 import org.spongepowered.api.block.BlockSnapshot;
-import org.spongepowered.api.block.transaction.BlockTransactionReceipt;
-import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.Order;
-import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.world.ExplosionEvent;
-import org.spongepowered.api.registry.RegistryTypes;
-import org.spongepowered.api.world.server.ServerLocation;
 
 import static org.cubeengine.module.vigil.report.ReportUtil.name;
 

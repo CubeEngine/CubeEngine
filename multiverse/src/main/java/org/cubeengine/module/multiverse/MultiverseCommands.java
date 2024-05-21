@@ -18,7 +18,6 @@
 package org.cubeengine.module.multiverse;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +38,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import org.cubeengine.libcube.service.command.DispatcherCommand;
 import org.cubeengine.libcube.service.command.annotation.Command;
-import org.cubeengine.libcube.service.command.annotation.Flag;
 import org.cubeengine.libcube.service.command.annotation.Parser;
 import org.cubeengine.libcube.service.config.ConfigWorld;
 import org.cubeengine.libcube.service.i18n.I18n;
@@ -56,6 +54,7 @@ import org.spongepowered.api.effect.sound.SoundTypes;
 import org.spongepowered.api.util.Ticks;
 import org.spongepowered.api.world.server.ServerWorld;
 
+import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.*;
 
 @Singleton
@@ -131,7 +130,7 @@ public class MultiverseCommands extends DispatcherCommand
             }
 
             final TextComponent autoconfigComponent = Component.text("(autoconfig)", NamedTextColor.GRAY)
-                                                   .hoverEvent(HoverEvent.showText(Component.join(Component.newline(), autoconfig)));
+                                                   .hoverEvent(HoverEvent.showText(Component.join(separator(Component.newline()), autoconfig)));
             context.sendMessage(Identity.nil(), Component.text(entry.getKey(), NamedTextColor.GOLD)
                                                          .append(Component.text(": ", NamedTextColor.GRAY))
                                                          .append(autoconfigComponent));

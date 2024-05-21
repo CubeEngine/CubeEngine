@@ -119,19 +119,22 @@ public class HeadVillager
 
             int catCount = 0;
             int headCount = 0;
-            for (final Path file : Files.newDirectoryStream(cachePath, "*.json"))
+            try (var dirStream = Files.newDirectoryStream(cachePath, "*.json"))
             {
-                catCount++;
-                for (Head head : gson.fromJson(new FileReader(file.toFile()), Head[].class))
+                for (final Path file : dirStream)
                 {
-                    try
+                    catCount++;
+                    for (Head head : gson.fromJson(new FileReader(file.toFile()), Head[].class))
                     {
-                        headCount++;
-                        head.init(Category.valueOf(StringUtils.stripFileExtension(file.getFileName().toString())));
-                    }
-                    catch (Exception e)
-                    {
-                        logger.warn("Invalid Head: " + head, e);
+                        try
+                        {
+                            headCount++;
+                            head.init(Category.valueOf(StringUtils.stripFileExtension(file.getFileName().toString())));
+                        }
+                        catch (Exception e)
+                        {
+                            logger.warn("Invalid Head: " + head, e);
+                        }
                     }
                 }
             }
@@ -155,6 +158,7 @@ public class HeadVillager
         HeadVillagerItems.register(event);
     }
 
+    @SuppressWarnings("unchecked")
     @Listener
     public void onRightClickBlock(InteractEntityEvent.Secondary.On event, @First ServerPlayer player)
     {

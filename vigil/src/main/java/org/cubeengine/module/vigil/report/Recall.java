@@ -18,7 +18,6 @@
 package org.cubeengine.module.vigil.report;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -47,17 +46,6 @@ import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.world.server.ServerLocation;
 import org.spongepowered.api.world.server.ServerWorld;
 
-import static org.cubeengine.module.vigil.report.Report.*;
-import static org.cubeengine.module.vigil.report.block.BlockReport.CAUSE;
-import static org.cubeengine.module.vigil.report.block.BlockReport.CAUSE_NAME;
-import static org.cubeengine.module.vigil.report.block.BlockReport.CAUSE_PLAYER_UUID;
-import static org.cubeengine.module.vigil.report.block.BlockReport.CAUSE_TARGET;
-import static org.cubeengine.module.vigil.report.block.BlockReport.CAUSE_TYPE;
-import static org.cubeengine.module.vigil.report.Report.CauseType;
-import static org.cubeengine.module.vigil.report.block.BlockReport.WORLD;
-import static org.cubeengine.module.vigil.report.block.BlockReport.X;
-import static org.cubeengine.module.vigil.report.block.BlockReport.Y;
-import static org.cubeengine.module.vigil.report.block.BlockReport.Z;
 import static org.cubeengine.module.vigil.report.block.BlockReport.*;
 
 public class Recall

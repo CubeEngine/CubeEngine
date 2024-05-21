@@ -55,9 +55,7 @@ import org.spongepowered.api.world.LocatableBlock;
 import org.spongepowered.api.world.server.ServerLocation;
 
 import static java.util.stream.Collectors.toList;
-import static org.cubeengine.module.vigil.report.Report.*;
 import static org.cubeengine.module.vigil.report.Report.CauseType.*;
-import static org.cubeengine.module.vigil.report.block.BlockReport.CAUSE_TARGET;
 import static org.cubeengine.module.vigil.report.block.BlockReport.*;
 
 public class Observe

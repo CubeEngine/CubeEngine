@@ -23,13 +23,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.cubeengine.libcube.service.command.annotation.Command;
-import org.cubeengine.libcube.service.command.annotation.Default;
 import org.cubeengine.libcube.service.command.annotation.Flag;
 import org.cubeengine.libcube.service.command.annotation.Greedy;
 import org.cubeengine.libcube.service.command.annotation.Option;
@@ -42,7 +40,6 @@ import org.cubeengine.module.vanillaplus.VanillaPlus;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.data.type.HandTypes;
-import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.enchantment.Enchantment;
@@ -51,6 +48,8 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.Slot;
 import org.spongepowered.api.registry.RegistryTypes;
 
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.*;
 
 /**
@@ -199,13 +198,14 @@ public class ItemModifyCommands extends PermissionContainer
         final List<Component> possibleEnchantments = RegistryTypes.ENCHANTMENT_TYPE.get().streamEntries()
                                                            .filter(e -> e.value().canBeAppliedToStack(item))
                                                            .map(enchantmentType -> enchantmentType.value().asComponent().color(NamedTextColor.YELLOW)
-                                                                                      .hoverEvent(HoverEvent.showText(Component.text(enchantmentType.key().asString(), NamedTextColor.YELLOW))))
+                                                                                      .hoverEvent(HoverEvent.showText(
+                                                                                          text(enchantmentType.key().asString(), NamedTextColor.YELLOW))))
                                                            .collect(Collectors.toList());
         if (!possibleEnchantments.isEmpty())
         {
             i18n.send(context, NEGATIVE, "This enchantment is not allowed for this item!");
             i18n.send(context, NEUTRAL, "Try one of those instead:");
-            context.sendMessage(Identity.nil(), Component.join(Component.text(", ", NamedTextColor.WHITE), possibleEnchantments));
+            context.sendMessage(Component.join(separator(text(", ", NamedTextColor.WHITE)), possibleEnchantments));
             return;
         }
         i18n.send(context, NEGATIVE, "You can not enchant this item!");

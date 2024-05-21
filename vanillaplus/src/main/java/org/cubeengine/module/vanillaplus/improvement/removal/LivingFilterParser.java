@@ -29,7 +29,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.cubeengine.libcube.service.command.DefaultParameterProvider;
 import org.cubeengine.libcube.service.i18n.I18n;
@@ -39,7 +39,6 @@ import org.cubeengine.libcube.service.permission.PermissionContainer;
 import org.cubeengine.libcube.service.permission.PermissionManager;
 import org.cubeengine.libcube.util.StringUtils;
 import org.cubeengine.module.vanillaplus.VanillaPlus;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.command.CommandCompletion;
 import org.spongepowered.api.command.exception.ArgumentParseException;
@@ -62,8 +61,9 @@ import org.spongepowered.api.entity.living.trader.Villager;
 import org.spongepowered.api.registry.RegistryTypes;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.rotate;
 import static java.util.Collections.singletonList;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEGATIVE;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEUTRAL;
 
@@ -158,7 +158,7 @@ public class LivingFilterParser extends PermissionContainer implements ValuePars
         {
             if (!source.hasPermission(PERM_ALLTYPE.getId()))
             {
-                throw reader.createException(Component.text("Missing permission"));
+                throw reader.createException(text("Missing permission"));
             }
             return Optional.of(new LivingFilter(emptyList(), context.subject(), this));
         }
@@ -194,11 +194,11 @@ public class LivingFilterParser extends PermissionContainer implements ValuePars
                 {
                     i18n.send(source, NEGATIVE, "Could not find a living entity named {input}", part);
                     i18n.send(source, NEUTRAL, "The following are valid entity groups:");
-                    List<Component> groups = groupMap.keySet().stream().map(s -> Component.text(s, NamedTextColor.GRAY)).collect(Collectors.toList());
-                    final TextComponent delimiter = Component.text(", ", NamedTextColor.WHITE);
+                    List<Component> groups = groupMap.keySet().stream().map(s -> text(s, NamedTextColor.GRAY)).collect(Collectors.toList());
+                    final JoinConfiguration delimiter = separator(text(", ", NamedTextColor.WHITE));
                     source.sendMessage(Identity.nil(), Component.join(delimiter, groups));
                     i18n.send(source, NEUTRAL, "The following are valid entity types:");
-                    List<Component> types = map.keySet().stream().map(s -> Component.text(s, NamedTextColor.GRAY)).collect(Collectors.toList());
+                    List<Component> types = map.keySet().stream().map(s -> text(s, NamedTextColor.GRAY)).collect(Collectors.toList());
                     source.sendMessage(Identity.nil(), Component.join(delimiter, types));
                     return Optional.empty();
                 }
@@ -212,7 +212,7 @@ public class LivingFilterParser extends PermissionContainer implements ValuePars
                 Permission perm = predicatePerms.get(predicate);
                 if (!source.hasPermission(perm.getId()))
                 {
-                    throw reader.createException(Component.text("Missing permission"));
+                    throw reader.createException(text("Missing permission"));
                 }
                 list.add(predicate);
             }

@@ -49,6 +49,8 @@ import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.*;
 import static org.cubeengine.libcube.util.ComponentUtil.fromLegacy;
 
@@ -222,7 +224,7 @@ public class ChatCommands
     public void chatcolors(CommandCause context)
     {
         i18n.send(context.audience(), POSITIVE, "The following chat codes are available:");
-        Builder builder = Component.text();
+        Builder builder = text();
 
         List<Triplet<NamedTextColor, Component, String>> namedColors = Arrays.asList(
                 new Triplet<>(NamedTextColor.BLACK, i18n.translate(context, "Black"), "0"),
@@ -268,27 +270,27 @@ public class ChatCommands
             components.add(render.apply(entry));
             if (components.size() >= entriesPerLine)
             {
-                builder.append(Component.join(Component.text("   "), components));
+                builder.append(Component.join(separator(text("   ")), components));
                 builder.append(Component.newline());
                 components.clear();
             }
         }
         if (!components.isEmpty())
         {
-            builder.append(Component.join(Component.text("   "), components));
+            builder.append(Component.join(separator(text("   ")), components));
             builder.append(Component.newline());
         }
     }
 
     private static Component presentFormat(Component label, Function<Component, Component> present, String legacySymbol) {
-        Component example = present.apply(Component.text("■"));
+        Component example = present.apply(text("■"));
         return Component.empty()
                 .append(example)
                 .append(Component.space())
                 .append(label)
-                .append(Component.text(" ("))
-                .append(Component.text("&" + legacySymbol, NamedTextColor.GRAY))
-                .append(Component.text(") "))
+                .append(text(" ("))
+                .append(text("&" + legacySymbol, NamedTextColor.GRAY))
+                .append(text(") "))
                 .append(example);
 
     }

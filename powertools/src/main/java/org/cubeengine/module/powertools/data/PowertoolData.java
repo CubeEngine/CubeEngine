@@ -36,6 +36,7 @@ public interface PowertoolData
     static void register(RegisterDataEvent event)
     {
         final ResourceKey rkey = ResourceKey.of(PluginPowertools.POWERTOOLS_ID, "powers");
+        @SuppressWarnings("unchecked")
         final DataStore dataStore = DataStore.builder().pluginData(rkey)
                                              .holder(ItemStack.class)
                                              .key(POWERS, "powers")

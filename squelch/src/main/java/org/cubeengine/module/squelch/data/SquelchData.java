@@ -40,6 +40,7 @@ public interface SquelchData
     static void register(RegisterDataEvent event)
     {
         final ResourceKey key = ResourceKey.of(PluginSquelch.SQUELCH_ID, "squelch");
+        @SuppressWarnings("unchecked")
         final DataStore dataStore = DataStore.builder().pluginData(key)
                                              .holder(ServerPlayer.class, User.class)
                                              .key(IGNORED, "ignored")

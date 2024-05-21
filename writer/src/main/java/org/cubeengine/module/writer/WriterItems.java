@@ -37,8 +37,9 @@ public class WriterItems
 {
     public static void registerRecipes(RegisterDataPackValueEvent<RecipeRegistration>event)
     {
-        final RecipeRegistration revertWrittenBook = CraftingRecipe
-            .shapelessBuilder().addIngredients(ItemTypes.LEATHER, WRITTEN_BOOK)
+        @SuppressWarnings("unchecked")
+        final RecipeRegistration revertWrittenBook = CraftingRecipe.shapelessBuilder()
+            .addIngredients(ItemTypes.LEATHER, WRITTEN_BOOK)
             .result(grid -> {
                 final ItemStack writtenBook = grid.query(QueryTypes.ITEM_TYPE, WRITTEN_BOOK).peek();
                 final List<String> lines = writtenBook.get(Keys.PAGES).orElse(

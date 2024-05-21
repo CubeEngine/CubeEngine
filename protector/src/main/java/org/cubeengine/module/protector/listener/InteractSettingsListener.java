@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.i18n.I18nTranslate.ChatType;
 import org.cubeengine.libcube.service.permission.Permission;
@@ -53,6 +51,7 @@ import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.world.server.ServerLocation;
 
+import static net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.CRITICAL;
 import static org.cubeengine.module.protector.listener.SettingsListener.checkSetting;
 import static org.spongepowered.api.util.Tristate.FALSE;
@@ -113,7 +112,7 @@ public class InteractSettingsListener extends PermissionContainer
         ItemType item = event.itemStack().type();
         List<Region> regionsAt = manager.getRegionsAt(player.serverLocation());
         final ResourceKey itemKey = item.key(RegistryTypes.ITEM_TYPE);
-        Permission usePerm = pm.register(SettingsListener.class, itemKey.value(), "Allows interacting with a " + PlainTextComponentSerializer.plainText().serialize(item.asComponent()) + " Item in hand", useItemPerm);
+        Permission usePerm = pm.register(SettingsListener.class, itemKey.value(), "Allows interacting with a " + plainText().serialize(item.asComponent()) + " Item in hand", useItemPerm);
         Tristate set = checkSetting(event, player, regionsAt, () -> usePermission.get(UseType.ITEM), s -> s.use.all.item, UNDEFINED);
         if (checkSetting(event, player, regionsAt, () -> usePerm, (s) -> s.use.item.getOrDefault(item, UNDEFINED), set) == FALSE)
         {
@@ -132,7 +131,7 @@ public class InteractSettingsListener extends PermissionContainer
         ItemStack item = player.itemInHand(HandTypes.MAIN_HAND);
 
         final ResourceKey typeKey = type.key(RegistryTypes.BLOCK_TYPE);
-        Permission blockPerm = pm.register(SettingsListener.class, typeKey.value(), "Allows interacting with a " + PlainTextComponentSerializer.plainText().serialize(type.asComponent()) + " Block", useBlockPerm);
+        Permission blockPerm = pm.register(SettingsListener.class, typeKey.value(), "Allows interacting with a " + plainText().serialize(type.asComponent()) + " Block", useBlockPerm);
 
         Tristate set = UNDEFINED;
         if (type != BlockTypes.AIR.get())
@@ -170,7 +169,7 @@ public class InteractSettingsListener extends PermissionContainer
             // Check all items
             set = checkSetting(event, player, regionsAt, () -> usePermission.get(UseType.ITEM), s -> s.use.all.item, UNDEFINED);
             final ResourceKey itemKey = item.type().key(RegistryTypes.ITEM_TYPE);
-            Permission usePerm = pm.register(SettingsListener.class, itemKey.value(), "Allows interacting with a " + PlainComponentSerializer.plain().serialize(item.type().asComponent()) + " Item in hand", useItemPerm);
+            Permission usePerm = pm.register(SettingsListener.class, itemKey.value(), "Allows interacting with a " + plainText().serialize(item.type().asComponent()) + " Item in hand", useItemPerm);
             // Then check individual item
             if (checkSetting(event, player, regionsAt, () -> usePerm, (s) -> s.use.item.getOrDefault(item.type(), UNDEFINED), set) == FALSE)
             {
@@ -213,6 +212,7 @@ public class InteractSettingsListener extends PermissionContainer
 //    }
 
 
+    @SuppressWarnings("unchecked")
     private boolean isRedstoneChange(BlockState block)
     {
         // TODO check if this can be simplified after the great flattening

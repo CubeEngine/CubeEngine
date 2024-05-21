@@ -18,6 +18,7 @@
 package org.cubeengine.module.vigil.commands;
 
 import java.util.Collections;
+import java.util.List;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.text.Component;
@@ -42,7 +43,6 @@ import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResult;
 
-import static java.util.Arrays.asList;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.POSITIVE;
 
 @Singleton
@@ -118,13 +118,12 @@ public class VigilCommands extends DispatcherCommand
         return null;
     }
 
-    @SuppressWarnings("deprecation")
     private void findLogTool(ServerPlayer player, LookupData data)
     {
 
         ItemStack itemStack = ItemStack.of(ItemTypes.BOOK);
         itemStack.offer(Keys.CUSTOM_NAME, toolName);
-        itemStack.offer(Keys.LORE, asList(i18n.translate(player, "created by {name}", player.name())));
+        itemStack.offer(Keys.LORE, List.of(i18n.translate(player, "created by {name}", player.name())));
         itemStack.offer(Keys.APPLIED_ENCHANTMENTS, Collections.emptyList());
         VigilData.syncToStack(itemStack, data);
         ItemStack inHand = player.itemInHand(HandTypes.MAIN_HAND);

@@ -115,7 +115,7 @@ public class HomeCommand extends DispatcherCommand
         sender.setLocationAndRotation(h.world.getWorld().location(transform.position()), transform.rotation());
         if (h.welcomeMsg != null)
         {
-            sender.sendMessage(Identity.nil(), Component.text(h.welcomeMsg));
+            sender.sendMessage(Component.text(h.welcomeMsg));
             return;
         }
         if (h.owner.equals(sender.uniqueId()))

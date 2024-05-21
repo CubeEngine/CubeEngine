@@ -130,7 +130,7 @@ public class RoleInformationCommands extends DispatcherCommand
             final Component def = i18n.composeMessage(cause, Style.style(NamedTextColor.GRAY), "[{name:color=yellow}]", defaults.contains(r.asSubjectReference()) ? defaultRole : noDefaultRole)
                 .hoverEvent(HoverEvent.showText(defaultClick)).clickEvent(ClickEvent.runCommand("/roles role toggledefault " + r.identifier()));
 
-            cContext.sendMessage(Identity.nil(), i18n.composeMessage(cause, Style.empty(),
+            cContext.sendMessage(i18n.composeMessage(cause, Style.empty(),
                  "- {name} {txt#perm} {txt#opts} {txt#parents} {txt#def}", r.identifier(), perms, opts, parents, def));
         }
     }

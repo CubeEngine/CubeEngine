@@ -42,7 +42,7 @@ import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEUTRAL;
 
 public class SpawnMob
 {
-    static Entity createMob(Audience context, EntityType type, List<String> data, ServerLocation loc, I18n i18n)
+    static Entity createMob(Audience context, EntityType<?> type, List<String> data, ServerLocation loc, I18n i18n)
     {
         Entity entity = loc.world().createEntity(type, loc.position());
         if (!(entity instanceof Living))
@@ -61,7 +61,7 @@ public class SpawnMob
      * @param datas the data to apply
      * @param entity one or multiple entities of the same type
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     static void applyDataToMob(List<String> datas, Entity entity)
     {
         Map<EntityDataChanger, Object> changers = new HashMap<>();

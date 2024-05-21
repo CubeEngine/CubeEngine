@@ -81,6 +81,7 @@ public class ChopListener
         return module.getConfig().soilTypes.contains(belowType);
     }
 
+    @SuppressWarnings("unchecked")
     @Listener
     public void onChop(final ChangeBlockEvent.All event, @First ServerPlayer player)
     {

@@ -380,7 +380,7 @@ public class LockerManager
                 if (flag.isSet(flags))
                 {
                     // TODO description on hover?
-                    player.sendMessage(Identity.nil(), Component.text(" - ", NamedTextColor.GRAY)
+                    player.sendMessage(Component.text(" - ", NamedTextColor.GRAY)
                                                                 .append(Component.text(flag.flagname, NamedTextColor.YELLOW)));
                 }
             }
@@ -415,7 +415,7 @@ public class LockerManager
                 {
                     text = text.append(Component.text(" [Unlocked]", NamedTextColor.GOLD));
                 }
-                player.sendMessage(Identity.nil(), text);
+                player.sendMessage(text);
             }
         }
 

@@ -227,7 +227,7 @@ public class KitCommand extends DispatcherCommand
                     return;
                 }
 
-                player.sendMessage(Identity.nil(), fromLegacy(kit.getCustomMessage()));
+                player.sendMessage(fromLegacy(kit.getCustomMessage()));
                 return;
             }
             if (kit.getCustomMessage() == null || kit.getCustomMessage().isEmpty())
@@ -235,7 +235,7 @@ public class KitCommand extends DispatcherCommand
                 i18n.send(context, POSITIVE, "Received the {name#kit} kit. Enjoy.", kit.getKitName());
                 return;
             }
-            player.sendMessage(Identity.nil(), fromLegacy(kit.getCustomMessage()));
+            player.sendMessage(fromLegacy(kit.getCustomMessage()));
             return;
         }
         if (other)

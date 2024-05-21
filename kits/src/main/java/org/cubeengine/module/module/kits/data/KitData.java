@@ -39,6 +39,7 @@ public interface KitData
     static void register(RegisterDataEvent event)
     {
         final ResourceKey key = ResourceKey.of(PluginKits.KITS_ID, "kit-usage");
+        @SuppressWarnings("unchecked")
         final DataStore dataStore = DataStore.builder()
                                              .pluginData(key)
                                              .holder(ServerPlayer.class)

@@ -40,6 +40,8 @@ import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEGATIVE;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.POSITIVE;
 
@@ -95,9 +97,9 @@ public class PlayerListCommand
             {
                 continue;
             }
-            final TextComponent playerList = Component.join(Component.text(", ", NamedTextColor.WHITE), entry.getValue().stream().map(this::formatUser).collect(Collectors.toList()));
+            final Component playerList = Component.join(separator(text(", ", NamedTextColor.WHITE)), entry.getValue().stream().map(this::formatUser).collect(Collectors.toList()));
             final TextComponent msg = LegacyComponentSerializer.legacyAmpersand().deserialize(entry.getKey())
-                                                               .append(Component.text(": ", NamedTextColor.WHITE))
+                                                               .append(text(": ", NamedTextColor.WHITE))
                                                                .append(playerList);
             context.sendMessage(Identity.nil(), msg);
         }
@@ -105,7 +107,7 @@ public class PlayerListCommand
 
     private Component formatUser(ServerPlayer user)
     {
-        final TextComponent result = Component.text(user.name(), NamedTextColor.DARK_GREEN);
+        final TextComponent result = text(user.name(), NamedTextColor.DARK_GREEN);
 
         // TODO chat module pass info that player is afk
         /*

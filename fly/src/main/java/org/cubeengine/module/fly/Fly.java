@@ -48,6 +48,7 @@ public class Fly
 
     private final HashMap<Player, ScheduledTask> tasks = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
     @Listener
     public void playerInteract(final InteractBlockEvent.Secondary event, @First ServerPlayer player)
     {

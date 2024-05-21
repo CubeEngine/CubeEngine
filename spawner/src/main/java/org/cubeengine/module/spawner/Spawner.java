@@ -260,6 +260,7 @@ public class Spawner
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Listener(order = POST)
     public void onBlockPlace(ChangeBlockEvent.All event, @First Player player)
     {
@@ -287,6 +288,7 @@ public class Spawner
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Listener(order = POST)
     public void onInteract(InteractBlockEvent.Secondary event, @First ServerPlayer player)
     {

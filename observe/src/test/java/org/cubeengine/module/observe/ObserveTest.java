@@ -39,7 +39,8 @@ import java.io.InputStream;
 import java.lang.reflect.Proxy;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -94,40 +95,47 @@ public class ObserveTest {
         final String urlBase = "http://localhost:" + webServer.getBoundAddress().getPort();
 
         assertThrows(FileNotFoundException.class, () -> {
-            System.out.println(readUrlData(new URL(urlBase + "/other")));
+            System.out.println(readUrlData(urlBase + "/other"));
         });
 
-        final Pair<Integer, String> metricsResult = readUrlData(new URL(urlBase + "/metrics"));
+        final Pair<Integer, String> metricsResult = readUrlData(urlBase + "/metrics");
         assertEquals(200, metricsResult.getLeft().intValue());
         assertFalse(metricsResult.getRight().isEmpty());
         System.out.println(metricsResult.getRight());
 
 
-        assertEquals(new Pair<>(200, "{\"state\":\"HEALTHY\",\"details\":{\"test\":\"HEALTHY\"}}"), readUrlData(new URL(urlBase + "/healthy")));
+        assertEquals(new Pair<>(200, "{\"state\":\"HEALTHY\",\"details\":{\"test\":\"HEALTHY\"}}"), readUrlData(urlBase + "/healthy"));
 
         assertThrows(IOException.class, () -> {
-            readUrlData(new URL(urlBase + "/broken"));
+            readUrlData(urlBase + "/broken");
         });
 
         webServer.stop();
     }
 
-    private static Pair<Integer, String> readUrlData(URL url) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.connect();
-        final InputStream data = connection.getInputStream();
-        byte[] buf = new byte[1000];
-        ByteArrayOutputStream agg = new ByteArrayOutputStream();
+    private static Pair<Integer, String> readUrlData(String uri) throws IOException {
+        try
+        {
+            HttpURLConnection connection = (HttpURLConnection)new URI(uri).toURL().openConnection();
+            connection.connect();
+            final InputStream data = connection.getInputStream();
+            byte[] buf = new byte[1000];
+            ByteArrayOutputStream agg = new ByteArrayOutputStream();
 
-        while (true) {
-            int bytesRead = data.read(buf);
-            if (bytesRead == -1) {
-                break;
+            while (true)
+            {
+                int bytesRead = data.read(buf);
+                if (bytesRead == -1)
+                {
+                    break;
+                }
+                agg.write(buf, 0, bytesRead);
             }
-            agg.write(buf, 0, bytesRead);
-        }
 
-        return new Pair<>(connection.getResponseCode(), agg.toString(StandardCharsets.UTF_8.toString()));
+            return new Pair<>(connection.getResponseCode(), agg.toString(StandardCharsets.UTF_8));
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
     }
 
 }

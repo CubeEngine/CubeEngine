@@ -203,7 +203,7 @@ public class PowertoolCommand extends DispatcherCommand
                 {
                     ItemStack item = slot.peek();
                     item.get(PowertoolData.POWERS).ifPresent(list -> {
-                        context.sendMessage(Identity.nil(), item.get(Keys.CUSTOM_NAME).orElse(item.type().asComponent()).color(NamedTextColor.GOLD).append(Component.text(":")));
+                        context.sendMessage(item.get(Keys.CUSTOM_NAME).orElse(item.type().asComponent()).color(NamedTextColor.GOLD).append(Component.text(":")));
                         showPowerToolList(context, list, false, false);
                     });
                 }
@@ -240,12 +240,12 @@ public class PowertoolCommand extends DispatcherCommand
         {
             i18n.send(context, NEUTRAL, "{amount} command(s) bound to this item:{}", i + 1, sb.toString());
             final Component newText = i18n.translate(context, Style.style(NamedTextColor.GOLD), "NEW");
-            context.sendMessage(Identity.nil(), Component.text().append(Component.text(powertools.get(i), NamedTextColor.YELLOW)).append(newText).build());
+            context.sendMessage(Component.text().append(Component.text(powertools.get(i), NamedTextColor.YELLOW)).append(newText).build());
         }
         else
         {
             i18n.send(context, NEUTRAL, "{amount} command(s) bound to this item:{}", i + 1, sb.toString());
-            context.sendMessage(Identity.nil(), Component.text(powertools.get(i)));
+            context.sendMessage(Component.text(powertools.get(i)));
         }
     }
 
@@ -336,7 +336,7 @@ public class PowertoolCommand extends DispatcherCommand
                 }
                 else
                 {
-                    player.sendMessage(Identity.nil(), Component.text(power));
+                    player.sendMessage(Component.text(power));
                 }
             }
             if (!powers.isEmpty() && event instanceof Cancellable)

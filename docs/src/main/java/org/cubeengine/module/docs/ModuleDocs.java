@@ -117,6 +117,7 @@ public class ModuleDocs
         this.commands.putAll(mm.getBaseCommands(module));
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void generate(Path modulesPath, DocType docType, Logger log)
     {
         String generated = docType.getGenerator()

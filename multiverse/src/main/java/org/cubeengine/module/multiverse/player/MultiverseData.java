@@ -21,7 +21,6 @@ import org.cubeengine.module.multiverse.PluginMultiverse;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.data.DataRegistration;
 import org.spongepowered.api.data.Key;
-import org.spongepowered.api.data.persistence.DataContainer;
 import org.spongepowered.api.data.persistence.DataStore;
 import org.spongepowered.api.data.persistence.DataView;
 import org.spongepowered.api.data.value.MapValue;
@@ -49,6 +48,7 @@ public interface MultiverseData
     static void registerCurrentWorldData(RegisterDataEvent event)
     {
         final ResourceKey rkey = ResourceKey.of(PluginMultiverse.MULTIVERSE_ID, "current-universe");
+        @SuppressWarnings("unchecked")
         final DataStore dataStore = DataStore.builder().pluginData(rkey)
                                              .holder(ServerPlayer.class, User.class)
                                              .key(MultiverseData.UNIVERSE, "current-universe")
@@ -64,6 +64,7 @@ public interface MultiverseData
     static void registerPlayerData(RegisterDataEvent event)
     {
         final ResourceKey rkey = ResourceKey.of(PluginMultiverse.MULTIVERSE_ID, "player-data");
+        @SuppressWarnings("unchecked")
         final DataStore dataStore = DataStore.builder().pluginData(rkey)
                                              .holder(ServerPlayer.class, User.class)
                                              .key(MultiverseData.DATA, "player-data")

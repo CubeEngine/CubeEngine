@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import com.google.inject.Inject;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import org.cubeengine.libcube.service.Broadcaster;
@@ -52,6 +53,8 @@ import org.spongepowered.api.service.ban.Ban.IP;
 import org.spongepowered.api.service.ban.BanService;
 import org.spongepowered.api.service.ban.BanTypes;
 
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.*;
 import static org.cubeengine.libcube.util.ComponentUtil.fromLegacy;
 
@@ -124,7 +127,7 @@ public class KickBanCommands
             return;
         }
         Component formattedReason = parseReason(reason, perms.COMMAND_BAN_NOREASON, context);
-        Component banSource = Component.text(context.subject().friendlyIdentifier().orElse(context.subject().identifier()));
+        Component banSource = text(context.subject().friendlyIdentifier().orElse(context.subject().identifier()));
         if (ipban)
         {
             if (player == null)
@@ -141,7 +144,8 @@ public class KickBanCommands
                     return;
                 }
 
-                this.banService.add(Ban.builder().type(BanTypes.IP).address(ipAdress).reason(Component.text(reason)).source(banSource).build());
+                this.banService.add(Ban.builder().type(BanTypes.IP).address(ipAdress).reason(
+                    text(reason)).source(banSource).build());
                 Set<String> bannedUsers = new HashSet<>();
                 for (ServerPlayer ipPlayer : Sponge.server().onlinePlayers())
                 {
@@ -157,7 +161,7 @@ public class KickBanCommands
                 bc.broadcastMessageWithPerm(Style.empty(), reason, perms.BAN_RECEIVEMESSAGE.getId());
                 bc.broadcastTranslatedWithPerm(NEGATIVE, "And with it kicked: {txt}!",
                                                perms.BAN_RECEIVEMESSAGE.getId(),
-                                               Component.join(Component.text(",", NamedTextColor.RED), bannedUsers.stream().map(u -> Component.text(u, NamedTextColor.DARK_GREEN)).collect(Collectors.toList())));
+                                               Component.join(separator(text(",", NamedTextColor.RED)), bannedUsers.stream().map(u -> text(u, NamedTextColor.DARK_GREEN)).collect(Collectors.toList())));
             }
             else
             {
@@ -172,7 +176,8 @@ public class KickBanCommands
                 i18n.send(context, NEGATIVE, "{user} is already banned!", user);
                 return;
             }
-            this.banService.add(Ban.builder().type(BanTypes.PROFILE).profile(user.profile()).reason(Component.text(reason)).source(banSource).build());
+            this.banService.add(Ban.builder().type(BanTypes.PROFILE).profile(user.profile()).reason(
+                text(reason)).source(banSource).build());
             if (player != null && player.isOnline())
             {
                 player.kick(this.getBanMessage(formattedReason, player));
@@ -228,8 +233,9 @@ public class KickBanCommands
                 return;
             }
             Component formattedReasons = parseReason(reason, perms.COMMAND_IPBAN_NOREASON, context);
-            Component banSource = Component.text(context.subject().friendlyIdentifier().orElse(context.subject().identifier()));
-            this.banService.add(Ban.builder().type(BanTypes.IP).address(address).reason(Component.text(reason)).source(banSource).build());
+            Component banSource = text(context.subject().friendlyIdentifier().orElse(context.subject().identifier()));
+            this.banService.add(Ban.builder().type(BanTypes.IP).address(address).reason(
+                text(reason)).source(banSource).build());
             i18n.send(context, NEGATIVE, "You banned the IP {input#ip} from your server!", address.getHostAddress());
             Set<String> bannedUsers = new HashSet<>();
             for (ServerPlayer player : Sponge.server().onlinePlayers())
@@ -247,7 +253,7 @@ public class KickBanCommands
             {
                 bc.broadcastTranslatedWithPerm(NEGATIVE, "And with it kicked: {txt}!",
                                                perms.BAN_RECEIVEMESSAGE.getId(),
-                                               Component.join(Component.text(",", NamedTextColor.RED), bannedUsers.stream().map(u -> Component.text(u, NamedTextColor.DARK_GREEN)).collect(Collectors.toList())));
+                                               Component.join(separator(text(",", NamedTextColor.RED)), bannedUsers.stream().map(u -> text(u, NamedTextColor.DARK_GREEN)).collect(Collectors.toList())));
             }
         }
         catch (UnknownHostException | CommandPermissionException e)
@@ -301,8 +307,9 @@ public class KickBanCommands
         {
             long millis = StringUtils.convertTimeToMillis(time);
             Instant until = Instant.now().plusMillis(millis);
-            Component banSource = Component.text(context.subject().friendlyIdentifier().orElse(context.subject().identifier()));
-            this.banService.add(Ban.builder().type(BanTypes.PROFILE).profile(user.profile()).reason(Component.text(reason)).expirationDate(until).source(banSource).build());
+            Component banSource = text(context.subject().friendlyIdentifier().orElse(context.subject().identifier()));
+            this.banService.add(Ban.builder().type(BanTypes.PROFILE).profile(user.profile()).reason(
+                text(reason)).expirationDate(until).source(banSource).build());
             if (user.isOnline())
             {
                 if (player == null) throw new IllegalStateException();
@@ -386,7 +393,7 @@ public class KickBanCommands
         ipbans.forEach(ipban -> {
             i18n.send(context, NEUTRAL, " - {name} was banned by {txt}: {text#reason}",
                       ipban.address().toString(),
-                      ipban.banSource().orElse(Component.text("Server")),
+                      ipban.banSource().orElse(text("Server")),
                       ipban.reason().orElse(Component.empty()));
         });
     }
@@ -413,7 +420,7 @@ public class KickBanCommands
         userBans.forEach(userban -> {
             i18n.send(context, NEUTRAL, " - {name} was banned by {txt}: {text#reason}",
                       userban.profile().name(),
-                      userban.banSource().orElse(Component.text("Server")),
+                      userban.banSource().orElse(text("Server")),
                       userban.reason().orElse(Component.empty()));
         });
     }

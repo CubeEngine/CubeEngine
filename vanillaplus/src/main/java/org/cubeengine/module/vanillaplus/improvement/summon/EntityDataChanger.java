@@ -27,7 +27,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.apache.logging.log4j.LogManager;
 import org.cubeengine.libcube.service.matcher.StringMatcher;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
@@ -63,7 +62,7 @@ public class EntityDataChanger<EntityInterface>
 {
     private final Class<EntityInterface> clazz;
     protected final EntityChanger<EntityInterface, ?> changer;
-    public static final Set<EntityDataChanger> entityDataChangers = new HashSet<>();
+    public static final Set<EntityDataChanger<?>> entityDataChangers = new HashSet<>();
 
     public static final EntityDataChanger<Pig> PIG_SADDLE =
             new EntityDataChanger<>(Pig.class,
