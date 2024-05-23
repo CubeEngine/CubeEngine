@@ -45,7 +45,7 @@ public class DataContainerConverter implements ClassedConverter<DataContainer>
         DataContainer data = DataContainer.createNew();
         for (Entry<String, Node> entry : ((MapNode) node).getValue().entrySet())
         {
-            DataQuery key = DataQuery.of('_', ((MapNode) node).getOriginalKey(entry.getKey()));
+            DataQuery key = DataQuery.of('/', ((MapNode) node).getOriginalKey(entry.getKey()));
             data.set(key, toObject(entry.getValue(), manager));
         }
         return data;
@@ -80,7 +80,7 @@ public class DataContainerConverter implements ClassedConverter<DataContainer>
         DataContainer dc = DataContainer.createNew();
         for (Entry<String, Node> entry : node.getMappedNodes().entrySet())
         {
-            DataQuery key = DataQuery.of('_', node.getOriginalKey(entry.getKey()));
+            DataQuery key = DataQuery.of('/', node.getOriginalKey(entry.getKey()));
             dc.set(key, toObject(entry.getValue(), manager));
         }
         return dc;
