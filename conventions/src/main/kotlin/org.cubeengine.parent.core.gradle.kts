@@ -2,6 +2,7 @@ import org.spongepowered.gradle.ore.task.PublishToOreTask
 import java.io.ByteArrayOutputStream
 
 plugins {
+    `java-library`
     id("org.cubeengine.parent.root")
     publishing
     signing
