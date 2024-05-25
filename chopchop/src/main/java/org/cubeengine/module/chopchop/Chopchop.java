@@ -33,12 +33,16 @@ import org.cubeengine.processor.Module;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.data.Keys;
+import org.spongepowered.api.entity.attribute.AttributeModifier;
+import org.spongepowered.api.entity.attribute.AttributeOperations;
+import org.spongepowered.api.entity.attribute.type.AttributeTypes;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.item.enchantment.Enchantment;
 import org.spongepowered.api.item.enchantment.EnchantmentTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.equipment.EquipmentTypes;
 import org.spongepowered.api.item.recipe.RecipeRegistration;
 import org.spongepowered.api.item.recipe.crafting.CraftingRecipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
@@ -71,6 +75,10 @@ public class Chopchop
         axe.offer(Keys.CUSTOM_NAME, Component.text("Heavy Diamond Axe", NamedTextColor.GOLD));
         axe.offer(Keys.LORE, singletonList(Component.text("Chop Chop!", NamedTextColor.YELLOW)));
         axe.offer(Keys.HIDE_ENCHANTMENTS, true);
+        axe.offer(Keys.HIDE_ATTRIBUTES, true);
+
+        final AttributeModifier multiply0 = AttributeModifier.builder().name("[chopchop] No Attack").amount(-1).operation(AttributeOperations.MULTIPLY_BASE).build();
+        axe.addAttributeModifier(AttributeTypes.GENERIC_ATTACK_DAMAGE, multiply0, EquipmentTypes.MAIN_HAND);
 
         this.recipe = CraftingRecipe.shapedBuilder()
                 .aisle("aa", "as", " s")
