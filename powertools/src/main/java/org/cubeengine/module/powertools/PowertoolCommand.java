@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;

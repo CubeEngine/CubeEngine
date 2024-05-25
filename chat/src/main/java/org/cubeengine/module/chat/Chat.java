@@ -35,7 +35,6 @@ import org.spongepowered.api.service.permission.PermissionService;
  * /me 	Displays a message about yourself.
  * /tell (msg) Displays a private message to other players.
  */
-// TODO link item in hand
 @Singleton
 @Module
 public class Chat

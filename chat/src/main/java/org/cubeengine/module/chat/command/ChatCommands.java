@@ -39,6 +39,7 @@ import org.cubeengine.libcube.service.command.annotation.Command;
 import org.cubeengine.libcube.service.command.annotation.Greedy;
 import org.cubeengine.libcube.service.command.annotation.Label;
 import org.cubeengine.libcube.service.command.annotation.Option;
+import org.cubeengine.libcube.service.command.annotation.Restricted;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.util.Triplet;
 import org.cubeengine.module.chat.ChatPerm;
@@ -46,8 +47,10 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.SystemSubject;
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.data.Keys;
+import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
+import org.spongepowered.api.item.inventory.ItemStack;
 
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.separator;
@@ -83,7 +86,6 @@ public class ChatCommands
     @Command(desc = "Changes your display name")
     public void nick(CommandCause context, @Label("<name>|-reset") String name, @Option ServerPlayer player)
     {
-        // TODO this only works when ChatFormat uses {DISPLAYNAME}
         final Audience ctxAudience = context.audience();
         if (player == null)
         {
@@ -115,8 +117,13 @@ public class ChatCommands
             i18n.send(ctxAudience, NEGATIVE, "This name has been taken by another player!");
             return;
         }
-        i18n.send(ctxAudience, POSITIVE, "Display name changed from {user} to {user}", ctxAudience, name);
+
+        i18n.send(ctxAudience, POSITIVE, "Display name changed from {txt:color=dark_green} to {user}", player.displayName().get(), name);
         player.offer(Keys.CUSTOM_NAME, fromLegacy(name));
+        if (!player.option("chat-format").orElse("").contains("{DISPLAY_NAME}"))
+        {
+            i18n.send(context, NEUTRAL, "Current chat-format does not use {text:DISPLAY_NAME:color=gold}!");
+        }
     }
 
     @Command(desc = "Sends a private message to someone", alias = {"tell", "message", "pm", "m", "t", "whisper", "w"})
@@ -322,6 +329,20 @@ public class ChatCommands
         {
         }
         this.i18n.send(context.audience(), NEGATIVE, "Invalid dice. Try something like d20.");
+    }
+
+    @Command(desc = "Shows held item in chat")
+    @Restricted
+    public void showItem(ServerPlayer context)
+    {
+        final ItemStack stack = context.itemInHand(HandTypes.MAIN_HAND);
+        if (stack.isEmpty())
+        {
+            this.i18n.send(context, NEGATIVE, "You are not holding an item to show!");
+            return;
+        }
+
+        this.i18n.send(context, POSITIVE, "* {player} shows around {txt}", context, stack.require(Keys.DISPLAY_NAME));
     }
 
 }
