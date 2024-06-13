@@ -246,7 +246,7 @@ public class TerraListener
         {
             return;
         }
-        final ItemStackSnapshot result = event.cookedItems().get(0);
+        final ItemStackSnapshot result = event.transactions().getFirst().finalReplacement();
         if (TerraItems.isTerraEssence(result))
         {
             event.blockEntity().world().playSound(Sound.sound(SoundTypes.ENTITY_GENERIC_EXTINGUISH_FIRE, Source.PLAYER, 5, 2f), event.blockEntity().blockPosition().toDouble());

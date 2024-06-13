@@ -77,7 +77,7 @@ public class Chopchop
         axe.offer(Keys.HIDE_ENCHANTMENTS, true);
         axe.offer(Keys.HIDE_ATTRIBUTES, true);
 
-        final AttributeModifier multiply0 = AttributeModifier.builder().name("[chopchop] No Attack").amount(-1).operation(AttributeOperations.MULTIPLY_BASE).build();
+        final AttributeModifier multiply0 = AttributeModifier.builder().key(ResourceKey.of("chopchop", "no_attack")).amount(-1).operation(AttributeOperations.MULTIPLY_BASE).build();
         axe.addAttributeModifier(AttributeTypes.GENERIC_ATTACK_DAMAGE, multiply0, EquipmentTypes.MAIN_HAND);
 
         this.recipe = CraftingRecipe.shapedBuilder()
