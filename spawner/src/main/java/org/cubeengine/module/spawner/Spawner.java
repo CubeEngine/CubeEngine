@@ -213,7 +213,7 @@ public class Spawner
             Transaction<BlockSnapshot> trans = event.transactions().get(0);
             ServerLocation loc = trans.finalReplacement().location().get();
             trans.original().restore(true, BlockChangeFlags.NONE);
-            EntityType<?> type = loc.blockEntity().flatMap(spawner -> spawner.get(Keys.NEXT_ENTITY_TO_SPAWN)).map(a -> a.get().type()).orElse(null);
+            EntityType<?> type = loc.blockEntity().flatMap(spawner -> spawner.get(Keys.NEXT_ENTITY_TO_SPAWN)).map(EntityArchetype::type).orElse(null);
             trans.defaultReplacement().restore(true, BlockChangeFlags.NONE);
 
             if (type == null || event.isCancelled())
@@ -280,7 +280,7 @@ public class Spawner
                     ServerLocation loc = snap.location().get();
                     final BlockEntity spawner = loc.blockEntity().get();
                     spawner.offer(Keys.SPAWNABLE_ENTITIES, new WeightedTable<>());
-                    spawner.offer(Keys.NEXT_ENTITY_TO_SPAWN, new WeightedSerializableObject<>(hidden, 1));
+                    spawner.offer(Keys.NEXT_ENTITY_TO_SPAWN, hidden);
                     i18n.send(ACTION_BAR, player, POSITIVE, "Inactive monster spawner placed!");
                     return;
                 }
@@ -325,7 +325,7 @@ public class Spawner
                 EntityArchetype nextSpawn = EntityArchetype.builder().type(type).build();
                 spawns.add(nextSpawn, 1);
                 block.offer(Keys.SPAWNABLE_ENTITIES, spawns);
-                block.offer(Keys.NEXT_ENTITY_TO_SPAWN, new WeightedSerializableObject<>(nextSpawn, 1));
+                block.offer(Keys.NEXT_ENTITY_TO_SPAWN, nextSpawn);
 
                 if (!player.gameMode().get().equals(CREATIVE))
                 {
