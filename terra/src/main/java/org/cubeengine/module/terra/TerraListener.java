@@ -264,7 +264,7 @@ public class TerraListener
         {
             return;
         }
-        final ItemStackSnapshot result = event.transactions().getFirst().finalReplacement();
+        final ItemStackSnapshot result = event.transactions().getFirst().original();
         if (TerraItems.isTerraEssence(result))
         {
             var worldKey = result.get(TerraData.WORLD_KEY).map(ResourceKey::resolve);
