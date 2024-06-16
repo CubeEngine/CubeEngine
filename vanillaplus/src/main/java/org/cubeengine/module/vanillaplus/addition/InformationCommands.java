@@ -34,6 +34,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.TextComponent.Builder;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -248,7 +249,8 @@ public class InformationCommands extends PermissionContainer
             i18n.send(context, NEGATIVE, "Nothing detected nearby!");
             return;
         }
-        Component result = Component.join(Component.text(", ", NamedTextColor.WHITE), outputlist).append(builder.build());
+        final var separator = JoinConfiguration.separator(Component.text(", ", NamedTextColor.WHITE));
+        Component result = Component.join(separator, outputlist).append(builder.build());
         if (context.subject().equals(player))
         {
             i18n.send(context, NEUTRAL, "Found those nearby you:");

@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.matcher.EntityMatcher;
@@ -122,7 +123,7 @@ public class EntityFilterParser implements ValueParser<EntityFilter>, ValueCompl
                                                     .map(DefaultedRegistryReference::get)
                                                     .map(EntityType::asComponent)
                                                     .collect(Collectors.toList());
-                cmdSource.sendMessage(Identity.nil(), Component.join(Component.text(", ", NamedTextColor.YELLOW), types));
+                cmdSource.sendMessage(Identity.nil(), Component.join(JoinConfiguration.separator(Component.text(", ", NamedTextColor.YELLOW)), types));
                 return Optional.empty();
             }
 //            if (Living.class.isAssignableFrom(type.getEntityClass()))
