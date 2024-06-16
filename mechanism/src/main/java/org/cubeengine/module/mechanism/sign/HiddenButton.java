@@ -88,7 +88,9 @@ public class HiddenButton extends PermissionContainer implements SignMechanism
         for (Direction dir : BlockUtil.BLOCK_FACES)
         {
             final ServerLocation relative = loc.relativeTo(dir);
-            if (relative.blockType().isAnyOf(BlockTypes.STONE_BUTTON))
+            @SuppressWarnings("unchecked")
+            final var isButton = relative.blockType().isAnyOf(BlockTypes.STONE_BUTTON);
+            if (isButton)
             {
                 final BlockState state = relative.block();
                 if (!state.get(Keys.IS_POWERED).orElse(false))
@@ -96,7 +98,7 @@ public class HiddenButton extends PermissionContainer implements SignMechanism
                     relative.setBlock(state.with(Keys.IS_POWERED, true).get());
                     loc.world().playSound(Sound.sound(SoundTypes.BLOCK_STONE_BUTTON_CLICK_ON, Source.BLOCK, 0.1f, 0.8f), loc.position());
                     taskManager.runTaskDelayed(() -> {
-                        if (relative.blockType().isAnyOf(BlockTypes.STONE_BUTTON))
+                        if (isButton)
                         {
                             relative.setBlock(state.with(Keys.IS_POWERED, false).get());
                             loc.world().playSound(Sound.sound(SoundTypes.BLOCK_STONE_BUTTON_CLICK_ON, Source.BLOCK, 0.1f, 0.7f), loc.position());

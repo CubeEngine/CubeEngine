@@ -35,6 +35,7 @@ public interface ZonedData
     Key<Value<Vector3d>> ZONE_MAX = Key.builder().key(ResourceKey.of(PluginZoned.ZONED_ID, "zone-max")).elementType(Vector3d.class).build();
 
 
+    @SuppressWarnings("unchecked")
     static void register(RegisterDataEvent event)
     {
         {

@@ -134,6 +134,7 @@ public class ZonedListener
         this.moveShape(extend, player, config);
     }
 
+    @SuppressWarnings("unchecked")
     @Listener
     public void onInteract(InteractBlockEvent event, @First ServerPlayer player)
     {

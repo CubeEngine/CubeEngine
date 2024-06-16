@@ -307,6 +307,7 @@ public class ZonedCommands extends DispatcherCommand
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     private boolean isPowering(ServerWorld world, Vector3i pos)
     {
         final BlockState state = world.block(pos);

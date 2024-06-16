@@ -143,6 +143,7 @@ public class ModuleManager
                       .forEach(entry -> injectClassAnnotation(instance, module.getAnnotation(entry.getKey()), entry.getValue()));
     }
 
+    @SuppressWarnings("rawtypes")
     private void injectClassAnnotation(Object instance, Annotation annotation, ModuleInjector injector)
     {
         injector.inject(instance, annotation);

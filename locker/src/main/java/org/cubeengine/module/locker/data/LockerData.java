@@ -56,6 +56,7 @@ public interface LockerData
     Key<Value<Long>> LAST_ACCESS = Key.builder().key(ResourceKey.of(PluginLocker.LOCKER_ID, "last_access")).elementType(Long.class).build();
     Key<Value<Long>> CREATED = Key.builder().key(ResourceKey.of(PluginLocker.LOCKER_ID, "created")).elementType(Long.class).build();
 
+    @SuppressWarnings("unchecked")
     static void register(RegisterDataEvent event)
     {
         DataStore bookDataStore = DataStore.builder().pluginData(ResourceKey.of(PluginLocker.LOCKER_ID, "book"))

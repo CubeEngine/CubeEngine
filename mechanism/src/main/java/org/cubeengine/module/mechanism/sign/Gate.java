@@ -94,13 +94,7 @@ public class Gate extends PermissionContainer implements SignMechanism
         if (gateBlockType == null)
         {
             final Optional<BlockType> blockType = player.itemInHand(HandTypes.MAIN_HAND).type().block();
-            final Boolean isValidGateMaterial = blockType.map(bt ->
-                                                                  bt.isAnyOf(BlockTypes.IRON_BARS, BlockTypes.ACACIA_FENCE,
-                                                                             BlockTypes.BIRCH_FENCE, BlockTypes.CRIMSON_FENCE,
-                                                                             BlockTypes.DARK_OAK_FENCE, BlockTypes.JUNGLE_FENCE,
-                                                                             BlockTypes.NETHER_BRICK_FENCE, BlockTypes.OAK_FENCE,
-                                                                             BlockTypes.SPRUCE_FENCE, BlockTypes.WARPED_FENCE)
-                                                             ).orElse(false);
+            final Boolean isValidGateMaterial = blockType.map(Gate::isValidGateMaterial).orElse(false);
             if (isValidGateMaterial)
             {
                 loc.blockEntity().get().offer(MechanismData.GATE_BLOCK_TYPE, blockType.get().key(RegistryTypes.BLOCK_TYPE).asString());
@@ -120,6 +114,15 @@ public class Gate extends PermissionContainer implements SignMechanism
         }
         gateBlocks.toggle(player);
         return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean isValidGateMaterial(final BlockType bt)
+    {
+        return bt.isAnyOf(BlockTypes.IRON_BARS, BlockTypes.ACACIA_FENCE, BlockTypes.BIRCH_FENCE,
+                          BlockTypes.CRIMSON_FENCE, BlockTypes.DARK_OAK_FENCE, BlockTypes.JUNGLE_FENCE,
+                          BlockTypes.NETHER_BRICK_FENCE, BlockTypes.OAK_FENCE, BlockTypes.SPRUCE_FENCE,
+                          BlockTypes.WARPED_FENCE);
     }
 
     @Override
@@ -200,7 +203,9 @@ public class Gate extends PermissionContainer implements SignMechanism
                     {
                         i = 0; // Reset height when reaching the main frame-block
                     }
-                    if (downBlock.blockType().isAnyOf(BlockTypes.AIR, BlockTypes.WATER))
+                    @SuppressWarnings("unchecked")
+                    final var isWaterOrAir = downBlock.blockType().isAnyOf(BlockTypes.AIR, BlockTypes.WATER);
+                    if (isWaterOrAir)
                     {
                         this.gateBlocks.add(downBlock);
                         count++;
@@ -227,7 +232,9 @@ public class Gate extends PermissionContainer implements SignMechanism
             {
                 relativeBlock = relativeBlock.relativeTo(dir);
                 final BlockType blockType = relativeBlock.blockType();
-                if (blockType.isAnyOf(BlockTypes.AIR, BlockTypes.WATER) || blockType.isAnyOf(gateBlockType))
+                @SuppressWarnings("unchecked")
+                final var isWaterOrAir = blockType.isAnyOf(BlockTypes.AIR, BlockTypes.WATER);
+                if (isWaterOrAir || blockType.isAnyOf(gateBlockType))
                 {
                     final ServerLocation frameBlock = this.isValidColumn(relativeBlock);
                     if (frameBlock != null)
@@ -252,7 +259,10 @@ public class Gate extends PermissionContainer implements SignMechanism
             boolean lastUpGate = false;
             for (int i = 0; i < VERTICAL_LIMIT; i++) {
                 upBlock = upBlock.relativeTo(Direction.UP);
-                if (upBlock.blockType().isAnyOf(BlockTypes.AIR, BlockTypes.WATER))
+
+                @SuppressWarnings("unchecked")
+                final var isWaterOrAir = upBlock.blockType().isAnyOf(BlockTypes.AIR, BlockTypes.WATER);
+                if (isWaterOrAir)
                 {
                     lastUpGate = false;
                     continue;
@@ -282,6 +292,7 @@ public class Gate extends PermissionContainer implements SignMechanism
             {
                 for (ServerLocation block : this.gateBlocks)
                 {
+                    @SuppressWarnings("unchecked")
                     final Boolean isWater = block.get(Keys.IS_WATERLOGGED).orElse(block.blockType().isAnyOf(BlockTypes.WATER));
                     BlockState gateBlock = isWater ? BlockTypes.WATER.get().defaultState() : BlockTypes.AIR.get().defaultState();
                     block.setBlock(gateBlock);
@@ -315,7 +326,9 @@ public class Gate extends PermissionContainer implements SignMechanism
                     }
                     availableBlocks--;
                     BlockState gateBlock = this.gateBlockType.defaultState();
-                    gateBlock = gateBlock.with(Keys.IS_WATERLOGGED, block.get(Keys.IS_WATERLOGGED).orElse(block.blockType().isAnyOf(BlockTypes.WATER))).orElse(gateBlock);
+                    @SuppressWarnings("unchecked")
+                    final var isWater = block.blockType().isAnyOf(BlockTypes.WATER);
+                    gateBlock = gateBlock.with(Keys.IS_WATERLOGGED, block.get(Keys.IS_WATERLOGGED).orElse(isWater)).orElse(gateBlock);
                     gateBlock = gateBlock.with(Keys.CONNECTED_DIRECTIONS, new HashSet<>(Arrays.asList(this.leftDir, this.rightDir))).orElse(gateBlock);
                     block.setBlock(gateBlock, BlockChangeFlags.ALL);
 

@@ -522,6 +522,7 @@ public class AnnotationCommandBuilder
         return buildParameter(index, params, namedParameter, type, annotations, last, name, false, requirements, injector, permNodes);
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private <T> ContextExtractor<?> buildParameter(int index, List<org.spongepowered.api.util.Builder<? extends Parameter, ?>> params,
                                                    Map<Named, org.spongepowered.api.util.Builder<? extends Parameter, ?>> namedParameter, Type type, Annotation[] annotations, int last, String name,
                                                    boolean forceOptional, Requirements requirements, Injector injector, String[] permNodes)

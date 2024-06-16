@@ -85,7 +85,9 @@ public class HiddenLever extends PermissionContainer implements SignMechanism
         for (Direction dir : BlockUtil.BLOCK_FACES)
         {
             final ServerLocation relative = loc.relativeTo(dir);
-            if (relative.blockType().isAnyOf(BlockTypes.LEVER))
+            @SuppressWarnings("unchecked")
+            final var isLever = relative.blockType().isAnyOf(BlockTypes.LEVER);
+            if (isLever)
             {
                 final BlockState state = relative.block();
                 final boolean newPower = !state.get(Keys.IS_POWERED).orElse(false);

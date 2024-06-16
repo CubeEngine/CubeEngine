@@ -161,7 +161,9 @@ public class LockerLockedListener
     @Listener
     public void onBlockBreakByBlock(ChangeBlockEvent.All event, @First BlockSnapshot maybeFire)
     {
-        if (maybeFire.state().type().isAnyOf(BlockTypes.FIRE)) // other types? maybe water/lava
+        @SuppressWarnings("unchecked")
+        final var isFire = maybeFire.state().type().isAnyOf(BlockTypes.FIRE);
+        if (isFire) // other types? maybe water/lava
         {
             final Set<Vector3i> checkedPos = new HashSet<>();
             // TODO missing original data

@@ -40,6 +40,7 @@ public interface MechanismData
     {
         event.register(DataRegistration.of(MECHANISM, Sign.class, BlockSnapshot.class, ItemStack.class, ItemStackSnapshot.class));
 
+        @SuppressWarnings("unchecked")
         final DataStore gateDataStore = DataStore.builder().pluginData(ResourceKey.of(PluginMechanism.MECHANISM_ID, "gate"))
                                                  .holder(Sign.class, BlockSnapshot.class)
                                                  .keys(GATE_BLOCK_TYPE, GATE_BLOCKS).build();

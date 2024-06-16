@@ -35,12 +35,14 @@ public abstract class LockConfig<This extends LockConfig,T>
         this.protectedType = protectedType;
     }
 
+    @SuppressWarnings("unchecked")
     public This autoProtect()
     {
         this.autoProtect = true;
         return (This)this;
     }
 
+    @SuppressWarnings("unchecked")
     public This defaultFlags(ProtectionFlag... flags)
     {
         this.defaultFlags = Arrays.asList(flags);
