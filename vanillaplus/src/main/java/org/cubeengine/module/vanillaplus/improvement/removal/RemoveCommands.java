@@ -29,7 +29,6 @@ import org.cubeengine.libcube.service.command.annotation.Named;
 import org.cubeengine.libcube.service.command.annotation.Option;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.matcher.EntityMatcher;
-import org.cubeengine.libcube.service.matcher.MaterialMatcher;
 import org.cubeengine.module.vanillaplus.VanillaPlus;
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.entity.Entity;
@@ -51,11 +50,11 @@ public class RemoveCommands
     private I18n i18n;
 
     @Inject
-    public RemoveCommands(VanillaPlus module, EntityMatcher em, MaterialMatcher mm, I18n i18n)
+    public RemoveCommands(VanillaPlus module, EntityMatcher em, I18n i18n)
     {
         this.i18n = i18n;
         this.module = module;
-        ParameterRegistry.register(EntityFilter.class, new EntityFilterParser(i18n, em, mm));
+        ParameterRegistry.register(EntityFilter.class, new EntityFilterParser(i18n, em));
     }
 
     @Command(desc = "Removes entities in a world")

@@ -30,7 +30,6 @@ import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.matcher.EntityMatcher;
-import org.cubeengine.libcube.service.matcher.MaterialMatcher;
 import org.cubeengine.libcube.util.StringUtils;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.command.CommandCause;
@@ -49,6 +48,7 @@ import org.spongepowered.api.entity.living.Living;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.registry.DefaultedRegistryReference;
+import org.spongepowered.api.registry.RegistryTypes;
 
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEGATIVE;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEUTRAL;
@@ -58,13 +58,11 @@ public class EntityFilterParser implements ValueParser<EntityFilter>, ValueCompl
 {
     private I18n i18n;
     private EntityMatcher em;
-    private MaterialMatcher mm;
 
-    public EntityFilterParser(I18n i18n, EntityMatcher em, MaterialMatcher mm)
+    public EntityFilterParser(I18n i18n, EntityMatcher em)
     {
         this.i18n = i18n;
         this.em = em;
-        this.mm = mm;
     }
 
     @Override
@@ -93,7 +91,7 @@ public class EntityFilterParser implements ValueParser<EntityFilter>, ValueCompl
         for (String entityString : StringUtils.explode(",", token))
         {
             EntityType<?> type;
-            ItemType itemType = null;
+            Optional<ItemType> itemType = Optional.empty();
             if (entityString.contains(":"))
             {
                 type = em.any(entityString.substring(0, entityString.indexOf(":")), locale);
@@ -103,8 +101,8 @@ public class EntityFilterParser implements ValueParser<EntityFilter>, ValueCompl
                     return Optional.empty();
                 }
                 String itemString = entityString.substring(entityString.indexOf(":") + 1);
-                itemType = mm.material(itemString, locale);
-                if (itemType == null)
+                itemType = RegistryTypes.ITEM_TYPE.get().findValue(ResourceKey.resolve(itemString));
+                if (itemType.isEmpty())
                 {
                     i18n.send(cmdSource, NEGATIVE, "Cannot find itemtype {input}", itemString);
                     return Optional.empty();
@@ -131,7 +129,7 @@ public class EntityFilterParser implements ValueParser<EntityFilter>, ValueCompl
 //                i18n.send(cmdSource, NEGATIVE, "To kill living entities use the {text:/butcher} command!");
 //                return Optional.empty();
 //            }
-            final ItemType item = itemType;
+            final ItemType item = itemType.orElse(null);
             filters.add(entity -> entity.type().equals(type) && (item == null || entity.get(Keys.ITEM_STACK_SNAPSHOT).get().type().equals(item)));
         }
         return Optional.of(new EntityFilter(filters));

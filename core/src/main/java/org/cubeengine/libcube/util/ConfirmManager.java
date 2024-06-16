@@ -47,7 +47,7 @@ public class ConfirmManager
         final Component cancel = i18n.translate(source,  Style.style(NamedTextColor.GOLD), "Cancel")
             .clickEvent(SpongeComponents.executeCallback(s -> cancel(i18n, source, uuid)));
         ConfirmManager.times.put(uuid, System.currentTimeMillis());
-        source.sendMessage(Identity.nil(), Component.text().append(msg).append(Component.space()).append(confirm).append(Component.space()).append(cancel).build());
+        source.sendMessage(Component.text().append(msg).append(Component.space()).append(confirm).append(Component.space()).append(cancel).build());
     }
 
     private static void confirm(I18n i18n, Audience source, UUID uuid, Runnable run)
