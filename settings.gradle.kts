@@ -51,7 +51,7 @@ include(
         "observe",
         "powertools",
         "spawn",
-        "spawner",
+//        "spawner",
         "squelch",
         "tablist",
         "terra",
