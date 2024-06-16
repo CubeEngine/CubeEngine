@@ -29,8 +29,7 @@ import org.spongepowered.api.event.cause.entity.MovementType;
 import org.spongepowered.api.event.cause.entity.MovementTypes;
 import org.spongepowered.api.event.entity.ChangeEntityWorldEvent;
 import org.spongepowered.api.event.filter.cause.First;
-import org.spongepowered.api.world.portal.PortalType;
-import org.spongepowered.api.world.portal.PortalTypes;
+import org.spongepowered.api.world.portal.PortalLogic;
 
 @Singleton
 @Module
@@ -40,7 +39,7 @@ public class Netherportals
     @ModuleCommand private NetherportalsCommand netherportalsCommand;
 
     @Listener
-    public void onPortal(ChangeEntityWorldEvent.Pre event, @First PortalType portalType)
+    public void onPortal(ChangeEntityWorldEvent.Pre event, @First PortalLogic portalLogic)
     {
         final MovementType type = event.context().get(EventContextKeys.MOVEMENT_TYPE).orElse(null);
         if (type != MovementTypes.PORTAL.get())
@@ -52,7 +51,8 @@ public class Netherportals
         {
             return;
         }
-        if (portalType == PortalTypes.END.get())
+
+        if (portalLogic == PortalLogic.factory().endPortal())
         {
             if (section.endTarget != null)
             {
@@ -61,7 +61,7 @@ public class Netherportals
                 // TODO cancel PortalCreation if not in end?
             }
         }
-        else if (portalType == PortalTypes.NETHER.get())
+        else if (portalLogic == PortalLogic.factory().endPortal())
         {
             if (section.netherTarget != null)
             {
