@@ -149,6 +149,7 @@ public class ParameterRegistry
         return VariableValueParameters.registryEntryBuilder(c -> registryType.defaultHolder().get(), registryType).defaultNamespace(defaultNameSpace).build();
     }
 
+    @SuppressWarnings("unchecked")
     static <T> ValueParser<T> getParser(Injector injector, Type type, Class<? extends ValueParser<T>> parserType, boolean last, boolean greedy)
     {
         if (parserType != null)
@@ -186,6 +187,8 @@ public class ParameterRegistry
         throw new IllegalArgumentException("No parser was registered for " + type);
     }
 
+    @SuppressWarnings("unchecked")
+
     static ValueCompleter getCompleter(Injector injector, Type type, Class<? extends ValueCompleter> completerType)
     {
         if (completerType != null)
@@ -215,6 +218,8 @@ public class ParameterRegistry
         }
         return completer.get();
     }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
 
     static <T> DefaultParameterProvider<T> getDefaultProvider(Injector injector, Type type, Class<?> customType)
     {

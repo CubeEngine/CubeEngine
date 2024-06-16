@@ -32,6 +32,7 @@ import org.spongepowered.api.fluid.FluidType;
 import org.spongepowered.api.fluid.FluidTypes;
 import org.spongepowered.api.registry.RegistryType;
 import org.spongepowered.api.registry.RegistryTypes;
+import org.spongepowered.api.tag.BlockTypeTags;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.util.blockray.RayTrace;
 import org.spongepowered.api.util.blockray.RayTraceResult;
@@ -110,7 +111,7 @@ public class LocationUtil
                 .map(FluidType::defaultState)
                 .map(FluidState::block)
                 .map(BlockState::type)
-                .collect(toList());
+                .toList();
 
         boolean headInFluid = fluidBlocks.contains(headIn);
 
@@ -119,23 +120,13 @@ public class LocationUtil
             final BlockType type = lb.blockState().type();
             if (fluidBlocks.contains(type))
             {
-                if (!headInFluid)
-                {
-                    return true;
-                }
+                return !headInFluid;
             }
-            else if (canPass(type))
+            if (canPass(type))
             {
-                if (type.isAnyOf(BlockTypes.AIR, BlockTypes.CAVE_AIR, BlockTypes.VOID_AIR) && headInFluid)
-                {
-                    return true;
-                }
+                return type.is(BlockTypeTags.AIR) && headInFluid;
             }
-            else
-            {
-                return true;
-            }
-            return false;
+            return true;
         });
         return ray.execute().map(RayTraceResult::selectedObject).map(Locatable::serverLocation).orElse(null);
     }
