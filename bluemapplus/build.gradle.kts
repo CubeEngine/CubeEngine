@@ -3,9 +3,9 @@ plugins {
 }
 
 repositories {
-    maven("https://jitpack.io")
+    maven ( "https://repo.bluecolored.de/releases" )
 }
 
 dependencies {
-    compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:v2.6.1")
+    compileOnly ("de.bluecolored.bluemap:BlueMapAPI:2.7.2")
 }
