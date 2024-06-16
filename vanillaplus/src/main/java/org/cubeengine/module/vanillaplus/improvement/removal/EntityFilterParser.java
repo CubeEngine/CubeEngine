@@ -29,7 +29,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.cubeengine.libcube.service.i18n.I18n;
-import org.cubeengine.libcube.service.matcher.EntityMatcher;
 import org.cubeengine.libcube.util.StringUtils;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.command.CommandCause;
@@ -57,12 +56,10 @@ import static org.spongepowered.api.entity.EntityTypes.*;
 public class EntityFilterParser implements ValueParser<EntityFilter>, ValueCompleter
 {
     private I18n i18n;
-    private EntityMatcher em;
 
-    public EntityFilterParser(I18n i18n, EntityMatcher em)
+    public EntityFilterParser(I18n i18n)
     {
         this.i18n = i18n;
-        this.em = em;
     }
 
     @Override
@@ -90,29 +87,27 @@ public class EntityFilterParser implements ValueParser<EntityFilter>, ValueCompl
         final Locale locale = cmdSource.audience() instanceof ServerPlayer ? ((ServerPlayer)cmdSource.audience()).locale() : Locale.getDefault();
         for (String entityString : StringUtils.explode(",", token))
         {
-            EntityType<?> type;
             Optional<ItemType> itemType = Optional.empty();
-            if (entityString.contains(":"))
+            var type = RegistryTypes.ENTITY_TYPE.get().findValue(ResourceKey.resolve(entityString));
+            if (type.isEmpty() && entityString.contains(":"))
             {
-                type = em.any(entityString.substring(0, entityString.indexOf(":")), locale);
-                if (!ITEM.get().equals(type))
+                final var firstDelimiterIdx = entityString.indexOf(":");
+                final var baseType = entityString.substring(0, firstDelimiterIdx);
+                type = RegistryTypes.ENTITY_TYPE.get().findValue(ResourceKey.resolve(baseType));
+                if (type.isEmpty() || !ITEM.get().equals(type.get()))
                 {
                     i18n.send(cmdSource, NEGATIVE, "You can only specify data for removing items!");
                     return Optional.empty();
                 }
-                String itemString = entityString.substring(entityString.indexOf(":") + 1);
-                itemType = RegistryTypes.ITEM_TYPE.get().findValue(ResourceKey.resolve(itemString));
+                String itemKey = entityString.substring(firstDelimiterIdx + 1);
+                itemType = RegistryTypes.ITEM_TYPE.get().findValue(ResourceKey.resolve(itemKey));
                 if (itemType.isEmpty())
                 {
-                    i18n.send(cmdSource, NEGATIVE, "Cannot find itemtype {input}", itemString);
+                    i18n.send(cmdSource, NEGATIVE, "Cannot find itemtype {input}", itemKey);
                     return Optional.empty();
                 }
             }
-            else
-            {
-                type = em.any(entityString, locale);
-            }
-            if (type == null)
+            if (type.isEmpty())
             {
                 i18n.send(cmdSource, NEGATIVE, "Invalid entity-type!");
                 i18n.send(cmdSource, NEUTRAL, "Try using one of those instead:");
@@ -130,7 +125,8 @@ public class EntityFilterParser implements ValueParser<EntityFilter>, ValueCompl
 //                return Optional.empty();
 //            }
             final ItemType item = itemType.orElse(null);
-            filters.add(entity -> entity.type().equals(type) && (item == null || entity.get(Keys.ITEM_STACK_SNAPSHOT).get().type().equals(item)));
+            final EntityType<?> eType = type.get();
+            filters.add(entity -> entity.type().equals(eType) && (item == null || entity.get(Keys.ITEM_STACK_SNAPSHOT).get().type().equals(item)));
         }
         return Optional.of(new EntityFilter(filters));
     }
