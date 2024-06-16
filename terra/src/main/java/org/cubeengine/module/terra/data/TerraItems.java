@@ -66,6 +66,7 @@ import org.spongepowered.api.world.generation.config.SurfaceRule;
 import org.spongepowered.api.world.generation.config.WorldGenerationConfig;
 import org.spongepowered.api.world.generation.config.noise.NoiseGeneratorConfig;
 import org.spongepowered.api.world.generation.config.noise.NoiseGeneratorConfigs;
+import org.spongepowered.api.world.generation.structure.Structures;
 import org.spongepowered.api.world.server.ServerWorld;
 import org.spongepowered.api.world.server.WorldTemplate;
 import org.spongepowered.api.world.server.WorldTemplate.Builder;
@@ -260,10 +261,12 @@ public class TerraItems
             else if (this == END)
             {
                 // TODO structureConfig
+                Structures.END_CITY.get();
 //                final StructureGenerationConfig endStructures = StructureGenerationConfig.builder().addStructure(Structures.ENDCITY.get(), SeparatedStructureConfig.of(6, 4, random.nextInt())).build();
                 noiseGeneratorConfig = NoiseGeneratorConfig.builder().fromValue(NoiseGeneratorConfigs.FLOATING_ISLANDS.get())
                                                            .surfaceRule(SurfaceRule.end())
                                                            .defaultBlock(BlockTypes.END_STONE.get().defaultState())
+                                                           .key(ResourceKey.of(PluginTerra.TERRA_ID, "end"))
 //                                                           .structureConfig(endStructures)
                                                            .build().config();
 

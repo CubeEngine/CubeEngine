@@ -59,19 +59,14 @@ public class Terra
         final Ticks minutes = Ticks.ofWallClockMinutes(Sponge.server(), 10);
         tm.runTimer(this.listener::checkForUnload, Ticks.ofWallClockSeconds(Sponge.server(), 10), minutes);
         tm.runTimer(task -> this.listener.doGenerate(), Ticks.of(20), Ticks.of(20));
+        final var template = WorldTypeTemplate.theEnd().key(WORLD_TYPE_END).build();
+        Sponge.server().dataPackManager().save(template);
     }
 
     @Listener
     public void onRegisterRecipe(RegisterDataPackValueEvent<RecipeRegistration>event)
     {
         TerraItems.registerRecipes(event, this);
-    }
-
-    @Listener
-    public void onRegisterWorldType(RegisterDataPackValueEvent<WorldTypeTemplate> event)
-    {
-        // TODO createDragonFight(false)?
-        event.register(WorldTypeTemplate.theEnd().key(WORLD_TYPE_END).build());
     }
 
     @Listener
