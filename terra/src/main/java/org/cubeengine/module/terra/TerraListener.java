@@ -90,6 +90,7 @@ public class TerraListener
     private WorldGeneration currentGeneration = null;
 
     private Map<ResourceKey, WorldGeneration> futureWorlds = new HashMap<>();
+    private Map<ResourceKey, Long> genesisTime = new HashMap<>();
     private Map<UUID, UUID> potions = new HashMap<>();
 
     private class WorldGeneration
@@ -197,19 +198,37 @@ public class TerraListener
     // Deletes Terra worlds without players
     public void checkForUnload(ScheduledTask task)
     {
-        // TODO grace period
+        var ticks = Sponge.server().runningTimeTicks().ticks();
         final WorldManager wm = Sponge.server().worldManager();
         for (ServerWorld world : new ArrayList<>(wm.worlds()))
         {
-            if (!futureWorlds.containsKey(world.key()) || futureWorlds.get(world.key()).isDone())
+            final var worldKey = world.key();
+            if (worldKey.namespace().equals(PluginTerra.TERRA_ID))
             {
-                if (world.key().namespace().equals(PluginTerra.TERRA_ID))
+                if (!futureWorlds.containsKey(worldKey) || futureWorlds.get(worldKey).isDone())
                 {
+                    final var genesis = genesisTime.get(worldKey);
+                    if (genesis != null)
+                    {
+                        final var worldAge = ticks - genesis;
+                        if (worldAge < Ticks.ofMinecraftMinutes(Sponge.server(), 10).ticks())
+                        {
+                            return; // Return if the world is still younger than 10 minutes
+                        }
+                    }
+
                     if (world.players().isEmpty())
                     {
-                        logger.info("Deleting empty Terra world: " + world.key());
-                        futureWorlds.remove(world.key());
-                        wm.deleteWorld(world.key());
+                        logger.info("Deleting empty Terra world: " + worldKey);
+                        futureWorlds.remove(worldKey);
+                        wm.deleteWorld(worldKey);
+                    }
+                    else
+                    {
+                        for (final ServerPlayer player : world.players())
+                        {
+                            world.playSound(Sound.sound(SoundTypes.ITEM_GOAT_HORN_SOUND_7, Source.PLAYER, 2, 5f), player.position().add(0,5,0));
+                        }
                     }
                 }
             }
@@ -226,11 +245,10 @@ public class TerraListener
         final ItemStackSnapshot original = event.cookingItem();
         if (TerraItems.isTerraEssence(original))
         {
-            final Optional<String> worldKeyString = original.get(TerraData.WORLD_KEY);
-            if (worldKeyString.isPresent())
+            final var worldKey = original.get(TerraData.WORLD_KEY).map(ResourceKey::resolve);
+            if (worldKey.isPresent())
             {
-                final ResourceKey worldKey = ResourceKey.resolve(worldKeyString.get());
-                final WorldGeneration futureWorld = this.futureWorlds.get(worldKey);
+                final WorldGeneration futureWorld = this.futureWorlds.get(worldKey.get());
                 if (futureWorld != null && !futureWorld.isDone())
                 {
                     event.setCancelled(true);
@@ -240,7 +258,7 @@ public class TerraListener
     }
 
     @Listener
-    public void onCampfireTick(CookingEvent.Finish event)
+    public void onCampfireFinish(CookingEvent.Finish event)
     {
         if (!(event.blockEntity() instanceof Campfire))
         {
@@ -249,8 +267,18 @@ public class TerraListener
         final ItemStackSnapshot result = event.transactions().getFirst().finalReplacement();
         if (TerraItems.isTerraEssence(result))
         {
-            event.blockEntity().world().playSound(Sound.sound(SoundTypes.ENTITY_GENERIC_EXTINGUISH_FIRE, Source.PLAYER, 5, 2f), event.blockEntity().blockPosition().toDouble());
+            var worldKey = result.get(TerraData.WORLD_KEY).map(ResourceKey::resolve);
+            if (worldKey.isPresent())
+            {
+                this.genesisTime.put(worldKey.get(), Sponge.server().runningTimeTicks().ticks());
+                event.blockEntity().world().playSound(Sound.sound(SoundTypes.ENTITY_GENERIC_EXTINGUISH_FIRE, Source.PLAYER, 5, 2f), event.blockEntity().blockPosition().toDouble());
+            }
+            else
+            {
+                logger.error("Terra Potion result without world key");
+            }
         }
+
     }
 
     @Listener
