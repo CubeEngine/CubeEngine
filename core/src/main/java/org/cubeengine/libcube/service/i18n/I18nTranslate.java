@@ -236,8 +236,8 @@ public abstract class I18nTranslate
     }
 
     public enum ChatType {
-        CHAT((a, c) -> a.sendMessage(Identity.nil(), c)),
-        SYSTEM((a, c) -> a.sendMessage(Identity.nil(), c, MessageType.SYSTEM)),
+        CHAT(Audience::sendMessage),
+        SYSTEM(Audience::sendMessage),
         ACTION_BAR(Audience::sendActionBar);
 
         private BiConsumer<Audience, Component> biConsumer;
