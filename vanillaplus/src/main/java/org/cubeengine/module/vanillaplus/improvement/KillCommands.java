@@ -123,7 +123,7 @@ public class KillCommands extends PermissionContainer
 
         if (force)
         {
-            player.offer(Keys.HEALTH, 0d);
+            player.damage(Double.MAX_VALUE, DamageSource.builder().type(DamageTypes.GENERIC_KILL).build());
         }
         if (showMessage)
         {
@@ -142,7 +142,7 @@ public class KillCommands extends PermissionContainer
     public void suicide(ServerPlayer context)
     {
         Sponge.server().causeStackManager().pushCause(context);
-        context.offer(Keys.HEALTH, 0d);
+        context.damage(Double.MAX_VALUE, DamageSource.builder().type(DamageTypes.GENERIC_KILL).build());
         i18n.send(context, NEGATIVE, "You ended your life. Why? {text::(:color=DARK_RED}");
     }
 }
