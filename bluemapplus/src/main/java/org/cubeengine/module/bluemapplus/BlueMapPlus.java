@@ -80,35 +80,24 @@ public class BlueMapPlus
 
     private void updateBlueMapBorder(BlueMapAPI blueMapAPI, ServerWorld world, Optional<WorldBorder> optBorder)
     {
-        // TODO bluemap calculates the save-folder for end/nether incorrectly, attempt to match by directory from config file instead
-        //        blueMapAPI.getWorld(world.properties().key()).map(BlueMapWorld::getMaps).ifPresent(maps -> {
-        //        });
-
-        final Map<Path, Collection<BlueMapMap>> mapsForWorlds = blueMapAPI.getWorlds().stream().collect(
-            Collectors.toMap(BlueMapWorld::getSaveFolder, BlueMapWorld::getMaps));
-        final Collection<BlueMapMap> maps = mapsForWorlds.get(world.directory().toAbsolutePath().normalize());
-        if (maps != null)
-        {
-            maps.forEach(map -> {
-                String markerId = world.properties().key() + "-border";
-                optBorder.ifPresentOrElse(border -> {
-                    final var centerX = border.center().x();
-                    final var centerZ = border.center().y();
-                    final var radius = border.diameter() / 2d;
-                    final Shape shape = Shape.createRect(new Vector2d(centerX - radius, centerZ - radius),
-                                                         new Vector2d(centerX + radius, centerZ + radius));
-                    final ShapeMarker marker = ShapeMarker.builder().label("World border")
-                                                          .shape(shape, world.seaLevel())
-                                                          .lineColor( new Color(0xFF0000, 1f))
-                                                          .fillColor( new Color(0))
-                                                          .lineWidth(2)
-                                                          .depthTestEnabled(false)
-                                                          .build();
-                    updateMarker(map, marker, markerId);
-                }, () -> updateMarker(map, null, markerId));
-            });
-        }
-
+        blueMapAPI.getWorlds().stream().filter(map -> map.getId().endsWith(world.key().toString())).flatMap(b -> b.getMaps().stream()).forEach(map -> {
+            String markerId = world.properties().key() + "-border";
+            optBorder.ifPresentOrElse(border -> {
+                final var centerX = border.center().x();
+                final var centerZ = border.center().y();
+                final var radius = border.diameter() / 2d;
+                final Shape shape = Shape.createRect(new Vector2d(centerX - radius, centerZ - radius),
+                                                     new Vector2d(centerX + radius, centerZ + radius));
+                final ShapeMarker marker = ShapeMarker.builder().label("World border")
+                                                      .shape(shape, world.seaLevel())
+                                                      .lineColor( new Color(0xFF0000, 1f))
+                                                      .fillColor( new Color(0))
+                                                      .lineWidth(2)
+                                                      .depthTestEnabled(false)
+                                                      .build();
+                updateMarker(map, marker, markerId);
+            }, () -> updateMarker(map, null, markerId));
+        });
     }
 
     private static void updateMarker(final BlueMapMap map, final @Nullable ShapeMarker marker, final String markerId)
