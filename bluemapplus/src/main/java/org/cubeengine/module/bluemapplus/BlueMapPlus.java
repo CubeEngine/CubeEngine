@@ -17,21 +17,16 @@
  */
 package org.cubeengine.module.bluemapplus;
 
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import com.flowpowered.math.vector.Vector2d;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.bluecolored.bluemap.api.BlueMapAPI;
-import de.bluecolored.bluemap.api.BlueMapMap;
-import de.bluecolored.bluemap.api.BlueMapWorld;
-import de.bluecolored.bluemap.api.markers.MarkerSet;
 import de.bluecolored.bluemap.api.markers.ShapeMarker;
 import de.bluecolored.bluemap.api.math.Color;
 import de.bluecolored.bluemap.api.math.Shape;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.cubeengine.libcube.service.command.annotation.ModuleCommand;
+import org.cubeengine.libcube.service.filesystem.FileManager;
 import org.cubeengine.processor.Dependency;
 import org.cubeengine.processor.Module;
 import org.spongepowered.api.Server;
@@ -45,15 +40,25 @@ import org.spongepowered.api.world.server.ServerWorld;
 
 @Singleton
 @Module(dependencies = @Dependency("bluemap"))
-
 public class BlueMapPlus
 {
-    private static final String MARKER_SET_ID = "cubeengine-bluemap-plus";
+    @ModuleCommand
+    private BlueMapPlusCommands commands;
+
+    @Inject
+    private FileManager fm;
 
     @Listener
     public void onEnable(StartedEngineEvent<Server> event)
     {
         BlueMapAPI.onEnable(this::updateAll);
+        BlueMapAPI.onEnable(this::loadAll);
+    }
+
+    private void loadAll(BlueMapAPI blueMapAPI)
+    {
+        var path = this.fm.getModulePath(BlueMapPlus.class);
+        BlueMapUtils.loadMarkerSets(path);
     }
 
     private void updateAll(final BlueMapAPI blueMapAPI)
@@ -95,29 +100,8 @@ public class BlueMapPlus
                                                       .lineWidth(2)
                                                       .depthTestEnabled(false)
                                                       .build();
-                updateMarker(map, marker, markerId);
-            }, () -> updateMarker(map, null, markerId));
+                BlueMapUtils.updateMarker(map, BlueMapUtils.BORDER, marker, markerId);
+            }, () -> BlueMapUtils.updateMarker(map, BlueMapUtils.BORDER, null, markerId));
         });
-    }
-
-    private static void updateMarker(final BlueMapMap map, final @Nullable ShapeMarker marker, final String markerId)
-    {
-        MarkerSet markerSet = map.getMarkerSets().get(MARKER_SET_ID);
-        if (marker == null)
-        {
-            if (markerSet != null)
-            {
-                markerSet.getMarkers().remove(markerId);
-            }
-        }
-        else
-        {
-            if (markerSet == null)
-            {
-                markerSet = MarkerSet.builder().label("BlueMap Plus").build();
-                map.getMarkerSets().put(MARKER_SET_ID, markerSet);
-            }
-            markerSet.getMarkers().put(markerId, marker);
-        }
     }
 }
