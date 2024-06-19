@@ -18,13 +18,18 @@
 package org.cubeengine.module.bluemapplus;
 
 import com.flowpowered.math.vector.Vector2i;
+import com.flowpowered.math.vector.Vector3d;
 import de.bluecolored.bluemap.api.BlueMapAPI;
 import de.bluecolored.bluemap.api.BlueMapMap;
+import de.bluecolored.bluemap.api.BlueMapWorld;
 import de.bluecolored.bluemap.api.gson.MarkerGson;
 import de.bluecolored.bluemap.api.markers.ExtrudeMarker;
+import de.bluecolored.bluemap.api.markers.HtmlMarker;
+import de.bluecolored.bluemap.api.markers.LineMarker;
 import de.bluecolored.bluemap.api.markers.Marker;
 import de.bluecolored.bluemap.api.markers.MarkerSet;
 import de.bluecolored.bluemap.api.math.Color;
+import de.bluecolored.bluemap.api.math.Line;
 import de.bluecolored.bluemap.api.math.Shape;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.world.biome.Biome;
@@ -33,6 +38,8 @@ import org.spongepowered.math.vector.Vector3i;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -46,8 +53,10 @@ public class BlueMapUtils
 
     public static final String BORDER = "cubeengine-bluemap-plus-border";
     public static final String BIOMES = "cubeengine-bluemap-plus-biomes";
-    public static final Map<String, String> NAMES = Map.of(BORDER, "Border", BIOMES, "Biomes");
-    public static final Map<String, String> IDS = Map.of("Border", BORDER, "Biomes", BIOMES);
+    public static final String CHUNKS = "cubeengine-bluemap-plus-chunks";
+    public static final String REGIONS = "cubeengine-bluemap-plus-regions";
+    public static final Map<String, String> NAMES = Map.of(BORDER, "Border", BIOMES, "Biomes", CHUNKS, "Chunks", REGIONS, "Regions");
+    public static final Map<String, String> IDS = Map.of("Border", BORDER, "Biomes", BIOMES, "Chunks", CHUNKS, "Regions", REGIONS);
     private static final Vector3i[] directions = {
         new Vector3i(1, 0, 0),
         new Vector3i(-1, 0, 0),
@@ -59,9 +68,9 @@ public class BlueMapUtils
         new Vector2i(-1, 0), /* Current position */ new Vector2i(1, 0),
         new Vector2i(-1, 1), new Vector2i(0, 1), new Vector2i(1, 1));
 
-    public static MarkerSet updateMarker(final BlueMapMap map, final String marketSetId, final @Nullable Marker marker, final String markerId)
+    public static MarkerSet updateMarker(final BlueMapMap map, final String markerSetId, final @Nullable Marker marker, final String markerId)
     {
-        MarkerSet markerSet = map.getMarkerSets().get(marketSetId);
+        MarkerSet markerSet = map.getMarkerSets().get(markerSetId);
         if (marker == null)
         {
             if (markerSet != null)
@@ -73,8 +82,8 @@ public class BlueMapUtils
         {
             if (markerSet == null)
             {
-                markerSet = MarkerSet.builder().label(NAMES.get(marketSetId)).build();
-                map.getMarkerSets().put(marketSetId, markerSet);
+                markerSet = MarkerSet.builder().label(NAMES.get(markerSetId)).build();
+                map.getMarkerSets().put(markerSetId, markerSet);
             }
             markerSet.getMarkers().put(markerId, marker);
         }
@@ -149,9 +158,9 @@ public class BlueMapUtils
         {
             builder.holes(outlines.get(i));
         }
-        return builder.lineColor( new Color(0xFF0000, 1f))
+        return builder.lineColor( new Color(0x807BB3, 0.5f))
                                               .fillColor( new Color(0))
-                                              .lineWidth(2)
+                                              .lineWidth(1)
                                               .depthTestEnabled(false)
                                               .build();
     }
@@ -226,5 +235,100 @@ public class BlueMapUtils
         {
             e.printStackTrace();
         }
+    }
+
+    public static List<LineMarker> generateGridLines(Vector3i minPos, Vector3i maxPos, int distance, int height, Color color, int width,
+                                                     int viewDistance) {
+        List<Line> lines = new ArrayList<>();
+        int minX = minPos.x();
+        int minZ = minPos.z();
+        int maxX = maxPos.x();
+        int maxZ = maxPos.z();
+
+        // Generate vertical lines along the Z axis
+        for (int x = minX; x <= maxX; x += distance) {
+            Line.Builder builder = Line.builder();
+            builder.addPoint(new Vector3d(x, height, minZ));
+            builder.addPoint(new Vector3d(x, height, maxZ));
+            lines.add(builder.build());
+        }
+
+        // Generate horizontal lines along the X axis
+        for (int z = minZ; z <= maxZ; z += distance) {
+            Line.Builder builder = Line.builder();
+            builder.addPoint(new Vector3d(minX, height, z));
+            builder.addPoint(new Vector3d(maxX, height, z));
+            lines.add(builder.build());
+        }
+
+        return lines.stream().map(line ->
+            LineMarker.builder().label("Line:" + line.getMin() + ":" + line.getMax())
+                      .line(line)
+                      .lineColor(color)
+                      .lineWidth(width)
+                      .depthTestEnabled(false)
+                      .maxDistance(viewDistance)
+                      .build()
+        ).toList();
+    }
+
+    static void buildChunkAndRegionGrid(final BlueMapWorld bmWorld, final Vector3i min, final Vector3i max,
+                                        Map<org.spongepowered.math.vector.Vector2i, List<Vector3i>> chunksByRegion)
+    {
+        final var minPos = min.mul(16);
+        final var maxPos = max.mul(16);
+        final var chunkLineMarkers = generateGridLines(minPos, maxPos, 16, 64,
+                                                       new Color(0xADD8E6, 0.2f), 1, 400);
+
+        final var minRPos = min.toDouble().div(32).toInt().mul(32 * 16);
+        final var maxRPos = max.toDouble().div(32).toInt().mul(32 * 16);
+        final var regionLineMarkers = generateGridLines(minRPos, maxRPos, 16*32, 65,
+                                                        new Color(0x90EE90, 0.4f), 2, Integer.MAX_VALUE);
+
+        List<HtmlMarker> regionLabels = new ArrayList<>();
+        for (int x = minRPos.x(); x <= maxRPos.x(); x += 16 * 32)
+        {
+            for (int z = minRPos.z(); z <= maxRPos.z(); z += 16 * 32)
+            {
+                final var pos = new Vector3d(x + 16 * 16, 64, z + 16 * 16);
+                final var rPos = new org.spongepowered.math.vector.Vector2i(x, z).div(16*32);
+                final var chunksInRegion = chunksByRegion.getOrDefault(rPos, Collections.emptyList());
+                if (chunksInRegion.isEmpty())
+                {
+                    continue;
+                }
+                final var label = "%d : %d".formatted(x / (16 * 32), z / (16 * 32));
+                final var marker = HtmlMarker.builder().position(pos)
+                                             .label(label)
+                                             .html("""
+                        <div style="background-color: #AAAAAAAA; padding: 2px; border-radius: 5px; color: #000000FF; font-size: 12px; font-weight: bold; text-align: center;">
+                            <div>%s</div>
+                            <div style="font-size: 8px">%d/1024</div>
+                        </div>
+                        """.formatted(label, chunksInRegion.size()))
+                                             .minDistance(1000)
+                                             .maxDistance(9000)
+                                             .build();
+                regionLabels.add(marker);
+            }
+        }
+
+
+        for (final BlueMapMap map : bmWorld.getMaps())
+        {
+            for (final LineMarker marker : chunkLineMarkers)
+            {
+                updateMarker(map, CHUNKS, marker, marker.getLabel());
+            }
+            for (final LineMarker marker : regionLineMarkers)
+            {
+                updateMarker(map, REGIONS, marker, marker.getLabel());
+            }
+            for (final HtmlMarker marker : regionLabels)
+            {
+                updateMarker(map, REGIONS, marker, marker.getLabel());
+            }
+        }
+
     }
 }

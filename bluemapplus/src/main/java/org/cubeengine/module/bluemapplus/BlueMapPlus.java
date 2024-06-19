@@ -18,7 +18,9 @@
 package org.cubeengine.module.bluemapplus;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 import com.flowpowered.math.vector.Vector2d;
+import com.flowpowered.math.vector.Vector2i;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.bluecolored.bluemap.api.BlueMapAPI;
@@ -36,6 +38,7 @@ import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.event.world.ChangeWorldBorderEvent;
 import org.spongepowered.api.world.border.WorldBorder;
 import org.spongepowered.api.world.server.ServerWorld;
+import org.spongepowered.math.vector.Vector3i;
 
 
 @Singleton
@@ -74,6 +77,18 @@ public class BlueMapPlus
             {
                 this.updateBlueMapBorder(blueMapAPI, world, Optional.of(border));
             }
+
+
+            BlueMapAPI.getInstance().get().getWorld(world).ifPresent(bmWorld -> {
+                var chunksByRegion = world.chunkPositions().collect(Collectors.groupingBy(v -> v.toDouble().div(32).toInt().toVector2(true)));
+                var min = world.chunkPositions().reduce(Vector3i::min);
+                var max = world.chunkPositions().reduce(Vector3i::max);
+                if (min.isPresent() && max.isPresent())
+                {
+                    BlueMapUtils.buildChunkAndRegionGrid(bmWorld, min.get(), max.get().add(Vector3i.ONE), chunksByRegion);
+                }
+
+            });
         }
     }
 
