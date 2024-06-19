@@ -49,8 +49,28 @@ public interface TradersItems {
                                                         .result(iceHead())
                                                         .key(ResourceKey.of(PluginTraders.TRADERS_ID, "ice"))
                                                         .build();
+        RecipeRegistration sandmanRecipe = ShapedCraftingRecipe.builder().aisle("eee", "ehe", "eee")
+                                                              .where('e', Ingredient.of(ItemTypes.EMERALD_BLOCK))
+                                                              .where('h', Ingredient.of(ItemTypes.CHISELED_SANDSTONE))
+                                                              .result(sandHead())
+                                                              .key(ResourceKey.of(PluginTraders.TRADERS_ID, "sand"))
+                                                              .build();
         event.register(fisherRecipe);
         event.register(icemanRecipe);
+        event.register(sandmanRecipe);
+    }
+
+    static ItemStack sandHead()
+    {
+        final ItemStack head = ItemStack.of(ItemTypes.PLAYER_HEAD);
+        head.offer(TradersData.VILLAGER, "sand");
+        final GameProfile profile = GameProfile.of(UUID.fromString("c0bbeabc-c17a-45af-995c-6d5b6e048442"), "Sand-Artifact")
+                                               .withProperty(ProfileProperty.of(ProfileProperty.TEXTURES,
+                                "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDVlOGY3ZTdlMDVjN2E4OGJiNzY2YTJlNGI0OTQ5N2JkOWU0MjJjMGFiNTIyZmYyZDk1MmMwNjNjOGEzMzVmZCJ9fX0="));
+        head.offer(Keys.GAME_PROFILE, profile);
+        head.offer(Keys.CUSTOM_NAME, Component.text("Sand-Artifact", NamedTextColor.GOLD));
+        head.offer(Keys.LORE, Arrays.asList(Component.text("Use on a Wandering Trader to unlock special trades", NamedTextColor.GRAY)));
+        return head;
     }
 
     static ItemStack conduitHead()

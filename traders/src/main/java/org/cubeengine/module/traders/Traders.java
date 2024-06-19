@@ -32,6 +32,7 @@ import org.cubeengine.libcube.util.EventUtil;
 import org.cubeengine.processor.Module;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.data.type.HandTypes;
+import org.spongepowered.api.data.type.PortionType;
 import org.spongepowered.api.effect.particle.ParticleEffect;
 import org.spongepowered.api.effect.particle.ParticleTypes;
 import org.spongepowered.api.effect.sound.SoundTypes;
@@ -47,6 +48,7 @@ import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.merchant.TradeOffer;
+import org.spongepowered.api.item.potion.PotionTypes;
 import org.spongepowered.api.item.recipe.RecipeRegistration;
 import org.spongepowered.math.vector.Vector3d;
 
@@ -201,6 +203,38 @@ public class Traders
                            .sellingItem(TradersItems.iceHead())
                            .maxUses(1).build();
                 offers = Arrays.asList(spruceSaplings, snowBlock, pumpkin, ice, packedIce, blueIce, spawnEgg, bribe2);
+                break;
+            case "sand":
+                final var waterBottle = ItemStack.of(ItemTypes.POTION, 1);
+                waterBottle.offer(Keys.POTION_TYPE, PotionTypes.WATER.get());
+                final TradeOffer water = TradeOffer.builder()
+                                                   .firstBuyingItem(ItemStack.of(ItemTypes.EMERALD, 1))
+                                                   .sellingItem(waterBottle)
+                                                   .maxUses(10).build();
+                final TradeOffer sand = TradeOffer.builder()
+                                                   .firstBuyingItem(ItemStack.of(ItemTypes.EMERALD, 6))
+                                                   .sellingItem(ItemStack.of(ItemTypes.SAND, 8))
+                                                   .maxUses(10).build();
+                final TradeOffer sandStone = TradeOffer.builder()
+                                                  .firstBuyingItem(ItemStack.of(ItemTypes.EMERALD, 8))
+                                                  .secondBuyingItem(ItemStack.of(ItemTypes.SAND, 16))
+                                                  .sellingItem(ItemStack.of(ItemTypes.SANDSTONE, 8))
+                                                  .maxUses(10).build();
+                final TradeOffer redSand = TradeOffer.builder()
+                                                       .firstBuyingItem(ItemStack.of(ItemTypes.EMERALD, 16))
+                                                       .secondBuyingItem(ItemStack.of(ItemTypes.SAND, 16))
+                                                       .sellingItem(ItemStack.of(ItemTypes.RED_SAND, 16))
+                                                       .maxUses(10).build();
+                final TradeOffer deadBush = TradeOffer.builder()
+                                                       .firstBuyingItem(ItemStack.of(ItemTypes.EMERALD, 4))
+                                                       .sellingItem(ItemStack.of(ItemTypes.DEAD_BUSH, 8))
+                                                       .maxUses(10).build();
+                final TradeOffer spawnEggCamel = TradeOffer.builder()
+                                                      .firstBuyingItem(ItemStack.of(ItemTypes.EMERALD_BLOCK, 16))
+                                                      .secondBuyingItem(ItemStack.of(ItemTypes.CHISELED_SANDSTONE, 64))
+                                                      .sellingItem(ItemStack.of(ItemTypes.CAMEL_SPAWN_EGG, 1))
+                                                      .maxUses(2).build();
+                offers = Arrays.asList(water, sand, deadBush, redSand, sandStone, spawnEggCamel);
                 break;
             default:
                 offers = new ArrayList<>();
