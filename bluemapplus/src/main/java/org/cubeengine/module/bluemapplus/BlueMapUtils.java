@@ -46,6 +46,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class BlueMapUtils
@@ -204,7 +205,7 @@ public class BlueMapUtils
         }
     }
 
-    public static void loadMarkerSets(final Path dir)
+    public static void loadMarkerSets(final BlueMapAPI blueMapAPI, final Path dir)
     {
         try
         {
@@ -216,7 +217,7 @@ public class BlueMapUtils
                     {
                         var json = Files.readString(file);
                         var markerSet = MarkerGson.INSTANCE.fromJson(json, MarkerSet.class);
-                        for (final BlueMapMap map : BlueMapAPI.getInstance().get().getMaps())
+                        for (final BlueMapMap map : blueMapAPI.getMaps())
                         {
                             if (filename.startsWith(map.getWorld().getId() + "."))
                             {
@@ -329,6 +330,6 @@ public class BlueMapUtils
                 updateMarker(map, REGIONS, marker, marker.getLabel());
             }
         }
-
     }
+
 }

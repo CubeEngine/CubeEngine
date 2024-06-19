@@ -23,10 +23,13 @@ import com.flowpowered.math.vector.Vector2d;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.bluecolored.bluemap.api.BlueMapAPI;
+import de.bluecolored.bluemap.api.BlueMapMap;
+import de.bluecolored.bluemap.api.BlueMapWorld;
 import de.bluecolored.bluemap.api.markers.ShapeMarker;
 import de.bluecolored.bluemap.api.math.Color;
 import de.bluecolored.bluemap.api.math.Shape;
 import org.apache.logging.log4j.Logger;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.cubeengine.libcube.service.command.annotation.ModuleCommand;
 import org.cubeengine.libcube.service.filesystem.FileManager;
 import org.cubeengine.processor.Dependency;
@@ -54,74 +57,106 @@ public class BlueMapPlus
     @Listener
     public void onEnable(StartedEngineEvent<Server> event)
     {
-        BlueMapAPI.onEnable(this::updateAll);
-        BlueMapAPI.onEnable(this::loadAll);
+        BlueMapAPI.onEnable(this::updateBorderMarkers);
+        BlueMapAPI.onEnable(this::updateChunkAndRegionMarkers);
+        BlueMapAPI.onEnable(this::loadMarkers);
     }
 
-    private void loadAll(BlueMapAPI blueMapAPI)
+    private void updateChunkAndRegionMarkers(BlueMapAPI blueMapAPI)
     {
-        var path = this.fm.getModulePath(BlueMapPlus.class);
-        BlueMapUtils.loadMarkerSets(path);
-    }
-
-    private void updateAll(final BlueMapAPI blueMapAPI)
-    {
+        logger.info("Generating Chunk and Region Markers...");
+        int i = 0;
         for (final ServerWorld world : Sponge.server().worldManager().worlds())
         {
-            WorldBorder border = world.border();
-            if (border.diameter() >= 59000000d)
+            final var blueMapWorld = blueMapAPI.getWorld(world);
+            if (blueMapWorld.isEmpty())
             {
-                this.updateBlueMapBorder(blueMapAPI, world, Optional.empty());
+                continue;
             }
-            else
-            {
-                this.updateBlueMapBorder(blueMapAPI, world, Optional.of(border));
-            }
+            i++;
+            blueMapWorld.ifPresent(bmWorld -> {
+                var chunksByRegion = world.chunkPositions().collect(Collectors.groupingBy(v -> v.toDouble().div(32).toInt().toVector2(true)));
+                var min = world.chunkPositions().reduce(Vector3i::min);
+                var max = world.chunkPositions().reduce(Vector3i::max);
+                if (min.isPresent() && max.isPresent())
+                {
+                    BlueMapUtils.buildChunkAndRegionGrid(bmWorld, min.get(), max.get().add(Vector3i.ONE), chunksByRegion);
+                }
+            });
+        }
+        logger.info("Done generating Chunk and Region Markers for {} worlds", i);
+    }
 
-            try
+    private void loadMarkers(BlueMapAPI blueMapAPI)
+    {
+        logger.info("Loading serialized markers...");
+        var path = this.fm.getModulePath(BlueMapPlus.class);
+        BlueMapUtils.loadMarkerSets(blueMapAPI, path);
+        logger.info("Done loading serialized markers");
+    }
+
+    private void updateBorderMarkers(final BlueMapAPI blueMapAPI)
+    {
+        logger.info("Generating Border Markers...");
+        int i = 0;
+        for (final ServerWorld world : Sponge.server().worldManager().worlds())
+        {
+            final var blueMapWorld = blueMapAPI.getWorld(world);
+            if (blueMapWorld.isEmpty())
             {
-                BlueMapAPI.getInstance().get().getWorld(world).ifPresent(bmWorld -> {
-                    var chunksByRegion = world.chunkPositions().collect(Collectors.groupingBy(v -> v.toDouble().div(32).toInt().toVector2(true)));
-                    var min = world.chunkPositions().reduce(Vector3i::min);
-                    var max = world.chunkPositions().reduce(Vector3i::max);
-                    if (min.isPresent() && max.isPresent())
-                    {
-                        BlueMapUtils.buildChunkAndRegionGrid(bmWorld, min.get(), max.get().add(Vector3i.ONE), chunksByRegion);
-                    }
-                });
+                continue;
             }
-            catch (Exception e)
+            i++;
+            WorldBorder border = world.border();
+            for (final BlueMapMap map : blueMapWorld.get().getMaps())
             {
-                logger.error("Error while building chunk and region grid", e);
+                if (border.diameter() >= 59000000d)
+                {
+                    this.updateBlueMapBorder(map, world.key().toString(), null);
+                }
+                else
+                {
+                    this.updateBlueMapBorder(map, world.key().toString(), border);
+                }
             }
         }
+        logger.info("Done Generating Border Markers for {} worlds", i);
     }
 
     @Listener
     public void onChangeBorder(ChangeWorldBorderEvent.World event)
     {
-        this.updateBlueMapBorder(BlueMapAPI.getInstance().get(), event.world(), event.newBorder());
+        final var bmWorld = BlueMapAPI.getInstance().get().getWorld(event.world());
+        if (bmWorld.isPresent())
+        {
+            for (final BlueMapMap map : bmWorld.get().getMaps())
+            {
+                this.updateBlueMapBorder(map, event.world().key().toString(), event.newBorder().orElse(null));
+
+            }
+        }
     }
 
-    private void updateBlueMapBorder(BlueMapAPI blueMapAPI, ServerWorld world, Optional<WorldBorder> optBorder)
+    private void updateBlueMapBorder(BlueMapMap map, String key, @Nullable WorldBorder border)
     {
-        blueMapAPI.getWorlds().stream().filter(map -> map.getId().endsWith(world.key().toString())).flatMap(b -> b.getMaps().stream()).forEach(map -> {
-            String markerId = world.properties().key() + "-border";
-            optBorder.ifPresentOrElse(border -> {
-                final var centerX = border.center().x();
-                final var centerZ = border.center().y();
-                final var radius = border.diameter() / 2d;
-                final Shape shape = Shape.createRect(new Vector2d(centerX - radius, centerZ - radius),
-                                                     new Vector2d(centerX + radius, centerZ + radius));
-                final ShapeMarker marker = ShapeMarker.builder().label("World border")
-                                                      .shape(shape, world.seaLevel())
-                                                      .lineColor( new Color(0xFF0000, 1f))
-                                                      .fillColor( new Color(0))
-                                                      .lineWidth(2)
-                                                      .depthTestEnabled(false)
-                                                      .build();
-                BlueMapUtils.updateMarker(map, BlueMapUtils.BORDER, marker, markerId);
-            }, () -> BlueMapUtils.updateMarker(map, BlueMapUtils.BORDER, null, markerId));
-        });
+        String markerId = key + "-border";
+        if (border == null)
+        {
+            BlueMapUtils.updateMarker(map, BlueMapUtils.BORDER, null, markerId);
+            return;
+        }
+        final var centerX = border.center().x();
+        final var centerZ = border.center().y();
+        final var radius = border.diameter() / 2d;
+        final Shape shape = Shape.createRect(new Vector2d(centerX - radius, centerZ - radius),
+                                             new Vector2d(centerX + radius, centerZ + radius));
+        final ShapeMarker marker = ShapeMarker.builder().label("World border")
+                                              .shape(shape, 64)
+                                              .lineColor( new Color(0xFF0000, 1f))
+                                              .fillColor( new Color(0))
+                                              .lineWidth(2)
+                                              .depthTestEnabled(false)
+                                              .build();
+        BlueMapUtils.updateMarker(map, BlueMapUtils.BORDER, marker, markerId);
     }
 }
