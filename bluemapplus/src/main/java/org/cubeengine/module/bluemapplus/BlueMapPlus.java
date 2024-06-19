@@ -78,6 +78,7 @@ public class BlueMapPlus
                 var chunksByRegion = world.chunkPositions().collect(Collectors.groupingBy(v -> v.toDouble().div(32).toInt().toVector2(true)));
                 var min = world.chunkPositions().reduce(Vector3i::min);
                 var max = world.chunkPositions().reduce(Vector3i::max);
+                logger.info("found {} regions in {}", chunksByRegion.size(), world.key().toString());
                 if (min.isPresent() && max.isPresent())
                 {
                     BlueMapUtils.buildChunkAndRegionGrid(bmWorld, min.get(), max.get().add(Vector3i.ONE), chunksByRegion);

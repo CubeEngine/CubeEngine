@@ -276,10 +276,20 @@ public class BlueMapUtils
     static void buildChunkAndRegionGrid(final BlueMapWorld bmWorld, final Vector3i min, final Vector3i max,
                                         Map<org.spongepowered.math.vector.Vector2i, List<Vector3i>> chunksByRegion)
     {
-        final var minPos = min.mul(16);
-        final var maxPos = max.mul(16);
-        final var chunkLineMarkers = generateGridLines(minPos, maxPos, 16, 64,
-                                                       new Color(0xADD8E6, 0.2f), 1, 400);
+        if (chunksByRegion.size() < 1000)
+        {
+            final var minPos = min.mul(16);
+            final var maxPos = max.mul(16);
+            final var chunkLineMarkers = generateGridLines(minPos, maxPos, 16, 64,
+                                                           new Color(0xADD8E6, 0.2f), 1, 400);
+            for (final BlueMapMap map : bmWorld.getMaps())
+            {
+                for (final LineMarker marker : chunkLineMarkers)
+                {
+                    updateMarker(map, CHUNKS, marker, marker.getLabel());
+                }
+            }
+        }
 
         final var minRPos = min.toDouble().div(32).toInt().mul(32 * 16);
         final var maxRPos = max.toDouble().div(32).toInt().mul(32 * 16);
@@ -317,10 +327,7 @@ public class BlueMapUtils
 
         for (final BlueMapMap map : bmWorld.getMaps())
         {
-            for (final LineMarker marker : chunkLineMarkers)
-            {
-                updateMarker(map, CHUNKS, marker, marker.getLabel());
-            }
+
             for (final LineMarker marker : regionLineMarkers)
             {
                 updateMarker(map, REGIONS, marker, marker.getLabel());
