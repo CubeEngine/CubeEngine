@@ -19,6 +19,7 @@ package org.cubeengine.module.bluemapplus;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import com.flowpowered.math.vector.Vector2d;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -58,8 +59,8 @@ public class BlueMapPlus
     public void onEnable(StartedEngineEvent<Server> event)
     {
         BlueMapAPI.onEnable(this::updateBorderMarkers);
-        BlueMapAPI.onEnable(this::updateChunkAndRegionMarkers);
         BlueMapAPI.onEnable(this::loadMarkers);
+        BlueMapAPI.onEnable(this::updateChunkAndRegionMarkers);
     }
 
     private void updateChunkAndRegionMarkers(BlueMapAPI blueMapAPI)
@@ -75,9 +76,11 @@ public class BlueMapPlus
             }
             i++;
             blueMapWorld.ifPresent(bmWorld -> {
-                var chunksByRegion = world.chunkPositions().collect(Collectors.groupingBy(v -> v.toDouble().div(32).toInt().toVector2(true)));
-                var min = world.chunkPositions().reduce(Vector3i::min);
-                var max = world.chunkPositions().reduce(Vector3i::max);
+                final var allPositions = world.chunkPositions().toList();
+                logger.info("found {} chunks in {}", allPositions.size(), world.key().toString());
+                var chunksByRegion = allPositions.stream().collect(Collectors.groupingBy(v -> v.toDouble().div(32).toInt().toVector2(true)));
+                var min = allPositions.stream().reduce(Vector3i::min);
+                var max = allPositions.stream().reduce(Vector3i::max);
                 logger.info("found {} regions in {}", chunksByRegion.size(), world.key().toString());
                 if (min.isPresent() && max.isPresent())
                 {
