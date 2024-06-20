@@ -26,7 +26,6 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.cubeengine.module.terra.PluginTerra;
 import org.cubeengine.module.terra.Terra;
@@ -51,6 +50,7 @@ import org.spongepowered.api.registry.RegistryReference;
 import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.util.Color;
 import org.spongepowered.api.util.RandomProvider.Source;
+import org.spongepowered.api.util.Range;
 import org.spongepowered.api.util.Ticks;
 import org.spongepowered.api.world.SerializationBehavior;
 import org.spongepowered.api.world.WorldTypes;
@@ -63,13 +63,12 @@ import org.spongepowered.api.world.biome.provider.MultiNoiseBiomeConfig;
 import org.spongepowered.api.world.difficulty.Difficulties;
 import org.spongepowered.api.world.generation.ChunkGenerator;
 import org.spongepowered.api.world.generation.config.SurfaceRule;
-import org.spongepowered.api.world.generation.config.WorldGenerationConfig;
 import org.spongepowered.api.world.generation.config.noise.NoiseGeneratorConfig;
 import org.spongepowered.api.world.generation.config.noise.NoiseGeneratorConfigs;
-import org.spongepowered.api.world.generation.structure.Structures;
 import org.spongepowered.api.world.server.ServerWorld;
 import org.spongepowered.api.world.server.WorldTemplate;
 import org.spongepowered.api.world.server.WorldTemplate.Builder;
+import org.spongepowered.math.vector.Vector3i;
 
 import static org.spongepowered.api.world.biome.Biomes.*;
 
@@ -80,6 +79,7 @@ public class TerraItems
     public static final ItemStack SPLASH_INK_BOTTLE = ItemStack.of(ItemTypes.SPLASH_POTION.get());
     public static final ItemStack TERRA_ESSENCE = ItemStack.of(ItemTypes.POTION.get());
     public static final ItemStack SPLASH_TERRA_ESSENCE = ItemStack.of(ItemTypes.SPLASH_POTION.get());
+    public static final List<RegistryReference<Biome>> CAVE_BIOMES = Arrays.asList(DRIPSTONE_CAVES, LUSH_CAVES);
     private static Terra terra;
 
     public static void registerRecipes(RegisterDataPackValueEvent<RecipeRegistration> event, Terra terra)
@@ -170,21 +170,31 @@ public class TerraItems
 
     public enum Essence
     {
-        GREEN_LANDSCAPE("Green Landscape", Color.ofRgb(0x336633), Arrays.asList(PLAINS, SUNFLOWER_PLAINS, FOREST, BIRCH_FOREST, FLOWER_FOREST)),
-        SWAMP_FOREST("Dark Swamp", Color.ofRgb(0x333333), Arrays.asList(DARK_FOREST, SWAMP)),
-        JUNGLE("Viney Jungle", Color.ofRgb(0x339933), Arrays.asList(Biomes.JUNGLE, BAMBOO_JUNGLE)),
-        MUSHROOMS("Mushrooms", Color.ofRgb(0x996666), Arrays.asList(MUSHROOM_FIELDS), Arrays.asList(COLD_OCEAN)),
-        SAVANNA("Dry Savanna", Color.ofRgb(0x666633), Arrays.asList(Biomes.SAVANNA, SAVANNA_PLATEAU)),
-        DESERT("Hot Desert", Color.ofRgb(0xCCCC99), Arrays.asList(Biomes.DESERT)),
-        MESA("Colorful Badlands", Color.ofRgb(0xCC6633), Arrays.asList(BADLANDS, ERODED_BADLANDS)),
-        TAIGA("Chilly Mountains", Color.ofRgb(0x333300), Arrays.asList(Biomes.TAIGA, SNOWY_TAIGA), Arrays.asList(SNOWY_BEACH, COLD_OCEAN)),
+        GREEN_LANDSCAPE("Green Landscape", Color.ofRgb(0x336633),
+                        Arrays.asList(PLAINS, SUNFLOWER_PLAINS, FOREST, BIRCH_FOREST, OLD_GROWTH_BIRCH_FOREST, MEADOW, CHERRY_GROVE),
+                        CAVE_BIOMES
+        ),
+        SWAMP("Dark Swamp", Color.ofRgb(0x333333), Arrays.asList(Biomes.SWAMP, MANGROVE_SWAMP)),
+        DARK_FOREST("Dark Forest", Color.ofRgb(0x073800), Arrays.asList(Biomes.DARK_FOREST), CAVE_BIOMES),
+        JUNGLE("Viney Jungle", Color.ofRgb(0x339933), Arrays.asList(Biomes.JUNGLE, BAMBOO_JUNGLE, SPARSE_JUNGLE)),
+        MUSHROOMS("Mushrooms", Color.ofRgb(0x996666), Arrays.asList(MUSHROOM_FIELDS)),
+        SAVANNA("Dry Savanna", Color.ofRgb(0x666633), Arrays.asList(Biomes.SAVANNA, SAVANNA_PLATEAU, WINDSWEPT_SAVANNA), CAVE_BIOMES),
+        DESERT("Hot Desert", Color.ofRgb(0xCCCC99), Arrays.asList(Biomes.DESERT), List.of(DRIPSTONE_CAVES)),
+        MESA("Colorful Badlands", Color.ofRgb(0xCC6633), Arrays.asList(BADLANDS, ERODED_BADLANDS, WOODED_BADLANDS)),
+        TAIGA("Chilly Mountains", Color.ofRgb(0x333300), Arrays.asList(Biomes.TAIGA, OLD_GROWTH_PINE_TAIGA, OLD_GROWTH_SPRUCE_TAIGA, SNOWY_TAIGA, GROVE, JAGGED_PEAKS, STONY_PEAKS, WINDSWEPT_FOREST, WINDSWEPT_GRAVELLY_HILLS, WINDSWEPT_HILLS), CAVE_BIOMES),
+
         // Special Biomes
         ICE_SPIKES("Frozen World", Color.ofRgb(0x6699CC), Arrays.asList(Biomes.ICE_SPIKES)),
+        DEEP_SEA("Deep Sea", Color.ofRgb(0x131D75), Arrays.asList(OCEAN, DEEP_FROZEN_OCEAN, COLD_OCEAN, DEEP_COLD_OCEAN, DEEP_OCEAN)),
+        SEA("Sea", Color.ofRgb(0x40ACA4), Arrays.asList(LUKEWARM_OCEAN, DEEP_LUKEWARM_OCEAN, BEACH)),
         CORAL_REEF("Coral Reef", Color.ofRgb(0xCC66CC), Arrays.asList(WARM_OCEAN)),
-        FLOWERY_FOREST("Flowery Forest", Color.ofRgb(0xCC6600), Arrays.asList(FLOWER_FOREST)),
-        // Needs special casing
+        FLOWERY_FOREST("Flowery Forest", Color.ofRgb(0xCC6600), Arrays.asList(FLOWER_FOREST), CAVE_BIOMES),
+        ENDLESS_DEPTHS("Endless Depths", Color.ofRgb(0x415F7E), Arrays.asList(DEEP_DARK)),
+
+        CAVEWORLD("Caveworld", Color.ofRgb(0x767272), CAVE_BIOMES),
+
         END("End Highlands", Color.ofRgb(0x999966), Arrays.asList(END_HIGHLANDS, END_BARRENS, END_MIDLANDS, SMALL_END_ISLANDS, THE_END)),
-        NETHER("Hellscape", Color.ofRgb(0x330000), Arrays.asList(NETHER_WASTES, CRIMSON_FOREST, WARPED_FOREST, SOUL_SAND_VALLEY, BASALT_DELTAS)),
+        NETHER("Hellscape", Color.ofRgb(0x660000), Arrays.asList(NETHER_WASTES, CRIMSON_FOREST, WARPED_FOREST, SOUL_SAND_VALLEY, BASALT_DELTAS)),
         ;
 
 
@@ -239,19 +249,47 @@ public class TerraItems
 
             final Source random = player.world().random();
 
-            final List<AttributedBiome> biomes = biomeList.stream().map(biome -> {
-                final Biome originalBiome = biome.get(player.world());
-                final BiomeAttributes biomeAttributes = BiomeAttributes.point((float) originalBiome.temperature(),
-                                                                           (float) originalBiome.humidity(),
-                                                                           random.nextFloat() * 4 - 2,
-                                                                           random.nextFloat() * 4 - 2,
-                                                                           random.nextFloat() * 4 - 2,
-                                                                           random.nextFloat() / 5,
-                                                                           0f);
-                return AttributedBiome.of(biome, biomeAttributes);
-            }).collect(Collectors.toList());
+            final var HALF_RANGE = Range.floatRange(-1f, 1f);
+            final var HALF_DEPTH = Range.floatRange(0.2f, 0.2f);
 
-            final MultiNoiseBiomeConfig multiNoiseBiomeConfig = MultiNoiseBiomeConfig.builder().addBiomes(biomes).build();
+            final List<AttributedBiome> biomes2 = new ArrayList<>();
+            var overworldBiomeDefaults = MultiNoiseBiomeConfig.overworld().attributedBiomes();
+            for (final RegistryReference<Biome> biome : biomeList)
+            {
+                if (CAVE_BIOMES.contains(biome) && this.additionalBiomeList.contains(biome))
+                {
+                    System.out.println(biome.location());
+                    final var defaultAttributes = BiomeAttributes.defaultAttributes(biome).get();
+                    System.out.println(defaultAttributes);
+                    final var biomeAttributes = BiomeAttributes.range(defaultAttributes.temperature(), // temp
+                                                                      defaultAttributes.humidity(), // humidity
+                                                                      defaultAttributes.continentalness(), // continentalness
+                                                                      Range.floatRange(-1f, 1f), // erosion
+                                                                      defaultAttributes.depth(), // depth (0.2-0.9)
+                                                                      Range.floatRange(-1f, 1f), // weirdness
+                                                                      defaultAttributes.offset());
+                    biomes2.add(AttributedBiome.of(biome, biomeAttributes));
+                }
+                else
+                {
+                    var list = overworldBiomeDefaults.stream().filter(ab -> ab.biome().equals(biome)).toList();
+                    for (final AttributedBiome attributedBiome : list)
+                    {
+                        final var defaultAttributes = attributedBiome.attributes();
+                        final var biomeAttributes = BiomeAttributes.range(HALF_RANGE, // temp
+                                                                          HALF_RANGE, // humidity
+                                                                          defaultAttributes.continentalness(), // continentalness
+                                                                          defaultAttributes.erosion(),// erosion
+                                                                          defaultAttributes.depth().min() == 0 ? defaultAttributes.depth() : HALF_DEPTH, // depth (0/1)
+                                                                          defaultAttributes.weirdness(),// weirdness
+                                                                          defaultAttributes.offset());
+                        biomes2.add(AttributedBiome.of(biome, biomeAttributes));
+                    }
+                }
+            }
+
+
+            final MultiNoiseBiomeConfig multiNoiseBiomeConfig = MultiNoiseBiomeConfig.builder().addBiomes(biomes2).build();
             final NoiseGeneratorConfig noiseGeneratorConfig;
             if (this == NETHER)
             {
@@ -260,17 +298,19 @@ public class TerraItems
             }
             else if (this == END)
             {
-                // TODO structureConfig
-                Structures.END_CITY.get();
-//                final StructureGenerationConfig endStructures = StructureGenerationConfig.builder().addStructure(Structures.ENDCITY.get(), SeparatedStructureConfig.of(6, 4, random.nextInt())).build();
                 noiseGeneratorConfig = NoiseGeneratorConfig.builder().fromValue(NoiseGeneratorConfigs.FLOATING_ISLANDS.get())
                                                            .surfaceRule(SurfaceRule.end())
                                                            .defaultBlock(BlockTypes.END_STONE.get().defaultState())
                                                            .key(ResourceKey.of(PluginTerra.TERRA_ID, "end"))
-//                                                           .structureConfig(endStructures)
                                                            .build().config();
 
                 templateBuilder.add(Keys.WORLD_TYPE, RegistryTypes.WORLD_TYPE.get().findValue(Terra.WORLD_TYPE_END).get());
+            }
+            else if (this == CAVEWORLD)
+            {
+                templateBuilder.add(Keys.SPAWN_POSITION, Vector3i.from(0, 64, 0));
+                final var caves = NoiseGeneratorConfigs.CAVES.get();
+                noiseGeneratorConfig = caves;
             }
             else
             {
@@ -279,9 +319,8 @@ public class TerraItems
             templateBuilder.add(Keys.SERIALIZATION_BEHAVIOR, SerializationBehavior.NONE);
             templateBuilder.add(Keys.DISPLAY_NAME, Component.text("Dream world by " + player.name()));
             templateBuilder.add(Keys.CHUNK_GENERATOR, ChunkGenerator.noise(BiomeProvider.multiNoise(multiNoiseBiomeConfig), noiseGeneratorConfig));
-            templateBuilder.add(Keys.SEED, random.nextLong()); // TODO check if this works
+            templateBuilder.add(Keys.SEED, random.nextLong());
             templateBuilder.add(Keys.WORLD_DIFFICULTY, Difficulties.HARD.get());
-//            templateBuilder.add(Keys.WORLD_GEN_CONFIG, WorldGenerationConfig.builder().seed(random.nextLong()).build()); // TODO or this is where the seed is set
             templateBuilder.add(Keys.IS_LOAD_ON_STARTUP, false);
             return templateBuilder.build();
         }
