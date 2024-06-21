@@ -17,24 +17,6 @@
  */
 package org.cubeengine.module.bluemapplus;
 
-import com.flowpowered.math.vector.Vector2i;
-import com.flowpowered.math.vector.Vector3d;
-import de.bluecolored.bluemap.api.BlueMapAPI;
-import de.bluecolored.bluemap.api.BlueMapMap;
-import de.bluecolored.bluemap.api.BlueMapWorld;
-import de.bluecolored.bluemap.api.gson.MarkerGson;
-import de.bluecolored.bluemap.api.markers.ExtrudeMarker;
-import de.bluecolored.bluemap.api.markers.HtmlMarker;
-import de.bluecolored.bluemap.api.markers.LineMarker;
-import de.bluecolored.bluemap.api.markers.Marker;
-import de.bluecolored.bluemap.api.markers.MarkerSet;
-import de.bluecolored.bluemap.api.math.Color;
-import de.bluecolored.bluemap.api.math.Line;
-import de.bluecolored.bluemap.api.math.Shape;
-import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.api.world.biome.Biome;
-import org.spongepowered.api.world.server.ServerLocation;
-import org.spongepowered.math.vector.Vector3i;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,8 +28,26 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import com.flowpowered.math.vector.Vector2i;
+import com.flowpowered.math.vector.Vector3d;
+import de.bluecolored.bluemap.api.BlueMapAPI;
+import de.bluecolored.bluemap.api.BlueMapMap;
+import de.bluecolored.bluemap.api.BlueMapWorld;
+import de.bluecolored.bluemap.api.gson.MarkerGson;
+import de.bluecolored.bluemap.api.markers.HtmlMarker;
+import de.bluecolored.bluemap.api.markers.LineMarker;
+import de.bluecolored.bluemap.api.markers.LineMarker.Builder;
+import de.bluecolored.bluemap.api.markers.Marker;
+import de.bluecolored.bluemap.api.markers.MarkerSet;
+import de.bluecolored.bluemap.api.markers.ShapeMarker;
+import de.bluecolored.bluemap.api.math.Color;
+import de.bluecolored.bluemap.api.math.Line;
+import de.bluecolored.bluemap.api.math.Shape;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.spongepowered.api.world.biome.Biome;
+import org.spongepowered.api.world.server.ServerLocation;
+import org.spongepowered.math.vector.Vector3i;
 
 public class BlueMapUtils
 {
@@ -91,7 +91,7 @@ public class BlueMapUtils
         return markerSet;
     }
 
-    public static ExtrudeMarker buildBiomeMarker(ServerLocation loc) {
+    public static ShapeMarker buildBiomeMarker(ServerLocation loc) {
         Biome startingBiome = loc.biome();  // Get the biome of the starting location
 
         var allPositions = new HashSet<Vector2i>();  // Set to collect all positions in the biome
@@ -134,7 +134,7 @@ public class BlueMapUtils
         }
     }
 
-    public static ExtrudeMarker buildBiomeOutline(Set<Vector2i> allPositions) {
+    public static ShapeMarker buildBiomeOutline(Set<Vector2i> allPositions) {
 
         if (allPositions.isEmpty()) {
             return null;
@@ -154,7 +154,7 @@ public class BlueMapUtils
         var outlines = connectedSets.stream().sorted(Comparator.comparingInt(Set::size)).map(
             BlueMapUtils::toShape).toList();
 
-        final var builder = ExtrudeMarker.builder().label("Biome Outline").shape(outlines.get(0), 64, 64);
+        final var builder = ShapeMarker.builder().label("Biome Outline").shape(outlines.get(0), 64);
         for (int i = 1; i < outlines.size(); i++)
         {
             builder.holes(outlines.get(i));
@@ -238,63 +238,56 @@ public class BlueMapUtils
         }
     }
 
-    public static List<LineMarker> generateGridLines(Vector3i minPos, Vector3i maxPos, int distance, int height, Color color, int width,
-                                                     int viewDistance) {
-        List<Line> lines = new ArrayList<>();
+    public static List<LineMarker> generateGridLines(Vector3i minPos, Vector3i maxPos, int distance, int height, Builder markerBuilder) {
         int minX = minPos.x();
         int minZ = minPos.z();
         int maxX = maxPos.x();
         int maxZ = maxPos.z();
 
-        // Generate vertical lines along the Z axis
+        List<Line> lines = new ArrayList<>();
         for (int x = minX; x <= maxX; x += distance) {
             Line.Builder builder = Line.builder();
             builder.addPoint(new Vector3d(x, height, minZ));
             builder.addPoint(new Vector3d(x, height, maxZ));
             lines.add(builder.build());
         }
-
-        // Generate horizontal lines along the X axis
         for (int z = minZ; z <= maxZ; z += distance) {
             Line.Builder builder = Line.builder();
             builder.addPoint(new Vector3d(minX, height, z));
             builder.addPoint(new Vector3d(maxX, height, z));
             lines.add(builder.build());
         }
-
         return lines.stream().map(line ->
-            LineMarker.builder().label("Line:" + line.getMin() + ":" + line.getMax())
-                      .line(line)
-                      .lineColor(color)
-                      .lineWidth(width)
-                      .depthTestEnabled(false)
-                      .maxDistance(viewDistance)
-                      .build()
+            markerBuilder.line(line).build()
         ).toList();
     }
 
     static void buildChunkAndRegionGrid(final BlueMapWorld bmWorld, final Vector3i min, final Vector3i max,
                                         Map<org.spongepowered.math.vector.Vector2i, List<Vector3i>> chunksByRegion)
     {
+        final var markerBuilder = LineMarker.builder().label("").depthTestEnabled(false);
         if (chunksByRegion.size() < 1000)
         {
             final var minPos = min.mul(16);
             final var maxPos = max.mul(16);
-            final var chunkLineMarkers = generateGridLines(minPos, maxPos, 16, 64,
-                                                           new Color(0xADD8E6, 0.2f), 1, 400);
+            final Color color = new Color(0xADD8E6, 0.2f);
+            markerBuilder.lineColor(color).lineWidth(1).maxDistance(400);
+            final var chunkLineMarkers = generateGridLines(minPos, maxPos, 16, 64, markerBuilder);
             for (final BlueMapMap map : bmWorld.getMaps())
             {
+                int i = 0;
                 for (final LineMarker marker : chunkLineMarkers)
                 {
-                    updateMarker(map, CHUNKS, marker, marker.getLabel());
+                    updateMarker(map, CHUNKS, marker, "chunk-line-" + i++);
                 }
             }
         }
 
         final var minRPos = min.toDouble().div(32).toInt().mul(32 * 16);
         final var maxRPos = max.toDouble().div(32).toInt().mul(32 * 16);
-        final var regionLineMarkers = generateGridLines(minRPos, maxRPos, 16*32, 65,
-                                                        new Color(0x90EE90, 0.4f), 2, Integer.MAX_VALUE);
+        final Color color = new Color(0x90EE90, 0.4f);
+        markerBuilder.lineColor(color).lineWidth(2).maxDistance(Integer.MAX_VALUE);
+        final var regionLineMarkers = generateGridLines(minRPos, maxRPos, 16*32, 65, markerBuilder);
 
         List<HtmlMarker> regionLabels = new ArrayList<>();
         for (int x = minRPos.x(); x <= maxRPos.x(); x += 16 * 32)
@@ -309,7 +302,7 @@ public class BlueMapUtils
                     continue;
                 }
                 final var label = "%d : %d".formatted(x / (16 * 32), z / (16 * 32));
-                final var marker = HtmlMarker.builder().position(pos)
+                final var marker = HtmlMarker.builder().anchor(20, 18).position(pos)
                                              .label(label)
                                              .html("""
                         <div style="background-color: #AAAAAAAA; padding: 2px; border-radius: 5px; color: #000000FF; font-size: 12px; font-weight: bold; text-align: center;">
@@ -317,8 +310,8 @@ public class BlueMapUtils
                             <div style="font-size: 8px">%d/1024</div>
                         </div>
                         """.formatted(label, chunksInRegion.size()))
-                                             .minDistance(1000)
-                                             .maxDistance(9000)
+                                             .minDistance(600)
+                                             .maxDistance(11000)
                                              .build();
                 regionLabels.add(marker);
             }
@@ -327,10 +320,10 @@ public class BlueMapUtils
 
         for (final BlueMapMap map : bmWorld.getMaps())
         {
-
+            int i = 0;
             for (final LineMarker marker : regionLineMarkers)
             {
-                updateMarker(map, REGIONS, marker, marker.getLabel());
+                updateMarker(map, REGIONS, marker, "region-line-" + i++);
             }
             for (final HtmlMarker marker : regionLabels)
             {
