@@ -17,9 +17,7 @@
  */
 package org.cubeengine.module.bluemapplus;
 
-import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import com.flowpowered.math.vector.Vector2d;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -40,9 +38,11 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.event.world.ChangeWorldBorderEvent;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.world.border.WorldBorder;
 import org.spongepowered.api.world.server.ServerWorld;
 import org.spongepowered.math.vector.Vector3i;
+import org.spongepowered.plugin.PluginContainer;
 
 
 @Singleton
@@ -54,6 +54,7 @@ public class BlueMapPlus
 
     @Inject private FileManager fm;
     @Inject private Logger logger;
+    @Inject private PluginContainer plugin;
 
     @Listener
     public void onEnable(StartedEngineEvent<Server> event)
@@ -66,29 +67,27 @@ public class BlueMapPlus
     private void updateChunkAndRegionMarkers(BlueMapAPI blueMapAPI)
     {
         logger.info("Generating Chunk and Region Markers...");
-        int i = 0;
         for (final ServerWorld world : Sponge.server().worldManager().worlds())
         {
-            final var blueMapWorld = blueMapAPI.getWorld(world);
-            if (blueMapWorld.isEmpty())
-            {
-                continue;
-            }
-            i++;
-            blueMapWorld.ifPresent(bmWorld -> {
-                final var allPositions = world.chunkPositions().toList();
-                logger.info("found {} chunks in {}", allPositions.size(), world.key().toString());
-                var chunksByRegion = allPositions.stream().collect(Collectors.groupingBy(v -> v.toDouble().div(32).toInt().toVector2(true)));
-                var min = allPositions.stream().reduce(Vector3i::min);
-                var max = allPositions.stream().reduce(Vector3i::max);
-                logger.info("found {} regions in {}", chunksByRegion.size(), world.key().toString());
-                if (min.isPresent() && max.isPresent())
-                {
-                    BlueMapUtils.buildChunkAndRegionGrid(bmWorld, min.get(), max.get().add(Vector3i.ONE), chunksByRegion);
-                }
+            blueMapAPI.getWorld(world).ifPresent(bmWorld -> {
+                Sponge.asyncScheduler().submit(Task.builder().execute(() -> generateChunkAndRegionGrid(world, bmWorld)).plugin(this.plugin).build());
             });
         }
-        logger.info("Done generating Chunk and Region Markers for {} worlds", i);
+    }
+
+    private void generateChunkAndRegionGrid(final ServerWorld world, final BlueMapWorld bmWorld)
+    {
+        final var allPositions = world.chunkPositions().toList();
+        logger.info("found {} chunks in {}", allPositions.size(), world.key().toString());
+        var chunksByRegion = allPositions.stream().collect(Collectors.groupingBy(v -> v.toDouble().div(32).toInt().toVector2(true)));
+        var min = allPositions.stream().reduce(Vector3i::min);
+        var max = allPositions.stream().reduce(Vector3i::max);
+        logger.info("found {} regions in {}", chunksByRegion.size(), world.key().toString());
+        if (min.isPresent() && max.isPresent())
+        {
+            BlueMapUtils.buildChunkAndRegionGrid(bmWorld, min.get(), max.get().add(Vector3i.ONE), chunksByRegion);
+        }
+        logger.info("Done generating Chunk and Region Markers for {}", world.key());
     }
 
     private void loadMarkers(BlueMapAPI blueMapAPI)
