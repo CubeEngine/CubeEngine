@@ -252,15 +252,14 @@ public class TerraItems
             final var HALF_RANGE = Range.floatRange(-1f, 1f);
             final var HALF_DEPTH = Range.floatRange(0.2f, 0.2f);
 
-            final List<AttributedBiome> biomes2 = new ArrayList<>();
+            final List<AttributedBiome> finalBiomes = new ArrayList<>();
             var overworldBiomeDefaults = MultiNoiseBiomeConfig.overworld().attributedBiomes();
+            var netherBiomeDefaults = MultiNoiseBiomeConfig.nether().attributedBiomes();
             for (final RegistryReference<Biome> biome : biomeList)
             {
                 if (CAVE_BIOMES.contains(biome) && this.additionalBiomeList.contains(biome))
                 {
-                    System.out.println(biome.location());
                     final var defaultAttributes = BiomeAttributes.defaultAttributes(biome).get();
-                    System.out.println(defaultAttributes);
                     final var biomeAttributes = BiomeAttributes.range(defaultAttributes.temperature(), // temp
                                                                       defaultAttributes.humidity(), // humidity
                                                                       defaultAttributes.continentalness(), // continentalness
@@ -268,7 +267,7 @@ public class TerraItems
                                                                       defaultAttributes.depth(), // depth (0.2-0.9)
                                                                       Range.floatRange(-1f, 1f), // weirdness
                                                                       defaultAttributes.offset());
-                    biomes2.add(AttributedBiome.of(biome, biomeAttributes));
+                    finalBiomes.add(AttributedBiome.of(biome, biomeAttributes));
                 }
                 else
                 {
@@ -283,13 +282,26 @@ public class TerraItems
                                                                           defaultAttributes.depth().min() == 0 ? defaultAttributes.depth() : HALF_DEPTH, // depth (0/1)
                                                                           defaultAttributes.weirdness(),// weirdness
                                                                           defaultAttributes.offset());
-                        biomes2.add(AttributedBiome.of(biome, biomeAttributes));
+                        finalBiomes.add(AttributedBiome.of(biome, biomeAttributes));
                     }
+                    list = netherBiomeDefaults.stream().filter(ab -> ab.biome().equals(biome)).toList();
+                    finalBiomes.addAll(list);
+                }
+                if (this == END)
+                {
+                    final BiomeAttributes biomeAttributes = BiomeAttributes.point((float) biome.get(Sponge.server()).temperature(),
+                                                                                  (float) biome.get(Sponge.server()).humidity(),
+                                                                                  random.nextFloat() * 4 - 2,
+                                                                                  random.nextFloat() * 4 - 2,
+                                                                                  random.nextFloat() * 4 - 2,
+                                                                                  random.nextFloat() / 5,
+                                                                                  0f);
+                    finalBiomes.add(AttributedBiome.of(biome, biomeAttributes));
                 }
             }
 
 
-            final MultiNoiseBiomeConfig multiNoiseBiomeConfig = MultiNoiseBiomeConfig.builder().addBiomes(biomes2).build();
+            final MultiNoiseBiomeConfig multiNoiseBiomeConfig = MultiNoiseBiomeConfig.builder().addBiomes(finalBiomes).build();
             final NoiseGeneratorConfig noiseGeneratorConfig;
             if (this == NETHER)
             {
@@ -308,6 +320,7 @@ public class TerraItems
             }
             else if (this == CAVEWORLD)
             {
+
                 templateBuilder.add(Keys.SPAWN_POSITION, Vector3i.from(0, 64, 0));
                 final var caves = NoiseGeneratorConfigs.CAVES.get();
                 noiseGeneratorConfig = caves;
