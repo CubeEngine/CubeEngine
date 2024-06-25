@@ -11,7 +11,6 @@ version = "1.0.1-SNAPSHOT"
 repositories {
     mavenCentral()
     gradlePluginPortal()
-    maven("https://repo.cubeengine.org")
     mavenLocal()
 }
 
