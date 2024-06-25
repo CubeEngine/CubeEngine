@@ -1,17 +1,11 @@
 plugins {
     `kotlin-dsl`
-    `maven-publish`
-    signing
 }
-
-group = "org.cubeengine.gradle"
-version = "1.0.1-SNAPSHOT"
 
 // repos **used by** this convention
 repositories {
     mavenCentral()
     gradlePluginPortal()
-    mavenLocal()
 }
 
 // pull plugins as implementation dependencies here:
@@ -26,23 +20,3 @@ dependencies {
 }
 
 fun plugin(id: String, version: String) = "$id:$id.gradle.plugin:$version"
-
-publishing {
-    repositories {
-        maven {
-            name = "cubyte"
-            val repoName = if (project.version.toString().endsWith("-SNAPSHOT")) "snapshots" else "releases"
-            url = uri("https://maven.cubyte.org/repository/$repoName/")
-            credentials(PasswordCredentials::class)
-        }
-    }
-}
-
-signing {
-    useGpgCmd()
-    sign(publishing.publications)
-}
-
-tasks.publish {
-    dependsOn(tasks.check)
-}
