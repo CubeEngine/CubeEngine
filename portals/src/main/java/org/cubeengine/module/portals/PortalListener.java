@@ -151,8 +151,8 @@ public class PortalListener
         noInteraction.put(EquipmentTypes.FEET.get(), true);
         noInteraction.put(EquipmentTypes.HEAD.get(), true);
         noInteraction.put(EquipmentTypes.LEGS.get(), true);
-        noInteraction.put(EquipmentTypes.MAIN_HAND.get(), true);
-        noInteraction.put(EquipmentTypes.OFF_HAND.get(), true);
+        noInteraction.put(EquipmentTypes.MAINHAND.get(), true);
+        noInteraction.put(EquipmentTypes.OFFHAND.get(), true);
         if (event.entities().size() == 1 && event.entities().get(0).type() == EntityTypes.ARMOR_STAND.get())
         {
             event.context().get(EventContextKeys.USED_ITEM).flatMap(item -> item.get(PortalsData.PORTAL)).ifPresent(p -> {
