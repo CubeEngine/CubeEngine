@@ -19,7 +19,6 @@ package org.cubeengine.libcube.service.command.parser;
 
 import org.cubeengine.libcube.service.command.DefaultParameterProvider;
 import org.spongepowered.api.command.CommandCause;
-import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 
 public class ServerPlayerDefaultParameterProvider implements DefaultParameterProvider<ServerPlayer>

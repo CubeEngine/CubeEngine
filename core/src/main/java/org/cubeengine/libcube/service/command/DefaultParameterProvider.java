@@ -18,9 +18,8 @@
 package org.cubeengine.libcube.service.command;
 
 import org.spongepowered.api.command.CommandCause;
+import org.spongepowered.api.command.exception.CommandException;
 
-import java.util.function.Function;
-
-public interface DefaultParameterProvider<ObjectT> extends Function<CommandCause, ObjectT> {
-
+public interface DefaultParameterProvider<ObjectT>  {
+    ObjectT apply(CommandCause t) throws CommandException;
 }

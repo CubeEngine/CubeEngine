@@ -17,6 +17,10 @@
  */
 package org.cubeengine.libcube.service.command.parser;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import net.kyori.adventure.text.Component;
 import org.cubeengine.libcube.service.command.DefaultParameterProvider;
 import org.spongepowered.api.ResourceKey;
@@ -24,6 +28,7 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.command.CommandCompletion;
 import org.spongepowered.api.command.exception.ArgumentParseException;
+import org.spongepowered.api.command.exception.CommandException;
 import org.spongepowered.api.command.parameter.ArgumentReader;
 import org.spongepowered.api.command.parameter.CommandContext;
 import org.spongepowered.api.command.parameter.Parameter;
@@ -33,12 +38,6 @@ import org.spongepowered.api.command.parameter.managed.clientcompletion.ClientCo
 import org.spongepowered.api.command.parameter.managed.clientcompletion.ClientCompletionTypes;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.world.server.ServerWorld;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class ServerWorldValueParser implements ValueParser<ServerWorld>, ValueCompleter, DefaultParameterProvider<ServerWorld>
 {
@@ -80,12 +79,13 @@ public class ServerWorldValueParser implements ValueParser<ServerWorld>, ValueCo
     }
 
     @Override
-    public ServerWorld apply(CommandCause commandCause)
+    public ServerWorld apply(CommandCause commandCause) throws CommandException
     {
         if (commandCause.audience() instanceof ServerPlayer)
         {
             return ((ServerPlayer)commandCause.audience()).world();
         }
-        return null;
+
+        throw new ArgumentParseException(Component.text("You need to define a world to use"), "", 0);
     }
 }

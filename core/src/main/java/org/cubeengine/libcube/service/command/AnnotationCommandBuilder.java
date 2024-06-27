@@ -65,6 +65,7 @@ import org.spongepowered.api.command.Command.Builder;
 import org.spongepowered.api.command.Command.Parameterized;
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.command.CommandExecutor;
+import org.spongepowered.api.command.exception.CommandException;
 import org.spongepowered.api.command.manager.CommandMapping;
 import org.spongepowered.api.command.parameter.CommandContext;
 import org.spongepowered.api.command.parameter.Parameter;
@@ -664,7 +665,7 @@ public class AnnotationCommandBuilder
         }
 
         @Override
-        public T apply(CommandContext commandContext)
+        public T apply(CommandContext commandContext) throws CommandException
         {
             if (this.optional)
             {
@@ -710,7 +711,7 @@ public class AnnotationCommandBuilder
         }
 
         @Override
-        public T apply(CommandContext commandContext)
+        public T apply(CommandContext commandContext) throws CommandException
         {
             final T instance = injector.getInstance(clazz);
             try
@@ -831,8 +832,9 @@ public class AnnotationCommandBuilder
         }
     }
 
-    public interface ContextExtractor<T> extends Function<CommandContext, T>
+    public interface ContextExtractor<T>
     {
+        T apply(CommandContext ctx) throws CommandException;
     }
 
     private static final ContextExtractor<CommandCause> COMMAND_CAUSE = CommandContext::cause;
