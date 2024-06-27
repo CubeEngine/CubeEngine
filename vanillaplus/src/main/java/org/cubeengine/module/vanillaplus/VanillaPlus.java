@@ -38,6 +38,7 @@ import org.cubeengine.module.vanillaplus.addition.SudoCommand;
 import org.cubeengine.module.vanillaplus.addition.UnlimitedFood;
 import org.cubeengine.module.vanillaplus.addition.UnlimitedItems;
 import org.cubeengine.module.vanillaplus.fix.ColoredSigns;
+import org.cubeengine.module.vanillaplus.fix.FixCommands;
 import org.cubeengine.module.vanillaplus.fix.FlymodeFixListener;
 import org.cubeengine.module.vanillaplus.fix.PaintingListener;
 import org.cubeengine.module.vanillaplus.fix.SafeLoginData;
@@ -163,6 +164,7 @@ public class VanillaPlus
 
     @Listener
     public void onRegisterCommand(RegisterCommandEvent<Parameterized> event) {
+        momu.registerCommands(event, plugin, this, FixCommands.class);
         // additions
         if (config.add.commandGod)
         {
