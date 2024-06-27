@@ -10,11 +10,6 @@ pluginManagement {
         maven("https://oss.sonatype.org/content/repositories/snapshots/")
         mavenLocal()
     }
-
-    val conventionPluginVersion: String by settings
-    plugins {
-        id("org.cubeengine.parent.module") version (conventionPluginVersion)
-    }
 }
 
 plugins {
