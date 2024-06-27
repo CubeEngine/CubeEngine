@@ -24,20 +24,17 @@ import org.cubeengine.module.locker.Locker;
 import org.cubeengine.module.locker.config.BlockLockConfig;
 import org.cubeengine.module.locker.config.EntityLockConfig;
 import org.cubeengine.module.locker.data.LockerManager;
-import org.spongepowered.api.block.BlockSnapshot;
-import org.spongepowered.api.block.transaction.BlockTransaction;
 import org.spongepowered.api.block.transaction.Operations;
-import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.entity.vehicle.Vehicle;
+import org.spongepowered.api.entity.vehicle.minecart.BlockOccupiedMinecart;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.entity.SpawnEntityEvent;
 import org.spongepowered.api.event.entity.TameEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.world.server.ServerLocation;
-import java.util.List;
 
 @Singleton
 public class LockerAutoProtectListener
@@ -95,7 +92,7 @@ public class LockerAutoProtectListener
     {
         for (Entity entity : event.entities())
         {
-            if (entity instanceof Vehicle)
+            if (entity instanceof Vehicle && !(entity instanceof BlockOccupiedMinecart))
             {
                 for (EntityLockConfig cfg : module.getConfig().entity.entities)
                 {
