@@ -6,7 +6,7 @@ plugins {
 val spongeVersion: String by project.properties
 
 dependencies {
-    implementation("org.spongepowered:spongevanilla:1.20.6-11.0.0-RC1613:universal")
+    implementation("org.spongepowered:spongevanilla:1.21-12.0.0-RC1710:universal")
     implementation("org.spongepowered:spongeapi:$spongeVersion")
     implementation(project(":core"))
     implementation(project(":vanillaplus"))
