@@ -48,10 +48,10 @@ public class FixCommands
 
     @Command(desc = "Touches all chunks to fix lighting issues")
     public void chunks(CommandCause cause, @Default @Named("in") ServerWorld world) {
-        taskManager.runTask(new ChunkGenerator(cause, world));
+        taskManager.runTask(new ChunkFixer(cause, world));
     }
 
-    private final class ChunkGenerator implements Runnable
+    private final class ChunkFixer implements Runnable
     {
         private final CommandCause cause;
         private final ServerWorld world;
@@ -59,7 +59,7 @@ public class FixCommands
         private int batchCounter = 0;
         private int iterationCounter = 0;
 
-        private ChunkGenerator(CommandCause cause, ServerWorld world)
+        private ChunkFixer(CommandCause cause, ServerWorld world)
         {
             this.cause = cause;
             this.world = world;
