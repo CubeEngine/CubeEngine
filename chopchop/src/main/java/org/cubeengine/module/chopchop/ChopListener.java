@@ -17,11 +17,17 @@
  */
 package org.cubeengine.module.chopchop;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
+import java.util.stream.IntStream;
 import com.google.inject.Inject;
 import net.kyori.adventure.sound.Sound;
+import org.cubeengine.libcube.service.task.TaskManager;
 import org.cubeengine.libcube.util.ItemUtil;
 import org.cubeengine.module.chopchop.ChopchopConfig.Tree;
 import org.spongepowered.api.Sponge;
@@ -31,10 +37,10 @@ import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.transaction.Operations;
 import org.spongepowered.api.data.Keys;
-import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.effect.sound.SoundTypes;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
+import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.event.EventContextKeys;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
@@ -42,6 +48,7 @@ import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.item.enchantment.Enchantment;
 import org.spongepowered.api.item.enchantment.EnchantmentTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.tag.BlockTypeTags;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.server.ServerLocation;
 import org.spongepowered.api.world.server.ServerWorld;
@@ -56,6 +63,8 @@ public class ChopListener
 {
     private static final Set<Direction> dir8 = EnumSet.of(NORTH, NORTHEAST, EAST, SOUTHEAST, SOUTH, SOUTHWEST, WEST, NORTHWEST);
     private Chopchop module;
+
+    @Inject private TaskManager tm;
 
     @Inject
     public ChopListener(Chopchop module)
@@ -85,16 +94,17 @@ public class ChopListener
     @Listener
     public void onChop(final ChangeBlockEvent.All event, @First ServerPlayer player)
     {
-
         if (event.transactions(Operations.BREAK.get()).count() != 1 ||
             player.itemInHand(HandTypes.MAIN_HAND).isEmpty() ||
             event.cause().context().containsKey(EventContextKeys.SIMULATED_PLAYER))
         {
             return;
         }
+
         ItemStack axe = player.itemInHand(HandTypes.MAIN_HAND);
-        if (axe == null || !axe.type().isAnyOf(DIAMOND_AXE) || axe.get(Keys.ITEM_DURABILITY).orElse(0) <= 0 ||
-           !axe.get(Keys.APPLIED_ENCHANTMENTS).orElse(emptyList()).contains(Enchantment.builder().type(EnchantmentTypes.PUNCH).level(5).build()))
+        if (!axe.type().isAnyOf(DIAMOND_AXE) ||
+            axe.get(Keys.ITEM_DURABILITY).orElse(0) <= 0 ||
+            !axe.get(Keys.APPLIED_ENCHANTMENTS).orElse(emptyList()).contains(Enchantment.of(EnchantmentTypes.PUNCH, 5)))
         {
             return;
         }
@@ -102,112 +112,83 @@ public class ChopListener
         {
             return;
         }
-        Sponge.server().causeStackManager().addContext(EventContextKeys.SIMULATED_PLAYER, player.profile());
-        int leafSounds = 0;
-        int logSounds = 0;
 
-        for (Transaction<BlockSnapshot> transaction : event.transactions())
+        event.transactions(Operations.BREAK.get())
+             .filter(trans -> isLog(trans.original().state()))
+             .filter(trans -> isSoil(trans.original().location().get().relativeTo(DOWN).blockType()))
+             .flatMap(trans -> findChopResult(player, trans.original()).stream())
+             .findFirst().ifPresent(chopResult -> chopResult.chopTree(player, axe));
+    }
+
+    private record ChopResult(Tree tree, ServerLocation origin, Set<Vector3i> logs, Set<Vector3i> leaves, Set<Vector3i> replantSaplings, List<ItemStack> stacks)
+    {
+        public void chopTree(ServerPlayer player, ItemStack axe)
         {
-            BlockType type = transaction.original().state().type();
-            ServerLocation orig = transaction.original().location().get();
-            ServerWorld world = orig.world();
-            BlockType belowType = orig.relativeTo(DOWN).blockType();
-            if (isLog(type) && isSoil(belowType))
+            var silktouch = axe.get(Keys.APPLIED_ENCHANTMENTS).orElse(List.of()).contains(Enchantment.of(EnchantmentTypes.SILK_TOUCH, 1));
+
+
+            var random = new Random();
+            final var csm = Sponge.server().causeStackManager();
+            csm.addContext(EventContextKeys.SIMULATED_PLAYER, player.profile());
+
+
+            int logs = 0;
+            int leaves = 0;
+            for (final Vector3i pos : this.logs)
             {
-                final Tree treeType = getTreeType(type);
-                Set<Vector3i> treeBlocks = findTreeBlocks(world, orig.blockPosition(), treeType);
-                if (treeBlocks.isEmpty())
-                {
-                    return;
+                if (logs++ % 5 == 0) {
+                    origin.world().playSound(Sound.sound(SoundTypes.BLOCK_WOOD_BREAK, Sound.Source.NEUTRAL, 0.5f, 0.8f), pos.toDouble());
                 }
+                origin.world().removeBlock(pos);
+            }
 
-                int logs = 0;
-                int leaves = 0;
-                Set<Vector3i> saplings = new HashSet<>();
-                for (Vector3i pos : treeBlocks)
-                {
-                    if (isLog(world.block(pos).type()))
-                    {
-                        if (!pos.equals(orig.blockPosition()))
-                        {
-                            logSounds++;
-                            if (logSounds > 5) {
-                                world.playSound(Sound.sound(SoundTypes.BLOCK_WOOD_BREAK, Sound.Source.NEUTRAL, 0.5f, 0.8f), pos.toDouble());
-                            }
-                        }
-                        logs++;
-                        world.removeBlock(pos);
-                        BlockType belowTyp = world.block(pos.add(DOWN.asBlockOffset())).type();
-                        if (isSoil(belowTyp))
-                        {
-                            saplings.add(pos);
-                        }
-                    }
-                    if (isLeaf(world, pos, treeType))
-                    {
-                        world.removeBlock(pos);
-                        leafSounds++;
-                        if (leafSounds > 3) {
-                            world.playSound(Sound.sound(SoundTypes.BLOCK_GRASS_BREAK, Sound.Source.NEUTRAL, 0.5f, 0.8f), pos.toDouble()); // TODO leaves sound?
-                        }
-                        leaves++;
-                    }
+            for (final Vector3i pos : this.leaves)
+            {
+                origin.world().removeBlock(pos);
+                if (leaves++ % 6 == 1) {
+                    origin.world().playSound(Sound.sound(SoundTypes.BLOCK_GRASS_BREAK, Sound.Source.NEUTRAL, 0.5f, 0.8f), pos.toDouble());
                 }
+            }
 
-                ItemStack log = ItemStack.builder().itemType(type.item().get()).quantity(logs).build();
+            this.stacks.add(ItemStack.of(tree.logType.item().get(), logs));
+            int saplingDrops = leaves / 20;
+            if (this.tree.leafType.isAnyOf(BlockTypes.JUNGLE_LEAVES))
+            {
+                saplingDrops = leaves / 40;
+            }
 
-                int apples = 0;
-                if (treeType.leafType == BlockTypes.JUNGLE_LEAVES.get())
-                {
-                    leaves = leaves / 40;
-                }
-                else
-                {
-                    if (treeType.leafType == BlockTypes.DARK_OAK_LEAVES.get() || treeType.leafType == BlockTypes.OAK_LEAVES.get())
-                    {
-                        apples = leaves / 200;
-                    }
-                    leaves = leaves / 20;
-                }
-                if (leaves == 0)
-                {
-                    leaves = 1;
-                }
+            saplingDrops -= replantSaplings.size();
+            if (silktouch)
+            {
+                this.stacks.add(ItemStack.of(tree.leafType.item().get(), leaves));
+            }
+            else
+            {
+                this.stacks.add(ItemStack.of(tree.saplingType.item().get(), Math.min(1, saplingDrops)));
+            }
 
-                final BlockType saplingType = treeType.saplingType;
-                if (saplingType != null)
-                {
-                    final BlockState sapState = saplingType.defaultState();
-                    if (this.module.autoplantPerm.check(player))
-                    {
-                        leaves -= saplings.size();
-                        leaves = Math.max(0, leaves);
-                        transaction.setCustom(sapState.snapshotFor(transaction.original().location().get()));
-                        saplings.forEach(p -> world.setBlock(p, sapState));
-                    }
-                }
+            if (this.tree.leafType.isAnyOf(BlockTypes.DARK_OAK_LEAVES, BlockTypes.OAK_LEAVES))
+            {
+                var apples = (int) IntStream.range(0, leaves).filter(i -> random.nextDouble() < 0.005).count();
+                this.stacks.add(ItemStack.of(APPLE, apples));
+            }
 
-                final int uses = axe.get(Keys.ITEM_DURABILITY).get() - logs;
-                axe.offer(Keys.ITEM_DURABILITY, uses);
-                player.setItemInHand(HandTypes.MAIN_HAND, axe);
+            final var sapState = tree.saplingType.defaultState();
+            for (final Vector3i replantSapling : this.replantSaplings)
+            {
+                origin.world().setBlock(replantSapling, sapState);
+            }
 
-                Sponge.server().causeStackManager().removeContext(EventContextKeys.SIMULATED_PLAYER);
-                Sponge.server().causeStackManager().pushCause(player);
-                if (apples > 0)
-                {
-                    ItemStack apple = ItemStack.builder().itemType(APPLE).quantity(apples).build();
-                    ItemUtil.spawnItem(orig, apple);
-                }
+            final int uses = axe.require(Keys.ITEM_DURABILITY) - logs;
+            axe.offer(Keys.ITEM_DURABILITY, uses);
+            player.setItemInHand(HandTypes.MAIN_HAND, axe);
 
-                if (leaves > 0)
-                {
-                    if (saplingType != null && saplingType.item().isPresent()) {
-                        ItemUtil.spawnItem(orig, ItemStack.of(saplingType.item().get(), leaves));
-                    }
-                }
+            csm.removeContext(EventContextKeys.SIMULATED_PLAYER);
+            csm.pushCause(player);
 
-                ItemUtil.spawnItem(orig, log);
-                return;
+            for (final ItemStack stack : this.stacks)
+            {
+                ItemUtil.spawnItem(origin, stack);
             }
         }
     }
@@ -224,16 +205,26 @@ public class ChopListener
         return null;
     }
 
+    private boolean isLog(BlockState state)
+    {
+        return this.isLog(state.type());
+    }
+
+
     private boolean isLog(BlockType type)
     {
         return this.module.getConfig().trees.stream().anyMatch(tree -> tree.logType == type);
     }
 
-    private Set<Vector3i> findTreeBlocks(ServerWorld world, Vector3i pos, Tree species)
+    private Optional<ChopResult> findChopResult(ServerPlayer player, BlockSnapshot original)
     {
-        Set<Vector3i> blocks = new HashSet<>();
+        var world = original.location().get().world();
+        var pos = original.position();
+        var species = getTreeType(original.state().type());
+
         Set<Vector3i> logs = new HashSet<>();
         Set<Vector3i> leaves = new HashSet<>();
+        Set<Vector3i> saplings = new HashSet<>();
 
         logs.add(pos);
         findTrunk(world, pos, pos, species, logs);
@@ -241,13 +232,19 @@ public class ChopListener
 
         if (leaves.isEmpty())
         {
-            return blocks;
+            return Optional.empty();
         }
 
-        blocks.addAll(logs);
-        blocks.addAll(leaves);
+        if (this.module.autoplantPerm.check(player))
+        {
+            BlockType belowTyp = world.block(pos.add(DOWN.asBlockOffset())).type();
+            if (isSoil(belowTyp))
+            {
+                saplings.add(pos);
+            }
+        }
 
-        return blocks;
+        return Optional.of(new ChopResult(species, original.location().get(), logs, leaves, saplings, new ArrayList<>()));
     }
 
     private void findLeaves(ServerWorld world, Set<Vector3i> logs, Set<Vector3i> finalLeaves, Tree species)

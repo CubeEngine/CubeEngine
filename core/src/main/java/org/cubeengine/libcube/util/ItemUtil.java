@@ -26,6 +26,10 @@ import org.spongepowered.api.world.server.ServerLocation;
 public class ItemUtil {
 
     public static void spawnItem(ServerLocation loc, ItemStack stack) {
+        if (stack.isEmpty())
+        {
+            return;
+        }
         Entity item = loc.createEntity(EntityTypes.ITEM.get());
         item.offer(Keys.ITEM_STACK_SNAPSHOT, stack.createSnapshot());
         loc.spawnEntity(item);
