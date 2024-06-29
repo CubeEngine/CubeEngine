@@ -27,6 +27,7 @@ import net.kyori.adventure.sound.Sound.Source;
 import net.kyori.adventure.text.Component;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.i18n.I18nTranslate.ChatType;
+import org.cubeengine.libcube.service.task.TaskManager;
 import org.cubeengine.libcube.util.EventUtil;
 import org.cubeengine.module.elevator.data.ElevatorData;
 import org.spongepowered.api.Sponge;
@@ -40,6 +41,7 @@ import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.EventContextKeys;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.block.InteractBlockEvent.Secondary;
 import org.spongepowered.api.event.filter.cause.Root;
@@ -63,13 +65,15 @@ public class ElevatorListener
     private I18n i18n;
     private Elevator module;
     private PluginContainer plugin;
+    private final TaskManager tm;
 
     @Inject
-    public ElevatorListener(I18n i18n, Elevator module, PluginContainer plugin)
+    public ElevatorListener(I18n i18n, Elevator module, PluginContainer plugin, TaskManager tm)
     {
         this.i18n = i18n;
         this.module = module;
         this.plugin = plugin;
+        this.tm = tm;
     }
 
     @Listener
@@ -253,6 +257,8 @@ public class ElevatorListener
         list.set(2, targetLine);
         list.set(3, directionLine);
         loc.offer(Keys.SIGN_LINES, list);
+
+        tm.runTaskDelayed(() -> loc.offer(Keys.SIGN_LINES, list), Ticks.of(2));
     }
 
     private Vector3i findNextSign(ServerLocation loc, Vector3i previous, Vector3i startPos, boolean up)
