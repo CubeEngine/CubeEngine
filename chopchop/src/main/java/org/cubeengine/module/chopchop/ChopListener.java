@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.stream.IntStream;
 import com.google.inject.Inject;
 import net.kyori.adventure.sound.Sound;
-import org.cubeengine.libcube.service.task.TaskManager;
 import org.cubeengine.libcube.util.ItemUtil;
 import org.cubeengine.module.chopchop.ChopchopConfig.Tree;
 import org.spongepowered.api.Sponge;
@@ -40,7 +39,6 @@ import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.effect.sound.SoundTypes;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
-import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.event.EventContextKeys;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
@@ -48,7 +46,6 @@ import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.item.enchantment.Enchantment;
 import org.spongepowered.api.item.enchantment.EnchantmentTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.tag.BlockTypeTags;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.server.ServerLocation;
 import org.spongepowered.api.world.server.ServerWorld;
@@ -63,8 +60,6 @@ public class ChopListener
 {
     private static final Set<Direction> dir8 = EnumSet.of(NORTH, NORTHEAST, EAST, SOUTHEAST, SOUTH, SOUTHWEST, WEST, NORTHWEST);
     private Chopchop module;
-
-    @Inject private TaskManager tm;
 
     @Inject
     public ChopListener(Chopchop module)
@@ -164,7 +159,7 @@ public class ChopListener
             }
             else
             {
-                this.stacks.add(ItemStack.of(tree.saplingType.item().get(), Math.min(1, saplingDrops)));
+                this.stacks.add(ItemStack.of(tree.saplingType.item().get(), Math.max(1, saplingDrops)));
             }
 
             if (this.tree.leafType.isAnyOf(BlockTypes.DARK_OAK_LEAVES, BlockTypes.OAK_LEAVES))
