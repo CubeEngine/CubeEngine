@@ -42,7 +42,7 @@ public class PortalConfig extends ReflectedYaml
         return AABB.of(location.from, location.to.add(Vector3i.ONE));
     }
 
-    public class PortalRegion implements Section
+    public static class PortalRegion implements Section
     {
         public Vector3i from;
         public Vector3i to;

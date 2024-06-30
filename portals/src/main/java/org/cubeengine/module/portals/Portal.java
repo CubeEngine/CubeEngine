@@ -18,9 +18,12 @@
 package org.cubeengine.module.portals;
 
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.sound.Sound.Source;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.util.math.MathHelper;
 import org.cubeengine.module.portals.config.PortalConfig;
+import org.spongepowered.api.effect.sound.SoundTypes;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.util.AABB;
@@ -82,6 +85,10 @@ public class Portal
         else
         {
             this.config.destination.teleport(entity, module, this.config.safeTeleport);
+            if (entity instanceof Player player)
+            {
+                player.playSound(Sound.sound(SoundTypes.ENTITY_ENDERMAN_TELEPORT, Source.NEUTRAL, 1, 1), player.position());
+            }
         }
     }
 
