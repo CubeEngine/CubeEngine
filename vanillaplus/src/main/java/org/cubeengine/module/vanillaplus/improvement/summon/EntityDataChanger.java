@@ -38,6 +38,7 @@ import org.spongepowered.api.data.type.HorseColor;
 import org.spongepowered.api.data.type.HorseColors;
 import org.spongepowered.api.data.type.ProfessionType;
 import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.Saddleable;
 import org.spongepowered.api.entity.living.Ageable;
 import org.spongepowered.api.entity.living.Living;
 import org.spongepowered.api.entity.living.animal.Cat;
@@ -46,7 +47,6 @@ import org.spongepowered.api.entity.living.animal.Pig;
 import org.spongepowered.api.entity.living.animal.Sheep;
 import org.spongepowered.api.entity.living.animal.Wolf;
 import org.spongepowered.api.entity.living.animal.horse.Horse;
-import org.spongepowered.api.entity.living.animal.horse.TameableHorse;
 import org.spongepowered.api.entity.living.monster.Creeper;
 import org.spongepowered.api.entity.living.monster.Enderman;
 import org.spongepowered.api.entity.living.monster.slime.Slime;
@@ -75,12 +75,12 @@ public class EntityDataChanger<EntityInterface>
                     }
                 });
 
-    public static final EntityDataChanger<TameableHorse> HORSE_SADDLE =
-        new EntityDataChanger<>(TameableHorse.class,
-                                new BoolEntityChanger<TameableHorse>("saddled")
+    public static final EntityDataChanger<Saddleable> HORSE_SADDLE =
+        new EntityDataChanger<>(Saddleable.class,
+                                new BoolEntityChanger<Saddleable>("saddled")
                                 {
                                     @Override
-                                    public void applyEntity(TameableHorse entity, Boolean input)
+                                    public void applyEntity(Saddleable entity, Boolean input)
                                     {
                                         entity.offer(Keys.IS_SADDLED, input);
                                     }
