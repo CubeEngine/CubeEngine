@@ -59,10 +59,6 @@ public class VanillaPlusConfig extends ReflectedYaml
         public boolean commandButcher = true;
         public int commandButcherDefaultRadius = 20;
 
-        @Comment("Also adds an alias /spawnmob for living entities only")
-        public boolean commandSummon = true;
-        public int spawnmobLimit = 20;
-
         @Comment("Improves /clear and adds some aliases")
         public boolean commandClearinventory = true;
         @Comment("Improves /difficulty")

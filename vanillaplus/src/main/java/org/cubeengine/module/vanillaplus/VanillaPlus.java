@@ -60,8 +60,6 @@ import org.cubeengine.module.vanillaplus.improvement.WeatherCommands;
 import org.cubeengine.module.vanillaplus.improvement.WhitelistCommand;
 import org.cubeengine.module.vanillaplus.improvement.removal.ButcherCommand;
 import org.cubeengine.module.vanillaplus.improvement.removal.RemoveCommands;
-import org.cubeengine.module.vanillaplus.improvement.summon.SpawnMobCommand;
-import org.cubeengine.module.vanillaplus.improvement.summon.SpawnMobStackCommand;
 import org.cubeengine.processor.Module;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.command.Command.Parameterized;
@@ -96,7 +94,6 @@ import org.spongepowered.plugin.PluginContainer;
  * ??? /setidletimeout 	Sets the time before idle players are kicked.
  * ??? /spreadplayers 	Teleports entities to random locations.
  * /stop 	Stops a server.
- * /summon (spawnmob) Summons an entity. {@link SpawnMobCommand#spawnMob}
  * /time 	Changes or queries the world's game time. {@link TimeCommands#time}
  * ??? /toggledownfall 	Toggles the weather.
  * /weather 	Sets the weather. {@link WeatherCommands#weather}
@@ -224,11 +221,6 @@ public class VanillaPlus
         if (config.improve.commandButcher)
         {
             momu.registerCommands(event, plugin, this, ButcherCommand.class);
-        }
-        if (config.improve.commandSummon)
-        {
-            momu.registerCommands(event, plugin, this, SpawnMobCommand.class);
-            momu.registerCommands(event, plugin, this, SpawnMobStackCommand.class);
         }
         if (config.improve.commandClearinventory)
         {
