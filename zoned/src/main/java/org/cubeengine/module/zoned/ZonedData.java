@@ -17,6 +17,9 @@
  */
 package org.cubeengine.module.zoned;
 
+import org.cubeengine.libcube.service.config.ConfigWorld;
+import org.cubeengine.libcube.util.math.shape.Cuboid;
+import org.cubeengine.module.zoned.config.ZoneConfig;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.data.DataRegistration;
 import org.spongepowered.api.data.Key;
@@ -25,6 +28,7 @@ import org.spongepowered.api.data.value.Value;
 import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.math.vector.Vector3d;
+import java.util.Optional;
 
 public interface ZonedData
 {
@@ -66,5 +70,21 @@ public interface ZonedData
     static boolean isSavedSelection(ItemStack stack)
     {
         return stack.get(ZONE_WORLD).isPresent();
+    }
+
+    static Optional<ZoneConfig> getSavedZone(final ItemStack stack)
+    {
+        if (isSavedSelection(stack))
+        {
+            final ZoneConfig zone = new ZoneConfig();
+            zone.world = new ConfigWorld(stack.get(ZONE_WORLD).get().asString());
+            final Vector3d min = stack.get(ZONE_MIN).get();
+            final Vector3d max = stack.get(ZONE_MAX).get();
+            final Vector3d size = max.sub(min);
+            zone.shape = new Cuboid(min, size);
+            return Optional.of(zone);
+        }
+        return Optional.empty();
+
     }
 }

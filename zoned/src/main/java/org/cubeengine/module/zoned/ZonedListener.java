@@ -91,12 +91,7 @@ public class ZonedListener
         }
 
         i18n.send(ChatType.ACTION_BAR, player, POSITIVE, "Recalled selection");
-        final ZoneConfig zone = new ZoneConfig();
-        zone.world = new ConfigWorld(itemInHand.get(ZonedData.ZONE_WORLD).get().asString());
-        final Vector3d min = itemInHand.get(ZonedData.ZONE_MIN).get();
-        final Vector3d max = itemInHand.get(ZonedData.ZONE_MAX).get();
-        final Vector3d size = max.sub(min);
-        zone.shape = new Cuboid(min, size);
+        final var zone = ZonedData.getSavedZone(itemInHand).get();
         this.setZone(player, zone);
         ShapeRenderer.showActiveZone(tm, player, this::getZone);
     }
