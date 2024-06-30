@@ -17,7 +17,8 @@
  */
 package org.cubeengine.module.portals;
 
-import java.util.Arrays;
+import java.util.List;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -32,9 +33,9 @@ import org.spongepowered.api.item.recipe.RecipeRegistration;
 import org.spongepowered.api.item.recipe.crafting.CraftingRecipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
 
-public interface PortalsItems
+public class PortalsItems
 {
-    static void registerRecipes(RegisterDataPackValueEvent<RecipeRegistration> event)
+    public static void registerRecipes(RegisterDataPackValueEvent<RecipeRegistration> event)
     {
         {
             final RecipeRegistration recipe = CraftingRecipe.shapedBuilder()
@@ -49,15 +50,22 @@ public interface PortalsItems
         }
     }
 
+    private static ItemStack PORTAL_EXIT = null;
+
     @NonNull
-    static ItemStack portalExit()
+    public static ItemStack portalExit()
     {
-        final ItemStack newTool = ItemStack.of(ItemTypes.ARMOR_STAND);
-        newTool.offer(Keys.APPLIED_ENCHANTMENTS, Arrays.asList(Enchantment.of(EnchantmentTypes.UNBREAKING, 1)));
-        newTool.offer(Keys.HIDE_ENCHANTMENTS, true);
-        newTool.offer(Keys.CUSTOM_NAME, Component.text("Portal Exit", NamedTextColor.DARK_AQUA));
-        newTool.offer(Keys.LORE, Arrays.asList(Component.text("To be used with a Saved Selection", NamedTextColor.GRAY)));
-        newTool.offer(PortalsData.PORTAL, "exit");
-        return newTool;
+        if (PORTAL_EXIT == null)
+        {
+            final ItemStack newTool = ItemStack.of(ItemTypes.ARMOR_STAND);
+            newTool.offer(Keys.APPLIED_ENCHANTMENTS, List.of(Enchantment.of(EnchantmentTypes.UNBREAKING, 1)));
+            newTool.offer(Keys.HIDE_ENCHANTMENTS, true);
+            newTool.offer(Keys.CUSTOM_NAME, Component.text("Portal Exit", NamedTextColor.DARK_AQUA));
+            newTool.offer(Keys.LORE, List.of(Component.text("To be used with a Saved Selection", NamedTextColor.GRAY)));
+            newTool.offer(PortalsData.PORTAL, "exit");
+            PORTAL_EXIT = newTool;
+        }
+
+        return PORTAL_EXIT.copy();
     }
 }

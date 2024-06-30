@@ -37,9 +37,10 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.cause.entity.MovementType;
 import org.spongepowered.api.event.cause.entity.MovementTypes;
 import org.spongepowered.api.event.entity.ChangeEntityWorldEvent;
+import org.spongepowered.api.event.entity.DestructEntityEvent;
+import org.spongepowered.api.event.entity.HarvestEntityEvent;
 import org.spongepowered.api.event.entity.MoveEntityEvent;
 import org.spongepowered.api.event.entity.SpawnEntityEvent;
-import org.spongepowered.api.event.item.inventory.DropItemEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.equipment.EquipmentType;
@@ -146,16 +147,18 @@ public class PortalListener
     @Listener
     public void onPlacePortalExit(SpawnEntityEvent.Pre event)
     {
-        final HashMap<EquipmentType, Boolean> noInteraction = new HashMap<>();
-        noInteraction.put(EquipmentTypes.CHEST.get(), true);
-        noInteraction.put(EquipmentTypes.FEET.get(), true);
-        noInteraction.put(EquipmentTypes.HEAD.get(), true);
-        noInteraction.put(EquipmentTypes.LEGS.get(), true);
-        noInteraction.put(EquipmentTypes.MAINHAND.get(), true);
-        noInteraction.put(EquipmentTypes.OFFHAND.get(), true);
         if (event.entities().size() == 1 && event.entities().get(0).type() == EntityTypes.ARMOR_STAND.get())
         {
             event.context().get(EventContextKeys.USED_ITEM).flatMap(item -> item.get(PortalsData.PORTAL)).ifPresent(p -> {
+
+                final HashMap<EquipmentType, Boolean> noInteraction = new HashMap<>();
+                noInteraction.put(EquipmentTypes.CHEST.get(), true);
+                noInteraction.put(EquipmentTypes.FEET.get(), true);
+                noInteraction.put(EquipmentTypes.HEAD.get(), true);
+                noInteraction.put(EquipmentTypes.LEGS.get(), true);
+                noInteraction.put(EquipmentTypes.MAINHAND.get(), true);
+                noInteraction.put(EquipmentTypes.OFFHAND.get(), true);
+
                 final ArmorStand entity = (ArmorStand) event.entities().get(0);
                 entity.offer(PortalsData.PORTAL, p);
                 entity.setHead(ItemStack.of(ItemTypes.PLAYER_HEAD));
@@ -167,15 +170,32 @@ public class PortalListener
     }
 
     @Listener
-    public void onBreakPortalExit(DropItemEvent.Destruct event)
+    public void onHarvestPortalExit(HarvestEntityEvent event)
     {
-        event.cause().first(ArmorStand.class).ifPresent(armorStand -> {
+        if (event.entity() instanceof ArmorStand armorStand)
+        {
             if (armorStand.get(PortalsData.PORTAL).isPresent())
             {
                 event.setCancelled(true);
-                ItemUtil.spawnItem(armorStand.serverLocation(), PortalsItems.portalExit());
             }
-        });
+        }
+    }
+
+    @Listener
+    public void onBreakPortalExit(DestructEntityEvent.Death event)
+    {
+        if (event.entity() instanceof ArmorStand armorStand)
+        {
+            if (armorStand.get(PortalsData.PORTAL).isPresent())
+            {
+                ItemUtil.spawnItem(armorStand.serverLocation(), PortalsItems.portalExit());
+                final var first = event.cause().first(ServerPlayer.class);
+                if (first.isPresent())
+                {
+                    first.get().inventory().offer(PortalsItems.portalExit());
+                }
+            }
+        }
     }
 
     private void onTeleport(ServerLocation target, Player player)
