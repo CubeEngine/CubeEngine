@@ -451,9 +451,9 @@ public class EntityDataChanger<EntityInterface>
                                 new EntityChanger<Entity, User>() {
                                     @Override
                                     public void applyEntity(Entity entity, User value) {
-                                        if (entity.supports(Keys.TAMER))
+                                        if (entity.supports(Keys.OWNER))
                                         {
-                                            entity.offer(Keys.TAMER, value.uniqueId());
+                                            entity.offer(Keys.OWNER, value.uniqueId());
                                         }
                                     }
 

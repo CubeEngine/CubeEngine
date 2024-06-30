@@ -41,7 +41,7 @@ public class TamedListener
     @Listener
     public void onInteractWithTamed(InteractEntityEvent.Secondary.On event, @First Player player)
     {
-        Optional<UUID> uuid = event.entity().get(Keys.TAMER);
+        Optional<UUID> uuid = event.entity().get(Keys.OWNER);
         if (uuid.isPresent())
         {
             final Optional<String> owner = Sponge.server().gameProfileManager().uncached().profile(uuid.get()).join().name();

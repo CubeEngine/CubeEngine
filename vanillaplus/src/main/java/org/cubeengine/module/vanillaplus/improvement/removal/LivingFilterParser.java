@@ -94,9 +94,9 @@ public class LivingFilterParser extends PermissionContainer implements ValuePars
     private final Predicate<Entity> FILTER_HOSTILE = entity -> entity instanceof Hostile;
     private final Predicate<Entity> FILTER_MONSTER = entity -> entity instanceof Hostile && !(entity instanceof Boss);
     private final Predicate<Entity> FILTER_BOSS = entity -> entity instanceof Boss;
-    private final Predicate<Entity> FILTER_ANIMAL = entity -> (entity instanceof Animal && !entity.get(Keys.TAMER).isPresent()) || entity instanceof Squid;
+    private final Predicate<Entity> FILTER_ANIMAL = entity -> (entity instanceof Animal && !entity.get(Keys.OWNER).isPresent()) || entity instanceof Squid;
     private final Predicate<Entity> FILTER_NPC = entity -> entity instanceof Villager;
-    private final Predicate<Entity> FILTER_PET = entity -> entity instanceof Animal && entity.get(Keys.TAMER).isPresent();
+    private final Predicate<Entity> FILTER_PET = entity -> entity instanceof Animal && entity.get(Keys.OWNER).isPresent();
     private final Predicate<Entity> FILTER_GOLEM = entity -> entity instanceof Golem;
     private final Predicate<Entity> FILTER_AMBIENT = entity -> entity instanceof Ambient;
 
@@ -204,7 +204,7 @@ public class LivingFilterParser extends PermissionContainer implements ValuePars
                 }
                 EntityType type = map.get(match);
 
-                list.add(entity -> entity.type().equals(type) && (!entity.get(Keys.TAMER).isPresent() || source.hasPermission(PERM_PET.getId())));
+                list.add(entity -> entity.type().equals(type) && (!entity.get(Keys.OWNER).isPresent() || source.hasPermission(PERM_PET.getId())));
             }
             else
             {
