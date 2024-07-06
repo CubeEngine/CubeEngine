@@ -19,20 +19,16 @@ package org.cubeengine.module.vanillaplus.improvement.removal;
 
 import java.util.List;
 import java.util.function.Predicate;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.Entity;
-import org.spongepowered.api.entity.EntityType;
 import org.spongepowered.api.entity.living.Ambient;
 import org.spongepowered.api.entity.living.Hostile;
 import org.spongepowered.api.entity.living.Living;
 import org.spongepowered.api.entity.living.animal.Animal;
 import org.spongepowered.api.entity.living.aquatic.Aquatic;
-import org.spongepowered.api.entity.living.aquatic.Squid;
 import org.spongepowered.api.entity.living.golem.Golem;
 import org.spongepowered.api.entity.living.monster.boss.Boss;
-import org.spongepowered.api.entity.living.trader.Trader;
-import org.spongepowered.api.entity.living.trader.Villager;
-import org.spongepowered.api.registry.RegistryTypes;
+import org.spongepowered.api.entity.living.trader.VillagerLike;
+import org.spongepowered.api.item.merchant.Merchant;
 import org.spongepowered.api.service.permission.Subject;
 
 public class LivingFilter extends EntityFilter
@@ -83,7 +79,7 @@ public class LivingFilter extends EntityFilter
                     return false;
                 }
             }
-            else if (entity instanceof Trader)
+            else if (entity instanceof VillagerLike)
             {
                 if (!perm.PERM_NPC.check(subject))
                 {
