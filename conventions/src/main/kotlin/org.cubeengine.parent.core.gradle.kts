@@ -29,9 +29,10 @@ dependencies {
     // sponge
     compileOnly("org.spongepowered:spongeapi:$spongeVersion")
 
-    val pluginGenVersion = "1.0.8"
-    compileOnly("org.cubeengine:plugin-gen:$pluginGenVersion")
-    annotationProcessor("org.cubeengine:plugin-gen:$pluginGenVersion")
+    "org.cubeengine:plugin-gen:1.0.9".also {
+        compileOnly(it)
+        annotationProcessor(it)
+    }
 
     // Testing
     val junitVersion = "5.9.1"
