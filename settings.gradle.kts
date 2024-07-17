@@ -27,6 +27,7 @@ include(
         "portals",
         "protector",
         "roles",
+        "rolecontrol",
         "teleport",
         "travel",
         "vanillaplus",

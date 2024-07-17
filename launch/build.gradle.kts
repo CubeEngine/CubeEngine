@@ -8,11 +8,13 @@ plugins {
 val spongeVersion: String by project.properties
 
 dependencies {
-    implementation("org.spongepowered:spongevanilla:1.21-12.0.0-RC1710:universal")
+    implementation("org.spongepowered:spongevanilla:1.21-12.0.0-RC1776:universal")
     implementation("org.spongepowered:spongeapi:$spongeVersion")
     implementation(project(":core"))
     implementation(project(":vanillaplus"))
     implementation(project(":discord"))
+    implementation(project(":roles"))
+    implementation(project(mapOf("path" to ":rolecontrol", "configuration" to "extraJars")))
 }
 
 tasks.withType<JavaExec>().configureEach {
