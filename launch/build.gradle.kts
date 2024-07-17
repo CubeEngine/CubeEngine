@@ -1,3 +1,5 @@
+import com.google.gson.Gson
+
 plugins {
     id("org.cubeengine.parent.root")
     application
