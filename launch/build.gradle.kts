@@ -27,11 +27,16 @@ tasks.withType<JavaExec>().configureEach {
         }
     }
 
+    data class Op(val uuid: String, val name: String, val level: Int = 4, val bypassesPlayerLimit: Boolean = true)
+
     doFirst {
         workingDir.mkdirs()
         workingDir.resolve("eula.txt").writeText("eula=true")
-        val ops = listOf("NinjaLaterne", "Faithcaio")
-        workingDir.resolve("ops.json").delete()
-        workingDir.resolve("ops.txt").writeText(ops.joinToString("\n"))
+        val ops = listOf(
+            Op(uuid = "fcd2958f-44f1-4a77-a788-d99e88eeeaaf", name = "NinjaLaterne"),
+            Op(uuid = "5d33570d-7901-474c-9005-3eeed10b7a55", name = "Faithcaio"),
+        )
+
+        workingDir.resolve("ops.json").writeText(Gson().toJson(ops))
     }
 }
