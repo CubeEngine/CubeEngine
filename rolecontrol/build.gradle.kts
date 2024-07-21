@@ -30,7 +30,8 @@ dependencies {
 }
 
 for (arch in archs) {
-    val taskSuffix = arch.split("[_-]".toRegex()).joinToString(separator = "") { it.capitalized() }
+    val taskSuffix = arch.split("[_-]".toRegex())
+        .joinToString(separator = "") { it.lowercase().replaceFirstChar(Char::uppercase) }
     val shadow = tasks.register<ShadowJar>("shadowWithNativeFor$taskSuffix") {
         from(tasks.shadowJar)
         from(nativeLibs.get().resolvedConfiguration.resolvedArtifacts.find { it.classifier == arch }?.file)
