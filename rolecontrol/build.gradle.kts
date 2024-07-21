@@ -16,15 +16,16 @@ repositories {
 
 val nativeLibs by configurations.registering
 
-val archs = listOf("x86_64", "aarch64")
+val archs = listOf("x86_32", "x86_64", "aarch64")
 
 dependencies {
     compileOnly(project(":roles"))
-    implementation("tel.schich:libdatachannel-java:1.0-SNAPSHOT") {
+    val libDataChannelVersion = "0.21.2.1-SNAPSHOT"
+    implementation(group = "tel.schich", name = "libdatachannel-java", version = libDataChannelVersion) {
         exclude("org.slf4j")
     }
     for (arch in archs) {
-        nativeLibs(group = "tel.schich", name = "libdatachannel-java", version = "1.0-SNAPSHOT", classifier = arch)
+        nativeLibs(group = "tel.schich", name = "libdatachannel-java", version = libDataChannelVersion, classifier = arch)
     }
 }
 
