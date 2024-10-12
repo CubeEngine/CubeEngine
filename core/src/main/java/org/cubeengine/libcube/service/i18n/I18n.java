@@ -182,15 +182,15 @@ public class I18n extends I18nTranslate
     {
         LanguageLoader languageLoader = service.getLanguageLoader();
         final Path languagesDir = Paths.get("assets", "cubeengine-core", "languages");
-        final InputStream langs = plugin.getContainer().openResource(pathToURI(languagesDir.resolve("languages.yml"))).get();
+        final InputStream langs = plugin.getContainer().openResource(languagesDir.resolve("languages.yml").toString()).get();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(langs)))
         {
             int i = 0;
             for (String lang : br.lines().collect(toList()))
             {
-                final URI langUri = pathToURI(languagesDir.resolve(lang + ".yml"));
-                final Optional<InputStream> is = plugin.getContainer().openResource(langUri);
+                final var langUri = languagesDir.resolve(lang + ".yml");
+                final Optional<InputStream> is = plugin.getContainer().openResource(langUri.toString());
                 if (is.isPresent())
                 {
                     i++;
@@ -219,14 +219,15 @@ public class I18n extends I18nTranslate
             String lang = language.getLocale().getLanguage();
             String full = lang + "_" + language.getLocale().getCountry();
             final Path translationsDir = Paths.get("assets", plugin.metadata().id(), "translations");
-            plugin.locateResource(pathToURI(translationsDir.resolve(lang + ".po"))).ifPresent(poUri -> {
+
+            plugin.locateResource(translationsDir.resolve(lang + ".po").toString()).ifPresent(poUri -> {
                 try
                 {
                     poFiles.add(poUri.toURL());
                 }
                 catch (MalformedURLException ignored) {}
             });
-            plugin.locateResource(translationsDir.resolve(full + ".po").toUri()).ifPresent(poUri -> {
+            plugin.locateResource(translationsDir.resolve(full + ".po").toString()).ifPresent(poUri -> {
                 try
                 {
                     poFiles.add(poUri.toURL());

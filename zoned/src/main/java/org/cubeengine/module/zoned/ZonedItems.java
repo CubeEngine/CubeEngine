@@ -18,6 +18,8 @@
 package org.cubeengine.module.zoned;
 
 import java.util.Arrays;
+import java.util.function.Predicate;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -32,6 +34,7 @@ import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.enchantment.Enchantment;
 import org.spongepowered.api.item.enchantment.EnchantmentTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.ItemStackLike;
 import org.spongepowered.api.item.recipe.RecipeRegistration;
 import org.spongepowered.api.item.recipe.crafting.CraftingRecipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
@@ -55,7 +58,7 @@ public interface ZonedItems
                   .build();
             event.register(recipe);
         }
-        final Ingredient toolIngredient = Ingredient.of(ResourceKey.of(PluginZoned.ZONED_ID, "tool_ingredient"), stack -> stack.get(ZonedData.ZONE_TYPE).isPresent(), selectionTool);
+        final Ingredient toolIngredient = Ingredient.of(ResourceKey.of(PluginZoned.ZONED_ID, "tool_ingredient"), (Predicate<ItemStack>) stack -> stack.get(ZonedData.ZONE_TYPE).isPresent(), selectionTool);
         {
             final RecipeRegistration recipe = CraftingRecipe.shapedBuilder()
                   .aisle(" t ", "ses", " i ")

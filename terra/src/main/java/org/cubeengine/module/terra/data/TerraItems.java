@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
@@ -148,7 +149,7 @@ public class TerraItems
                                      .build();
         event.register(splashRandomTerraEssence);
 
-        final Ingredient coldPotionIngredient = Ingredient.of(ResourceKey.of(PluginTerra.TERRA_ID, "cold_potion"), stack -> isTerraEssence(stack.createSnapshot()), ItemStack.of(ItemTypes.POTION));
+        final Ingredient coldPotionIngredient = Ingredient.of(ResourceKey.of(PluginTerra.TERRA_ID, "cold_potion"), (Predicate<ItemStack>) stack -> isTerraEssence(stack.asImmutable()), ItemStack.of(ItemTypes.POTION));
         final RecipeRegistration heatUpPotion = CookingRecipe.builder().type(RecipeTypes.CAMPFIRE_COOKING)
                                                      .ingredient(coldPotionIngredient)
                                                      .result(i -> TerraItems.heatedPotion(i), ItemStack.of(ItemTypes.POTION))

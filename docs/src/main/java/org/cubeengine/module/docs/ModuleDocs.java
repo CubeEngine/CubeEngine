@@ -89,7 +89,7 @@ public class ModuleDocs
         this.id = plugin.metadata().id();
         this.moduleId = mm.getModuleId(plugin);
         final Path infoPath = Paths.get("assets", plugin.metadata().id(), "info.yml");
-        final Optional<URI> infoFile = plugin.locateResource(URI.create(infoPath.toString()));
+        final Optional<URI> infoFile = plugin.locateResource(infoPath.toString());
         if (!infoFile.isPresent())
         {
             this.config = reflector.create(Info.class);
@@ -137,7 +137,7 @@ public class ModuleDocs
             // Copy Markdown pages
             for (String pageName : this.config.pages.values())
             {
-                final Optional<URI> asset = this.pc.locateResource(URI.create(pagesDir.resolve(pageName + ".md").toString()));
+                final Optional<URI> asset = this.pc.locateResource(pagesDir.resolve(pageName + ".md").toString());
                 if (asset.isPresent())
                 {
                     Files.createDirectories(modulePages);
