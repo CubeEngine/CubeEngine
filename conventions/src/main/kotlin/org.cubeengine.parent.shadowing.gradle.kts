@@ -3,7 +3,7 @@ import org.spongepowered.gradle.ore.task.PublishToOreTask
 plugins {
     `java-library` apply false
     id("org.spongepowered.gradle.ore") apply false
-    id("com.github.johnrengelman.shadow")
+    id("com.gradleup.shadow")
 }
 
 
