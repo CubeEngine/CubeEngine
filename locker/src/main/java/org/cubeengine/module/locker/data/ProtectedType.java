@@ -72,7 +72,7 @@ public enum ProtectedType
         entities.put(FURNACE_MINECART.get(), ENTITY);
         entities.put(TNT_MINECART.get(), ENTITY);
         entities.put(SPAWNER_MINECART.get(), ENTITY);
-        entities.put(BOAT.get(), ENTITY_VEHICLE);
+        entities.put(OAK_BOAT.get(), ENTITY_VEHICLE); // TODO Boat Types / use Tags
         entities.put(MINECART.get(), ENTITY_VEHICLE);
     }
 

@@ -79,7 +79,7 @@ public class Recall
     public static Optional<ItemStackSnapshot> item(Map<String, Object> data)
     {
         DataContainer container = ((DataContainer) toContainer(data));
-        return Optional.of(ItemStack.builder().fromContainer(container).build().createSnapshot());
+        return Optional.of(ItemStack.builder().fromContainer(container).build().asImmutable());
     }
 
     public static Optional<BlockSnapshot> origSnapshot(Action action)

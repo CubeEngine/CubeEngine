@@ -68,7 +68,7 @@ public class DestructReport extends EntityReport<DestructEntityEvent>
         if (entity.type() == EntityTypes.ITEM.get())
         {
             Component name = ReportUtil.name(entity);
-            ItemStack i = entity.get(Keys.ITEM_STACK_SNAPSHOT).map(ItemStackSnapshot::createStack).orElse(null);
+            ItemStack i = entity.get(Keys.ITEM_STACK_SNAPSHOT).map(ItemStackSnapshot::asMutable).orElse(null);
             Component item = Component.text("?");
             if (i != null)
             {
@@ -149,8 +149,8 @@ public class DestructReport extends EntityReport<DestructEntityEvent>
                 return false;
             }
             if (ItemStackComparators.DEFAULT.get().compare(
-                i1.map(ItemStackSnapshot::createStack).orElse(null),
-                i2.map(ItemStackSnapshot::createStack).orElse(null)) != 0)
+                i1.map(ItemStackSnapshot::asMutable).orElse(null),
+                i2.map(ItemStackSnapshot::asMutable).orElse(null)) != 0)
             {
                 return false;
             }

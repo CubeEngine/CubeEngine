@@ -58,7 +58,7 @@ public class StashCommand
         StashedInventory newStash = new StashedInventory();
         for (Inventory slot : context.inventory().slots())
         {
-            newStash.items.add(slot.poll().polledItem().createStack());
+            newStash.items.add(slot.poll().polledItem().asMutable());
         }
 
         StashedInventory replaced = stashed.put(context.uniqueId(), newStash);

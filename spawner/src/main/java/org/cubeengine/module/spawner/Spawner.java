@@ -229,7 +229,7 @@ public class Spawner
             brokenSpawners.computeIfAbsent(loc.worldKey(), k -> new HashSet<>()).add(loc.blockPosition());
 
             Entity item = player.world().createEntity(ITEM.get(), player.location().position());
-            item.offer(Keys.ITEM_STACK_SNAPSHOT, spawnerItem.createSnapshot());
+            item.offer(Keys.ITEM_STACK_SNAPSHOT, spawnerItem.asImmutable());
             Sponge.server().causeStackManager().pushCause(player);
             player.world().spawnEntity(item);
 
@@ -237,7 +237,7 @@ public class Spawner
             {
                 ItemStack eggItem = ItemStack.of(this.eggs.get(type));
                 Entity eggEntity = player.world().createEntity(ITEM.get(), player.location().position());
-                eggEntity.offer(Keys.ITEM_STACK_SNAPSHOT, eggItem.createSnapshot());
+                eggEntity.offer(Keys.ITEM_STACK_SNAPSHOT, eggItem.asImmutable());
                 player.world().spawnEntity(eggEntity);
             }
             i18n.send(ACTION_BAR, player, POSITIVE, "Dropped inactive monster spawner!");

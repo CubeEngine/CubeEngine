@@ -368,7 +368,7 @@ public class TerraListener
                 return;
             }
             final ItemStack itemInHand = player.itemInHand(HandTypes.MAIN_HAND);
-            if (TerraItems.isTerraEssence(itemInHand.createSnapshot()))
+            if (TerraItems.isTerraEssence(itemInHand.asImmutable()))
             {
                 if (itemInHand.get(TerraData.WORLD_UUID).isPresent())
                 {
@@ -389,7 +389,7 @@ public class TerraListener
                     i18n.send(ChatType.ACTION_BAR, player, MessageType.NEGATIVE, "It feels wrong to do that here.");
                     return;
                 }
-                final Essence essence = TerraItems.getEssenceForItem(itemInHand.createSnapshot()).get();
+                final Essence essence = TerraItems.getEssenceForItem(itemInHand.asImmutable()).get();
                 final ResourceKey worldKey = ResourceKey.of(PluginTerra.TERRA_ID, player.name().toLowerCase());
                 if (!futureWorlds.containsKey(worldKey) || futureWorlds.get(worldKey).isDone())
                 {

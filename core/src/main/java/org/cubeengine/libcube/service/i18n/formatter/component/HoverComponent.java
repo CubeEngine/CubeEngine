@@ -59,7 +59,7 @@ public class HoverComponent implements Component
 
     public static Component hoverItem(ItemStack item, Component component)
     {
-        return new HoverComponent(item.createSnapshot().asHoverEvent(), component);
+        return new HoverComponent(item.asImmutable().asHoverEvent(), component);
     }
     public static Component hoverItem(ItemStack item, String component)
     {

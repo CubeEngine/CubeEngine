@@ -66,7 +66,7 @@ public class ItemCommands extends PermissionContainer
     @Command(desc = "Gives the specified Item to a player")
     public void give(CommandCause context, @Default User player, ItemStackSnapshot itemstack, @Option Integer amount)
     {
-        final ItemStack item = itemstack.createStack();
+        final ItemStack item = itemstack.asMutable();
         amount = amount == null ? item.maxStackQuantity() : amount;
         if (amount <= 0)
         {
@@ -93,7 +93,7 @@ public class ItemCommands extends PermissionContainer
     @Restricted(msg = "Did you try to use {text:/give} on your new I-Tem?")
     public void item(ServerPlayer context, ItemStackSnapshot itemstack, @Option Integer amount)
     {
-        final ItemStack item = itemstack.createStack();
+        final ItemStack item = itemstack.asMutable();
         amount = amount == null ? item.maxStackQuantity() : amount;
         if (amount <= 0)
         {
