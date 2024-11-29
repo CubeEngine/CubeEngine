@@ -82,7 +82,7 @@ public class ReportUtil
 
                     ItemStack item = ItemStack.builder().fromContainer(itemData).build();
                     builder.append(Component.text(dataView.getInt(DataQuery.of("Slot")).get()).toBuilder()
-                                            .hoverEvent(item.createSnapshot().asHoverEvent()).build());
+                                            .hoverEvent(item.asImmutable().asHoverEvent()).build());
                     builder.append(Component.space());
                 }
             }

@@ -1154,8 +1154,8 @@ public class LockerManager
                 return true; // Allow all changes in player inventory
             }
 
-            final ItemStack stack1 = oldStack.createStack();
-            final ItemStack stack2 = newStack.createStack();
+            final ItemStack stack1 = oldStack.asMutable();
+            final ItemStack stack2 = newStack.asMutable();
             final int compare = ItemStackComparators.IGNORE_SIZE.get().compare(stack1, stack2);
             if (compare != 0) // Stack type changed
             {

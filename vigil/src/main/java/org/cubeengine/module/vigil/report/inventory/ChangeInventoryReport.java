@@ -72,8 +72,8 @@ public class ChangeInventoryReport extends InventoryReport<ChangeInventoryEvent>
             List<Map<String, Object>> changes = action.getData(INVENTORY_CHANGES);
             for (Map<String, Object> change : changes)
             {
-                ItemStack originStack = Recall.item(((Map<String, Object>) change.get(ORIGINAL))).get().createStack();
-                ItemStack finalStack = Recall.item(((Map<String, Object>) change.get(REPLACEMENT))).get().createStack();
+                ItemStack originStack = Recall.item(((Map<String, Object>) change.get(ORIGINAL))).get().asMutable();
+                ItemStack finalStack = Recall.item(((Map<String, Object>) change.get(REPLACEMENT))).get().asMutable();
 
                 if (COMPARATOR.compare(originStack, finalStack) == 0)
                 {
@@ -155,15 +155,15 @@ public class ChangeInventoryReport extends InventoryReport<ChangeInventoryEvent>
             }
             if (stack1.type().isAnyOf(ItemTypes.AIR))
             {
-                receiver.sendReport(this, actions, "{txt} inserted {txt}", cause, ReportUtil.name(stack2.createSnapshot()));
+                receiver.sendReport(this, actions, "{txt} inserted {txt}", cause, ReportUtil.name(stack2.asImmutable()));
             }
             else if (stack2.type().isAnyOf(ItemTypes.AIR))
             {
-                receiver.sendReport(this, actions, "{txt} took {txt}", cause, ReportUtil.name(stack1.createSnapshot()));
+                receiver.sendReport(this, actions, "{txt} took {txt}", cause, ReportUtil.name(stack1.asImmutable()));
             }
             else
             {
-                receiver.sendReport(this, actions, "{txt} swapped {txt} with {txt}", cause, ReportUtil.name(stack1.createSnapshot()), ReportUtil.name(stack2.createSnapshot()));
+                receiver.sendReport(this, actions, "{txt} swapped {txt} with {txt}", cause, ReportUtil.name(stack1.asImmutable()), ReportUtil.name(stack2.asImmutable()));
             }
         }
     }

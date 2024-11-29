@@ -278,11 +278,11 @@ public class Network
             if (!peek.isEmpty())
             {
                 final Poll pollResults = slot.poll();
-                final InventoryTransactionResult offerResult = target.offer(pollResults.polledItem().createStack());
+                final InventoryTransactionResult offerResult = target.offer(pollResults.polledItem().asImmutable());
                 InventoryTransactionResult combined = pollResults.and(offerResult);
                 for (final ItemStackSnapshot rejectedItem : offerResult.rejectedItems())
                 {
-                    final InventoryTransactionResult offerBackResult = slot.offer(rejectedItem.createStack());
+                    final InventoryTransactionResult offerBackResult = slot.offer(rejectedItem.asImmutable());
                     combined = combined.and(offerBackResult);
                 }
             }

@@ -215,7 +215,7 @@ public class InformationCommands extends PermissionContainer
                 }
                 else if (e instanceof Item)
                 {
-                    final ItemStack stack = e.get(Keys.ITEM_STACK_SNAPSHOT).get().createStack();
+                    final ItemStack stack = e.get(Keys.ITEM_STACK_SNAPSHOT).get().asMutable();
                     key = stack.type().asComponent().color(NamedTextColor.GRAY);
                 }
                 else
@@ -274,7 +274,7 @@ public class InformationCommands extends PermissionContainer
         }
         else if (entity instanceof Item)
         {
-            final ItemStack stack = entity.get(Keys.ITEM_STACK_SNAPSHOT).get().createStack();
+            final ItemStack stack = entity.get(Keys.ITEM_STACK_SNAPSHOT).get().asMutable();
             s = stack.get(Keys.DISPLAY_NAME).get().color(NamedTextColor.GRAY);
         }
         else

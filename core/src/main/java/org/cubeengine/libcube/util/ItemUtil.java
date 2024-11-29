@@ -31,7 +31,7 @@ public class ItemUtil {
             return;
         }
         Entity item = loc.createEntity(EntityTypes.ITEM.get());
-        item.offer(Keys.ITEM_STACK_SNAPSHOT, stack.createSnapshot());
+        item.offer(Keys.ITEM_STACK_SNAPSHOT, stack.asImmutable());
         loc.spawnEntity(item);
     }
 }

@@ -112,7 +112,7 @@ public class InvseeCommand extends PermissionContainer
             final StandardInventory playerInventory = player.isOnline() ? player.player().get().inventory() : (StandardInventory) player.inventory();
             viewable = ViewableInventory.builder().type(ContainerTypes.GENERIC_9X5)
                                         .slots(playerInventory.armor().slots(), 0)
-                                        .dummySlots(4, 4).item(barrier.createSnapshot())
+                                        .dummySlots(4, 4).item(barrier.asImmutable())
                                         .slots(playerInventory.offhand().slots(), 8)
                                         .slots(playerInventory.storage().slots(), 9)
                                         .slots(playerInventory.hotbar().slots(), 4*9)

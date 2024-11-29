@@ -58,7 +58,8 @@ public interface ZonedItems
                   .build();
             event.register(recipe);
         }
-        final Ingredient toolIngredient = Ingredient.of(ResourceKey.of(PluginZoned.ZONED_ID, "tool_ingredient"), (Predicate<ItemStack>) stack -> stack.get(ZonedData.ZONE_TYPE).isPresent(), selectionTool);
+        final Ingredient toolIngredient = Ingredient.of(ResourceKey.of(PluginZoned.ZONED_ID, "tool_ingredient"),
+                stack -> stack.get(ZonedData.ZONE_TYPE).isPresent(), selectionTool);
         {
             final RecipeRegistration recipe = CraftingRecipe.shapedBuilder()
                   .aisle(" t ", "ses", " i ")
