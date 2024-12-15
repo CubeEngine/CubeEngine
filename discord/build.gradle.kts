@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation("com.discord4j:discord4j-core:3.3.0-RC1") {
+    implementation("com.discord4j:discord4j-core:3.3.0-SNAPSHOT") {
         exclude(group = "com.fasterxml.jackson.core", module = "jackson-core")
         exclude(group = "io.netty", module = "netty-codec")
         exclude(group = "io.netty", module = "netty-transport")
