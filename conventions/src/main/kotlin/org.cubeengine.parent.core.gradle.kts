@@ -39,7 +39,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.slf4j:slf4j-simple:2.0.3")
+    testImplementation("org.slf4j:slf4j-simple:2.0.16")
     testImplementation("org.spongepowered:spongeapi:$spongeVersion")
 }
 
