@@ -23,7 +23,9 @@ tasks.withType<JavaExec>().configureEach {
     standardInput = System.`in`
 
     project.configurations.runtimeClasspath {
-        val spongeJar = resolvedConfiguration.getFiles { m -> m.group == "org.spongepowered" && m.name == "spongevanilla" }.firstOrNull()
+        val spongeJar = incoming.artifactView {
+            componentFilter { it is ModuleComponentIdentifier && it.group == "org.spongepowered" && it.module == "spongevanilla" }
+        }.artifacts.artifactFiles.files.firstOrNull()
         if (spongeJar != null) {
             jvmArgs = listOf("-javaagent:$spongeJar")
         } else {

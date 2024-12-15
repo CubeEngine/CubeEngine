@@ -50,7 +50,7 @@ tasks.test {
 fun getGitCommit(): String? {
     return try {
         val byteOut = ByteArrayOutputStream()
-        project.exec {
+        project.providers.exec {
             commandLine = "git rev-parse HEAD".split(" ")
             standardOutput = byteOut
         }
