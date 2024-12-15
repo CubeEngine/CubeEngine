@@ -35,7 +35,7 @@ dependencies {
     }
 
     // Testing
-    val junitVersion = "5.9.1"
+    val junitVersion = "5.11.3"
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
