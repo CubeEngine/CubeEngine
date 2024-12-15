@@ -14,5 +14,5 @@ dependencies {
     // Message formatting
     api("org.cubeengine:dirigent:5.0.2")
     // Other stuff
-    api("org.ocpsoft.prettytime:prettytime:5.0.4.Final")
+    api("org.ocpsoft.prettytime:prettytime:5.0.9.Final")
 }
