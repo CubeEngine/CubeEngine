@@ -41,9 +41,8 @@ buildscript {
 
 inline fun <reified T> ObjectMapper.decoding(): BodyHandler<T> {
     val ref = object : TypeReference<T>() {}
-    return BodyHandler<T> { info ->
+    return BodyHandler<T> {
         BodySubscribers.mapping(BodySubscribers.ofByteArray()) {
-            // println("Request output: ${info.statusCode()} -> ${String(it)}")
             this@decoding.readValue(it, ref)
         }
     }
