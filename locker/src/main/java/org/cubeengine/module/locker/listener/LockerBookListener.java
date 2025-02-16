@@ -61,7 +61,7 @@ public class LockerBookListener
     }
 
     @Listener
-    public void onInteractBlock(InteractBlockEvent.Secondary event, @Root ServerPlayer player)
+    public void onInteractBlock(InteractBlockEvent.Secondary.Pre event, @Root ServerPlayer player)
     {
         if (!EventUtil.isMainHand(event.context()))
         {

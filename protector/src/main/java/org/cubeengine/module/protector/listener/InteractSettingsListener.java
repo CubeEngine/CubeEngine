@@ -122,7 +122,7 @@ public class InteractSettingsListener extends PermissionContainer
 
 
     @Listener(order = Order.EARLY)
-    public void onUse(InteractBlockEvent.Secondary event, @Root ServerPlayer player)
+    public void onUse(InteractBlockEvent.Secondary.Pre event, @Root ServerPlayer player)
     {
         final ServerLocation loc = player.world().location(event.interactionPoint());
         // cause when the player tries to place a block and it cannot the client will not send the clicked location

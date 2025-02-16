@@ -290,7 +290,7 @@ public class Spawner
 
     @SuppressWarnings("unchecked")
     @Listener(order = POST)
-    public void onInteract(InteractBlockEvent.Secondary event, @First ServerPlayer player)
+    public void onInteract(InteractBlockEvent.Secondary.Pre event, @First ServerPlayer player)
     {
         final ServerLocation block = event.block().location().get();
         if (block.blockType().isAnyOf(BlockTypes.SPAWNER)

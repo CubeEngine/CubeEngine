@@ -189,7 +189,7 @@ public class ElevatorListener
         }
         // else no sneak
 
-        if (event instanceof InteractBlockEvent.Secondary && player.hasPermission(module.getPerm().USE.getId()))
+        if (event instanceof InteractBlockEvent.Secondary.Pre sPreEvent && player.hasPermission(module.getPerm().USE.getId()))
         {
             if (target.isPresent())
             {
@@ -198,7 +198,7 @@ public class ElevatorListener
                 if (!player.world().get(target.get(), ElevatorData.OWNER).isPresent())
                 {
                     updateSign(loc, null);
-                    ((Secondary)event).setCancelled(true);
+                    sPreEvent.setCancelled(true);
                     return;
                 }
                 ServerLocation targetLoc = ServerLocation.of(player.world(), pPos.x(), sign.y() -1, pPos.z());
@@ -215,7 +215,7 @@ public class ElevatorListener
                 {
                     i18n.send(ChatType.ACTION_BAR, player, NEGATIVE, "Target obstructed");
                 }
-                ((Secondary)event).setCancelled(true);
+                sPreEvent.setCancelled(true);
             }
             else if (owner.isPresent())
             {
@@ -224,11 +224,11 @@ public class ElevatorListener
             }
         }
 
-        if (event instanceof InteractBlockEvent.Secondary && !itemInHand.isEmpty())
+        if (event instanceof InteractBlockEvent.Secondary.Pre sPreEvent && !itemInHand.isEmpty())
         {
             if (player.hasPermission(module.getPerm().CREATE.getId()) && itemInHand.type().isAnyOf(module.getConfig().creationItem))
             {
-                ((Secondary)event).setCancelled(true);
+                sPreEvent.setCancelled(true);
             }
         }
     }

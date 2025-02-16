@@ -80,10 +80,10 @@ public class ToolListener
 
                 ((Start)event).setCancelled(true);
             }
-            else if (event instanceof InteractBlockEvent.Secondary)
+            else if (event instanceof InteractBlockEvent.Secondary.Pre)
             {
                 loc = event.block().location().get().relativeTo(event.targetSide());
-                ((Secondary)event).setCancelled(true);
+                ((Secondary.Pre)event).setCancelled(true);
             }
             else
             {

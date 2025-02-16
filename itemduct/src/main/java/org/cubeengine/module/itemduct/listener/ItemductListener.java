@@ -55,7 +55,7 @@ public class ItemductListener
     @Inject private ItemductManager manager;
 
     @Listener
-    public void onInteractPiston(InteractBlockEvent.Secondary event, @Root ServerPlayer player)
+    public void onInteractPiston(InteractBlockEvent.Secondary.Pre event, @Root ServerPlayer player)
     {
         if (!EventUtil.isMainHand(event.context()))
         {

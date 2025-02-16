@@ -358,7 +358,7 @@ public class TerraListener
     }
 
     @Listener
-    public void onStartPotionHeatup(InteractBlockEvent.Secondary event, @First ServerPlayer player)
+    public void onStartPotionHeatup(InteractBlockEvent.Secondary.Pre event, @First ServerPlayer player)
     {
         if (event.block().state().type().isAnyOf(BlockTypes.CAMPFIRE))
         {

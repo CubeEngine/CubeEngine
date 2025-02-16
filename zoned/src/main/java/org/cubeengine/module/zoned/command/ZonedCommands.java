@@ -219,7 +219,7 @@ public class ZonedCommands extends DispatcherCommand
     public void circuitSelect(ServerPlayer player)
     {
         Set<Direction> directions = EnumSet.of(Direction.DOWN, Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
-        em.listenUntil(this.module.getClass(), InteractBlockEvent.Secondary.class, e -> e.cause().root().equals(player), e -> this.circuitSelect(e, player, directions));
+        em.listenUntil(this.module.getClass(), InteractBlockEvent.Secondary.Pre.class, e -> e.cause().root().equals(player), e -> this.circuitSelect(e, player, directions));
         i18n.send(player, POSITIVE, "Select a piece of your redstone circuit.");
     }
 
@@ -240,7 +240,7 @@ public class ZonedCommands extends DispatcherCommand
         i18n.send(context, POSITIVE, "Part {number} does not exist yet", part);
     }
 
-    private boolean circuitSelect(InteractBlockEvent.Secondary e, ServerPlayer player, Set<Direction> directions)
+    private boolean circuitSelect(InteractBlockEvent.Secondary.Pre e, ServerPlayer player, Set<Direction> directions)
     {
         if (!EventUtil.isMainHand(e.context()))
         {

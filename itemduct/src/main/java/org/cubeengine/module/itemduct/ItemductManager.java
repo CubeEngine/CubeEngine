@@ -144,7 +144,7 @@ public class ItemductManager
         ItemductEffects.playNetworkEffects(network);
     }
 
-    public void activateNetwork(InteractBlockEvent.Secondary event, ServerPlayer player, ItemStack itemInHand, NetworkFilter networkFilter) {
+    public void activateNetwork(InteractBlockEvent.Secondary.Pre event, ServerPlayer player, ItemStack itemInHand, NetworkFilter networkFilter) {
         if (networkFilter.filterLoc.blockType().isAnyOf(BlockTypes.OBSERVER))
         {
             if (!perms.ACTIVATE_OBSERVER.check(player)) {

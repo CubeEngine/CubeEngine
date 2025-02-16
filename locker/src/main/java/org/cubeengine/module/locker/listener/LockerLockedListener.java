@@ -74,7 +74,7 @@ public class LockerLockedListener
     }
 
     @Listener
-    public void onInteractBlock(InteractBlockEvent.Secondary event, @Root ServerPlayer player)
+    public void onInteractBlock(InteractBlockEvent.Secondary.Pre event, @Root ServerPlayer player)
     {
         final Optional<ServerLocation> serverLoc = event.block().location();
         final DataHolder.Mutable blockEntityOrLocation = lockerManager.getDataHolderAtLoc(serverLoc.orElse(null));
