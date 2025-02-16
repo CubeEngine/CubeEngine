@@ -29,7 +29,8 @@ dependencies {
     // sponge
     compileOnly("org.spongepowered:spongeapi:$spongeVersion")
 
-    "org.cubeengine:plugin-gen:1.0.9".also {
+
+    "org.cubeengine:plugin-gen:1.0.10-SNAPSHOT".also {
         compileOnly(it)
         annotationProcessor(it)
     }
@@ -78,6 +79,7 @@ tasks.withType<JavaCompile>().configureEach {
             pluginGenArg("name", moduleName),
             pluginGenArg("team", orgName),
             pluginGenArg("url", orgUrl),
+            // TODO libCubeVersion is not Set?
             pluginGenArg("libcube.version", project.properties["libCubeVersion"]),
             pluginGenArg("sponge.version", spongeVersion),
         )
