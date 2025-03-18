@@ -27,6 +27,7 @@ import com.google.inject.Singleton;
 import org.cubeengine.libcube.ModuleManager;
 import org.cubeengine.libcube.service.command.DefaultParameterProvider;
 import org.cubeengine.libcube.service.command.annotation.ParserFor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.module.protector.RegionManager;
 import org.cubeengine.module.zoned.ZoneManager;
@@ -53,7 +54,7 @@ import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEGATIVE
 
 @Singleton
 @ParserFor(Region.class)
-public class RegionParser implements ValueParser<Region>, ValueCompleter, DefaultParameterProvider<Region>
+public class RegionParser implements CompletableParser<Region>, DefaultParameterProvider<Region>
 {
 
     private ZoneManager zoneMan;

@@ -58,7 +58,6 @@ import org.spongepowered.api.effect.potion.PotionEffectTypes;
 import org.spongepowered.api.effect.sound.SoundTypes;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
-import org.spongepowered.api.event.EventContextKeys;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.block.entity.CookingEvent;
@@ -76,7 +75,7 @@ import org.spongepowered.api.world.border.WorldBorder.Builder;
 import org.spongepowered.api.world.server.ServerLocation;
 import org.spongepowered.api.world.server.ServerWorld;
 import org.spongepowered.api.world.server.WorldManager;
-import org.spongepowered.api.world.server.WorldTemplate;
+import org.spongepowered.api.world.server.storage.ServerWorldProperties;
 import org.spongepowered.math.vector.Vector3i;
 
 @Singleton
@@ -96,13 +95,13 @@ public class TerraListener
     private class WorldGeneration
     {
         private ResourceKey worldKey;
-        private WorldTemplate template;
-        private CompletableFuture<ServerWorld> worldFuture;
+        private ServerWorldProperties.LoadOptions loadOptions;
+        private CompletableFuture<Optional<ServerWorld>> worldFuture;
 
-        public WorldGeneration(ResourceKey worldKey, WorldTemplate template)
+        public WorldGeneration(ResourceKey worldKey, ServerWorldProperties.LoadOptions loadOptions)
         {
             this.worldKey = worldKey;
-            this.template = template;
+            this.loadOptions = loadOptions;
         }
 
         private void generateWorld()
@@ -118,7 +117,7 @@ public class TerraListener
             }
 
             // Save Template and Load
-            this.worldFuture = worldDeletedFuture.thenCompose(b -> wm.loadWorld(template));
+            this.worldFuture = worldDeletedFuture.thenCompose(b -> wm.loadWorld(worldKey, loadOptions));
 
             this.worldFuture.handle((w, t) -> {
                 if (t != null)
@@ -143,7 +142,11 @@ public class TerraListener
         {
             try
             {
-                return this.worldFuture.get();
+                final var optWorld = this.worldFuture.get();
+                if (optWorld.isEmpty()) {
+                    throw new IllegalStateException("World did not load? %s".formatted(worldKey));
+                }
+                return optWorld.get();
             }
             catch (InterruptedException | ExecutionException e)
             {
@@ -399,11 +402,11 @@ public class TerraListener
                     this.potions.put(player.uniqueId(), potionUuid);
                     itemInHand.offer(TerraData.POTION_UUID, potionUuid);
 
-                    final WorldTemplate template = essence.createWorldTemplate(player, worldKey);
+                    final var loadOptions = essence.createWorldLoadOptions(player);
 
                     this.evacuateWorld(worldKey);
 
-                    final WorldGeneration worldGeneration = new WorldGeneration(worldKey, template);
+                    final WorldGeneration worldGeneration = new WorldGeneration(worldKey, loadOptions);
                     futureWorlds.put(worldKey, worldGeneration);
                     worldGenerationQueue.add(worldGeneration);
 

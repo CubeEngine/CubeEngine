@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.cubeengine.libcube.service.command.DefaultParameterProvider;
 import org.cubeengine.libcube.service.command.annotation.ParserFor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.module.roles.service.subject.FileSubject;
 import org.spongepowered.api.command.CommandCause;
@@ -41,7 +42,7 @@ import java.util.Optional;
 
 @Singleton
 @ParserFor(Tristate.class)
-public class TristateParser implements DefaultParameterProvider<Tristate>, ValueParser<Tristate>, ValueCompleter
+public class TristateParser implements DefaultParameterProvider<Tristate>, CompletableParser<Tristate>
 {
     private I18n i18n;
 

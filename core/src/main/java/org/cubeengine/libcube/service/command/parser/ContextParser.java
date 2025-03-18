@@ -35,6 +35,7 @@ import org.spongepowered.api.command.parameter.CommandContext.Builder;
 import org.spongepowered.api.command.parameter.Parameter.Key;
 import org.spongepowered.api.command.parameter.managed.ValueCompleter;
 import org.spongepowered.api.command.parameter.managed.ValueParser;
+import org.spongepowered.api.registry.RegistryHolder;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.world.server.ServerWorld;
 
@@ -44,8 +45,14 @@ import static org.spongepowered.api.service.context.Context.WORLD_KEY;
 
 @Singleton
 @ParserFor(Context.class)
-public class ContextParser implements ValueParser<Context>, ValueCompleter, DefaultParameterProvider<Context>
+public class ContextParser implements CompletableParser<Context>, DefaultParameterProvider<Context>
 {
+
+    @Override
+    public ContextParser bind(final RegistryHolder registryHolder) {
+        return this;
+    }
+
     private final I18n i18n;
 
     @Inject

@@ -23,6 +23,7 @@ import java.util.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.cubeengine.libcube.service.command.annotation.ParserFor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.module.vigil.report.Report;
 import org.cubeengine.module.vigil.report.ReportManager;
 import org.spongepowered.api.command.CommandCompletion;
@@ -36,7 +37,7 @@ import org.spongepowered.api.command.parameter.managed.ValueParser;
 
 @ParserFor(Report.class)
 @Singleton
-public class ReportParser implements ValueParser<Report>, ValueCompleter
+public class ReportParser implements CompletableParser<Report>
 {
 
     public static final String REPORT_BASE = "org.cubeengine.module.vigil.report";

@@ -32,6 +32,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.cubeengine.libcube.service.command.DefaultParameterProvider;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.matcher.StringMatcher;
 import org.cubeengine.libcube.service.permission.Permission;
@@ -67,7 +68,7 @@ import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEGATIVE;
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEUTRAL;
 
-public class LivingFilterParser extends PermissionContainer implements ValueParser<LivingFilter>, DefaultParameterProvider<LivingFilter>, ValueCompleter
+public class LivingFilterParser extends PermissionContainer implements CompletableParser<LivingFilter>, DefaultParameterProvider<LivingFilter>
 {
     private I18n i18n;
     private StringMatcher sm;

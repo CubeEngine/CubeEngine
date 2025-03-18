@@ -25,14 +25,11 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.sound.Sound.Source;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.apache.logging.log4j.Logger;
 import org.cubeengine.libcube.util.EventUtil;
 import org.cubeengine.processor.Module;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.data.type.HandTypes;
-import org.spongepowered.api.data.type.PortionType;
 import org.spongepowered.api.effect.particle.ParticleEffect;
 import org.spongepowered.api.effect.particle.ParticleTypes;
 import org.spongepowered.api.effect.sound.SoundTypes;
@@ -44,12 +41,12 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.InteractEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.merchant.TradeOffer;
 import org.spongepowered.api.item.potion.PotionTypes;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.math.vector.Vector3d;
 
 @Singleton
@@ -65,9 +62,9 @@ public class Traders
     }
 
     @Listener
-    public void onRegisterRecipe(RegisterDataPackValueEvent<RecipeRegistration> event)
+    public void onRegisterRecipe(RegisterRegistryValueEvent event)
     {
-        TradersItems.register(event);
+        event.registry(RegistryTypes.RECIPE, TradersItems::register);
     }
 
     @Listener

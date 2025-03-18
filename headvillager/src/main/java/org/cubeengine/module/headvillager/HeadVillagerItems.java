@@ -23,10 +23,10 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.data.Keys;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.item.recipe.Recipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
 import org.spongepowered.api.item.recipe.crafting.ShapedCraftingRecipe;
 import org.spongepowered.api.profile.GameProfile;
@@ -35,15 +35,14 @@ import org.spongepowered.api.profile.property.ProfileProperty;
 public interface HeadVillagerItems {
 
 
-    static void register(RegisterDataPackValueEvent<RecipeRegistration> event)
+    static void register(RegisterRegistryValueEvent.RegistryStep<Recipe<?>> event)
     {
-        RecipeRegistration recipe = ShapedCraftingRecipe.builder().aisle("eee", "ehe", "eee")
+        var recipe = ShapedCraftingRecipe.builder().aisle("eee", "ehe", "eee")
                             .where('e', Ingredient.of(ItemTypes.EMERALD_BLOCK))
                             .where('h', Ingredient.of(ItemTypes.DRAGON_HEAD))
                             .result(headItem())
-                            .key(ResourceKey.of(PluginHeadVillager.HEADVILLAGER_ID, "head"))
                             .build();
-        event.register(recipe);
+        event.register(ResourceKey.of(PluginHeadVillager.HEADVILLAGER_ID, "head"), recipe);
     }
 
     static ItemStack headItem()

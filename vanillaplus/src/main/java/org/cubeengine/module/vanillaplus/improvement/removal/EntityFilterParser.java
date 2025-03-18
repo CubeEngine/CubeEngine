@@ -28,6 +28,7 @@ import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.util.StringUtils;
 import org.spongepowered.api.ResourceKey;
@@ -53,7 +54,7 @@ import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEGATIVE
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.NEUTRAL;
 import static org.spongepowered.api.entity.EntityTypes.*;
 
-public class EntityFilterParser implements ValueParser<EntityFilter>, ValueCompleter
+public class EntityFilterParser implements CompletableParser<EntityFilter>
 {
     private I18n i18n;
 

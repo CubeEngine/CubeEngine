@@ -24,7 +24,6 @@ import org.cubeengine.processor.Module;
 import org.spongepowered.api.block.entity.BlockEntity;
 import org.spongepowered.api.block.transaction.Operations;
 import org.spongepowered.api.data.Keys;
-import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.EventContextKeys;
 import org.spongepowered.api.event.Listener;
@@ -33,8 +32,8 @@ import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.block.entity.ChangeSignEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
+import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.server.ServerLocation;
 
@@ -56,10 +55,10 @@ public class Mechanism
     }
 
     @Listener
-    public void onRecipeRegister(RegisterDataPackValueEvent<RecipeRegistration>event)
+    public void onRecipeRegister(RegisterRegistryValueEvent event)
     {
         this.manager.init();
-        MechanismItems.registerRecipes(event, manager);
+        event.registry(RegistryTypes.RECIPE, step -> MechanismItems.registerRecipes(step, manager));
     }
 
     @Listener

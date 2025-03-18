@@ -27,8 +27,6 @@ import org.spongepowered.api.command.exception.ArgumentParseException;
 import org.spongepowered.api.command.parameter.ArgumentReader;
 import org.spongepowered.api.command.parameter.CommandContext;
 import org.spongepowered.api.command.parameter.Parameter;
-import org.spongepowered.api.command.parameter.managed.ValueCompleter;
-import org.spongepowered.api.command.parameter.managed.ValueParser;
 import org.spongepowered.api.command.parameter.managed.clientcompletion.ClientCompletionType;
 import org.spongepowered.api.command.parameter.managed.clientcompletion.ClientCompletionTypes;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
@@ -39,7 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class ServerWorldPropertiesValueParser implements ValueParser<ServerWorldProperties>, ValueCompleter, DefaultParameterProvider<ServerWorldProperties>
+public class ServerWorldPropertiesValueParser implements CompletableParser<ServerWorldProperties>, DefaultParameterProvider<ServerWorldProperties>
 {
 
     @Override

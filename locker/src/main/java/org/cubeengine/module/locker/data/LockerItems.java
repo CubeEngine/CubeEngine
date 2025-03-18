@@ -22,16 +22,16 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.cubeengine.module.locker.PluginLocker;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.data.Keys;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.item.recipe.Recipe;
 import org.spongepowered.api.item.recipe.crafting.CraftingRecipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
 
 public interface LockerItems
 {
-    static void registerRecipes(RegisterDataPackValueEvent<RecipeRegistration>event)
+    static void registerRecipes(RegisterRegistryValueEvent.RegistryStep<Recipe<?>> event)
     {
         final ItemStack lockerBook = ItemStack.of(ItemTypes.ENCHANTED_BOOK);
         lockerBook.offer(LockerData.MODE, LockerMode.INFO_CREATE.name());
@@ -42,13 +42,12 @@ public interface LockerItems
                                            ProtectionFlag.ENTITY_DAMAGE.flagValue |
                                            ProtectionFlag.NOTIFY_ACCESS.flagValue);
         lockerBook.offer(Keys.CUSTOM_NAME, Component.text("Locker ").append(ItemTypes.BOOK.get().asComponent()).color(NamedTextColor.DARK_PURPLE));
-        final RecipeRegistration lockerBookRecipe = CraftingRecipe.shapedBuilder()
+        final var lockerBookRecipe = CraftingRecipe.shapedBuilder()
             .aisle("kkk", "kbk", "kkk")
             .where('k', Ingredient.of(ItemTypes.TRIPWIRE_HOOK))
             .where('b', Ingredient.of(ItemTypes.BOOK))
             .result(lockerBook)
-            .key(ResourceKey.of(PluginLocker.LOCKER_ID, "lockerbook"))
             .build();
-        event.register(lockerBookRecipe);
+        event.register(ResourceKey.of(PluginLocker.LOCKER_ID, "lockerbook"), lockerBookRecipe);
     }
 }

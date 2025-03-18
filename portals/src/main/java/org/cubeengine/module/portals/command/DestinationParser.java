@@ -25,6 +25,7 @@ import java.util.Random;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.cubeengine.libcube.service.command.annotation.ParserFor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.module.portals.Portal;
 import org.cubeengine.module.portals.Portals;
@@ -46,7 +47,7 @@ import org.spongepowered.api.world.server.ServerWorld;
 
 @Singleton
 @ParserFor(Destination.class)
-public class DestinationParser implements ValueParser<Destination>, ValueCompleter
+public class DestinationParser implements CompletableParser<Destination>
 {
     private final Portals module;
     private I18n i18n;

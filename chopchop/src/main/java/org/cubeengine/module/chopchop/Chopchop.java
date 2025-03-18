@@ -37,15 +37,16 @@ import org.spongepowered.api.entity.attribute.AttributeModifier;
 import org.spongepowered.api.entity.attribute.AttributeOperations;
 import org.spongepowered.api.entity.attribute.type.AttributeTypes;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.item.enchantment.Enchantment;
 import org.spongepowered.api.item.enchantment.EnchantmentTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.equipment.EquipmentTypes;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.item.recipe.Recipe;
 import org.spongepowered.api.item.recipe.crafting.CraftingRecipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
+import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.plugin.PluginContainer;
 
 @Singleton
@@ -56,7 +57,6 @@ public class Chopchop
     @Inject private PluginContainer plugin;
     @Inject private PermissionManager pm;
     @ModuleListener private ChopListener listener;
-    private RecipeRegistration recipe;
     protected Permission usePerm;
     protected Permission autoplantPerm;
 
@@ -68,7 +68,12 @@ public class Chopchop
     }
 
     @Listener
-    public void onRegistry(RegisterDataPackValueEvent<RecipeRegistration>event)
+    public void onRegistry(RegisterRegistryValueEvent event)
+    {
+        event.registry(RegistryTypes.RECIPE, this::registerRecipes);
+    }
+
+    private void registerRecipes(RegisterRegistryValueEvent.RegistryStep<Recipe<?>> event)
     {
         ItemStack axe = ItemStack.of(DIAMOND_AXE, 1);
         axe.offer(Keys.APPLIED_ENCHANTMENTS, singletonList(Enchantment.builder().type(EnchantmentTypes.PUNCH).level(5).build()));
@@ -80,14 +85,14 @@ public class Chopchop
         final AttributeModifier multiply0 = AttributeModifier.builder().key(ResourceKey.of("chopchop", "no_attack")).amount(-1).operation(AttributeOperations.MULTIPLY_BASE).build();
         axe.addAttributeModifier(AttributeTypes.ATTACK_DAMAGE, multiply0, EquipmentTypes.MAINHAND);
 
-        this.recipe = CraftingRecipe.shapedBuilder()
+
+        var recipe = CraftingRecipe.shapedBuilder()
                 .aisle("aa", "as", " s")
                 .where('a', Ingredient.of(DIAMOND_AXE))
                 .where('s', Ingredient.of(OAK_LOG))
                 .result(axe)
-                .key(ResourceKey.of(plugin, "chopchop"))
                 .build();
-        event.register(recipe);
+        event.register(ResourceKey.of(plugin, "chopchop"), recipe);
     }
 
     public ChopchopConfig getConfig()

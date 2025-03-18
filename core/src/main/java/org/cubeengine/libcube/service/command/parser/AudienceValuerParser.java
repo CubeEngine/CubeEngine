@@ -30,10 +30,12 @@ import org.spongepowered.api.command.parameter.CommandContext.Builder;
 import org.spongepowered.api.command.parameter.Parameter.Key;
 import org.spongepowered.api.command.parameter.managed.ValueCompleter;
 import org.spongepowered.api.command.parameter.managed.ValueParser;
+import org.spongepowered.api.registry.RegistryHolder;
 import org.spongepowered.api.util.Nameable;
 
-public class AudienceValuerParser implements ValueParser<Audience>, ValueCompleter
+public class AudienceValuerParser implements CompletableParser<Audience>
 {
+
     @Override
     public List<CommandCompletion> complete(CommandContext context, String currentInput)
     {

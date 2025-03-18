@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.cubeengine.libcube.service.command.annotation.ParserFor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.spongepowered.api.command.CommandCompletion;
 import org.spongepowered.api.command.exception.ArgumentParseException;
@@ -37,7 +38,7 @@ import static org.cubeengine.libcube.util.StringUtils.startsWithIgnoreCase;
 
 @Singleton
 @ParserFor(Kit.class)
-public class KitParser implements ValueParser<Kit>, ValueCompleter
+public class KitParser implements CompletableParser<Kit>
 {
     private final KitManager manager;
     private I18n i18n;

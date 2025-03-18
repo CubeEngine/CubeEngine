@@ -15,31 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.cubeengine.module.writer;
+package org.cubeengine.libcube.service.command.parser;
 
-import com.google.inject.Singleton;
-import org.cubeengine.processor.Module;
-import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
-import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
-import org.spongepowered.api.registry.RegistryTypes;
+import org.spongepowered.api.command.parameter.managed.ValueCompleter;
+import org.spongepowered.api.command.parameter.managed.ValueParser;
+import org.spongepowered.api.registry.RegistryHolder;
 
-/**
- * A module to edit signs and signed books
- */
-@Singleton
-@Module
-public class Writer
-{
-    @Listener
-    public void onRegisterData(RegisterDataEvent event)
-    {
-        WriterData.register(event);
-    }
+public interface CompletableParser<T> extends ValueParser<T>, ValueCompleter {
 
-    @Listener
-    public void onRecipeRegister(RegisterRegistryValueEvent event)
-    {
-        event.registry(RegistryTypes.RECIPE, WriterItems::registerRecipes);
+    @Override
+    default CompletableParser<T> bind(RegistryHolder registryHolder) {
+        return this;
     }
 }

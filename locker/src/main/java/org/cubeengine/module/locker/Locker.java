@@ -39,8 +39,9 @@ import org.cubeengine.processor.Module;
 import org.cubeengine.reflect.Reflector;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
+import org.spongepowered.api.registry.RegistryType;
+import org.spongepowered.api.registry.RegistryTypes;
 
 // TODO hoppers and protection
 @Singleton
@@ -62,9 +63,9 @@ public class Locker
     }
 
     @Listener
-    public void onRegisterRecipe(RegisterDataPackValueEvent<RecipeRegistration>event)
+    public void onRegisterRecipe(RegisterRegistryValueEvent event)
     {
-        LockerItems.registerRecipes(event);
+        event.registry(RegistryTypes.RECIPE, LockerItems::registerRecipes);
     }
 
     @Listener

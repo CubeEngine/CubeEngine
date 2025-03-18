@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.cubeengine.libcube.service.command.DefaultParameterProvider;
 import org.cubeengine.libcube.service.command.annotation.ParserFor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.module.portals.Portal;
 import org.cubeengine.module.portals.Portals;
@@ -40,7 +41,7 @@ import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 
 @Singleton
 @ParserFor(Portal.class)
-public class PortalParser implements ValueParser<Portal>, ValueCompleter, DefaultParameterProvider<Portal>
+public class PortalParser implements CompletableParser<Portal>, DefaultParameterProvider<Portal>
 {
     private Portals module;
     private I18n i18n;

@@ -18,7 +18,6 @@
 package org.cubeengine.module.zoned;
 
 import java.util.Arrays;
-import java.util.function.Predicate;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -29,13 +28,12 @@ import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.enchantment.Enchantment;
 import org.spongepowered.api.item.enchantment.EnchantmentTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.inventory.ItemStackLike;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.item.recipe.Recipe;
 import org.spongepowered.api.item.recipe.crafting.CraftingRecipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
 
@@ -44,24 +42,23 @@ import static org.spongepowered.api.item.ItemTypes.COAL;
 public interface ZonedItems
 {
 
-    static void registerRecipes(RegisterDataPackValueEvent<RecipeRegistration> event, ZonedListener listener)
+    static void registerRecipes(RegisterRegistryValueEvent.RegistryStep<Recipe<?>> event, ZonedListener listener)
     {
         final ItemStack selectionTool = newTool();
         {
-            final RecipeRegistration recipe = CraftingRecipe.shapedBuilder()
+            final var recipe = CraftingRecipe.shapedBuilder()
                   .aisle("trt", "rcr", "trt")
                   .where('t', Ingredient.of(ItemTypes.REDSTONE_TORCH))
                   .where('r', Ingredient.of(ItemTypes.REDSTONE))
                   .where('c', Ingredient.of(ItemTypes.COAL))
                   .result(selectionTool)
-                  .key(ResourceKey.of(PluginZoned.ZONED_ID, "selection_tool"))
                   .build();
-            event.register(recipe);
+            event.register(ResourceKey.of(PluginZoned.ZONED_ID, "selection_tool"), recipe);
         }
         final Ingredient toolIngredient = Ingredient.of(ResourceKey.of(PluginZoned.ZONED_ID, "tool_ingredient"),
                 stack -> stack.get(ZonedData.ZONE_TYPE).isPresent(), selectionTool);
         {
-            final RecipeRegistration recipe = CraftingRecipe.shapedBuilder()
+            final var recipe = CraftingRecipe.shapedBuilder()
                   .aisle(" t ", "ses", " i ")
                   .where('s', Ingredient.of(ItemTypes.STRING))
                   .where('i', Ingredient.of(ItemTypes.SLIME_BALL))
@@ -71,9 +68,8 @@ public interface ZonedItems
                                                      ItemStack.empty(), ItemStack.empty(), ItemStack.empty(),
                                                      ItemStack.empty(), ItemStack.empty(), ItemStack.empty()))
                   .result(g -> savedSelection(listener), savedSelection())
-                  .key(ResourceKey.of(PluginZoned.ZONED_ID, "saved_selection"))
                   .build();
-            event.register(recipe);
+            event.register(ResourceKey.of(PluginZoned.ZONED_ID, "saved_selection"), recipe);
         }
     }
 

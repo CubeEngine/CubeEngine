@@ -21,10 +21,10 @@ import org.cubeengine.module.mechanism.sign.Gate;
 import org.cubeengine.module.mechanism.sign.HiddenButton;
 import org.cubeengine.module.mechanism.sign.HiddenLever;
 import org.spongepowered.api.ResourceKey;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.item.recipe.Recipe;
 import org.spongepowered.api.item.recipe.crafting.CraftingRecipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
 
@@ -32,11 +32,11 @@ import static org.spongepowered.api.item.ItemTypes.OAK_SIGN;
 
 public class MechanismItems
 {
-    public static void registerRecipes(RegisterDataPackValueEvent<RecipeRegistration> event, MechanismManager manager)
+    public static void registerRecipes(RegisterRegistryValueEvent.RegistryStep<Recipe<?>> event, MechanismManager manager)
     {
         final ItemStack hiddenLeverSign = manager.makeSign(HiddenLever.class, ItemStack.of(OAK_SIGN));
 
-        final RecipeRegistration hiddenLever = CraftingRecipe
+        var hiddenLever = CraftingRecipe
             .shapedBuilder().aisle("rlr", "lsl", "rlr")
             .where('s', Ingredient.of(ItemTypes.ACACIA_SIGN, ItemTypes.BIRCH_SIGN, ItemTypes.DARK_OAK_SIGN, ItemTypes.JUNGLE_SIGN, ItemTypes.OAK_SIGN, ItemTypes.SPRUCE_SIGN))
             .where('r', Ingredient.of(ItemTypes.REDSTONE))
@@ -47,13 +47,12 @@ public class MechanismItems
                 newStack.setQuantity(1);
                 return newStack;
              }, hiddenLeverSign)
-            .key(ResourceKey.of(PluginMechanism.MECHANISM_ID, "hidden-lever"))
             .build();
-        event.register(hiddenLever);
+        event.register(ResourceKey.of(PluginMechanism.MECHANISM_ID, "hidden-lever"), hiddenLever);
 
         final ItemStack hiddenButtonSign = manager.makeSign(HiddenButton.class, ItemStack.of(OAK_SIGN));
 
-        final RecipeRegistration hiddenButton = CraftingRecipe
+        final var hiddenButton = CraftingRecipe
             .shapedBuilder().aisle("rbr", "bsb", "rbr")
             .where('s', Ingredient.of(ItemTypes.ACACIA_SIGN, ItemTypes.BIRCH_SIGN, ItemTypes.DARK_OAK_SIGN, ItemTypes.JUNGLE_SIGN, ItemTypes.OAK_SIGN, ItemTypes.SPRUCE_SIGN))
             .where('r', Ingredient.of(ItemTypes.REDSTONE))
@@ -64,13 +63,12 @@ public class MechanismItems
                 newStack.setQuantity(1);
                 return newStack;
             }, hiddenButtonSign)
-            .key(ResourceKey.of(PluginMechanism.MECHANISM_ID, "hidden-button"))
             .build();
-        event.register(hiddenButton);
+        event.register(ResourceKey.of(PluginMechanism.MECHANISM_ID, "hidden-button"), hiddenButton);
 
         final ItemStack gateSign = manager.makeSign(HiddenButton.class, ItemStack.of(OAK_SIGN));
 
-        final RecipeRegistration gate = CraftingRecipe
+        final var gate = CraftingRecipe
             .shapedBuilder().aisle("rbr", "bsb", "rbr")
             .where('s', Ingredient.of(ItemTypes.ACACIA_SIGN, ItemTypes.BIRCH_SIGN, ItemTypes.DARK_OAK_SIGN, ItemTypes.JUNGLE_SIGN, ItemTypes.OAK_SIGN, ItemTypes.SPRUCE_SIGN))
             .where('r', Ingredient.of(ItemTypes.REDSTONE))
@@ -81,9 +79,8 @@ public class MechanismItems
                 newStack.setQuantity(1);
                 return newStack;
             }, gateSign)
-            .key(ResourceKey.of(PluginMechanism.MECHANISM_ID, "gate"))
             .build();
-        event.register(gate);
+        event.register(ResourceKey.of(PluginMechanism.MECHANISM_ID, "gate"), gate);
 
     }
 }

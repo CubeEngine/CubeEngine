@@ -20,38 +20,36 @@ package org.cubeengine.module.itemduct.data;
 import static java.util.Collections.singletonList;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.cubeengine.module.itemduct.ItemductConfig;
 import org.cubeengine.module.itemduct.ItemductManager;
 import org.cubeengine.module.itemduct.PluginItemduct;
 import org.spongepowered.api.ResourceKey;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.living.player.gamemode.GameModes;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.enchantment.Enchantment;
 import org.spongepowered.api.item.enchantment.EnchantmentTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.item.recipe.Recipe;
 import org.spongepowered.api.item.recipe.crafting.CraftingRecipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
-import org.spongepowered.api.registry.RegistryTypes;
 
 import java.util.Collections;
 
 public class ItemductItems
 {
+
+    public static final ResourceKey ITEMDUCTACTIVATOR = ResourceKey.of(PluginItemduct.ITEMDUCT_ID, "itemductactivator");
+    public static final ResourceKey ITEMDUCTSUPERACTIVATOR = ResourceKey.of(PluginItemduct.ITEMDUCT_ID, "itemductsuperactivator");
     private static ItemStack activatorItem;
     public static ItemStack singleActivatorItem;
     private static ItemStack superActivatorItem;
-    private static RecipeRegistration superRecipe;
-    private static RecipeRegistration recipe;
 
-    public static void registerRecipes(RegisterDataPackValueEvent<RecipeRegistration>event, ItemductConfig config)
+    public static void registerRecipes(RegisterRegistryValueEvent.RegistryStep<Recipe<?>> event, ItemductConfig config)
     {
         Ingredient hopper = Ingredient.of(ItemTypes.HOPPER.get());
         activatorItem = ItemStack.of(ItemTypes.HOPPER, 1);
@@ -65,12 +63,11 @@ public class ItemductItems
         singleActivatorItem.offer(ItemductData.USES, 1);
         singleActivatorItem.offer(Keys.LORE, Collections.singletonList(Component.text("Single Use")));
 
-        recipe = CraftingRecipe.shapedBuilder().rows()
+        var recipe = CraftingRecipe.shapedBuilder().rows()
                 .row(hopper, hopper, hopper)
                 .row(hopper, Ingredient.of(ItemTypes.DIAMOND.get()), hopper)
                 .row(hopper, hopper, hopper)
                 .result(activatorItem.copy())
-                .key(ResourceKey.of(PluginItemduct.ITEMDUCT_ID, "itemductactivator"))
                 .build();
 
         superActivatorItem = activatorItem.copy();
@@ -79,20 +76,19 @@ public class ItemductItems
         superActivatorItem.offer(Keys.CUSTOM_NAME, Component.text("ItemDuct Super Activator", NamedTextColor.GOLD));
 
         hopper = Ingredient.of(activatorItem);
-        superRecipe = CraftingRecipe.shapedBuilder().rows()
+        var superRecipe = CraftingRecipe.shapedBuilder().rows()
                 .row(hopper, hopper, hopper)
                 .row(hopper, Ingredient.of(ItemTypes.NETHER_STAR.get()), hopper)
                 .row(hopper, hopper, hopper)
                 .result(superActivatorItem.copy())
-                .key(ResourceKey.of(PluginItemduct.ITEMDUCT_ID, "itemductsuperactivator"))
                 .build();
 
-        event.register(recipe);
-        event.register(superRecipe);
+        event.register(ITEMDUCTACTIVATOR, recipe);
+        event.register(ITEMDUCTSUPERACTIVATOR, superRecipe);
     }
 
     public static boolean matchesRecipe(ResourceKey craftingRecipeKey) {
-        return recipe.key().equals(craftingRecipeKey) || superRecipe.key().equals(craftingRecipeKey);
+        return ITEMDUCTACTIVATOR.equals(craftingRecipeKey) || ITEMDUCTSUPERACTIVATOR.equals(craftingRecipeKey);
     }
 
     @SuppressWarnings("unchecked")

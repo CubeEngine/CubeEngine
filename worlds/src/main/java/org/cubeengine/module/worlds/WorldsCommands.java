@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import com.google.inject.Inject;
@@ -38,22 +39,27 @@ import org.cubeengine.libcube.service.command.annotation.Alias;
 import org.cubeengine.libcube.service.command.annotation.Command;
 import org.cubeengine.libcube.service.command.annotation.Default;
 import org.cubeengine.libcube.service.command.annotation.Flag;
-import org.cubeengine.libcube.service.command.annotation.ParameterPermission;
+import org.cubeengine.libcube.service.command.annotation.Option;
 import org.cubeengine.libcube.service.i18n.I18n;
+import org.cubeengine.libcube.util.ComponentUtil;
 import org.spongepowered.api.Platform.Type;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.data.Keys;
-import org.spongepowered.api.datapack.DataPacks;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.world.DefaultWorldKeys;
+import org.spongepowered.api.world.WorldType;
+import org.spongepowered.api.world.WorldTypes;
 import org.spongepowered.api.world.gamerule.GameRule;
+import org.spongepowered.api.world.generation.ChunkGenerator;
+import org.spongepowered.api.world.generation.config.WorldGenerationConfig;
 import org.spongepowered.api.world.server.ServerLocation;
 import org.spongepowered.api.world.server.ServerWorld;
+import org.spongepowered.api.world.server.WorldArchetype;
+import org.spongepowered.api.world.server.WorldArchetypeType;
 import org.spongepowered.api.world.server.WorldManager;
-import org.spongepowered.api.world.server.WorldTemplate;
 import org.spongepowered.api.world.server.storage.ServerWorldProperties;
 import org.spongepowered.math.vector.Vector3i;
 
@@ -83,9 +89,9 @@ public class WorldsCommands extends DispatcherCommand
     private CompletableFuture<Void> touchChunkFuture;
 
     @Inject
-    public WorldsCommands(I18n i18n, WorldsModifyCommands modify, WorldsTemplateCommands template, WorldsTypeCommands type, Logger logger)
+    public WorldsCommands(I18n i18n, WorldsModifyCommands modify, WorldsTypeCommands type, Logger logger)
     {
-        super(modify, template, type);
+        super(modify, type);
         this.i18n = i18n;
         this.logger = logger;
     }
@@ -103,35 +109,54 @@ public class WorldsCommands extends DispatcherCommand
         });
     }
 
-    @Command(desc = "Creates a world based on a template")
-    public void create(CommandCause context, WorldTemplate template)
+    @Command(desc = "Creates a new world")
+    public void create(CommandCause context,
+            ResourceKey worldKey,
+            @Default WorldType type,
+            @Option String displayName,
+            @Flag boolean loadOnStartup)
     {
-        final CompletableFuture<ServerWorld> futureWorld = Sponge.server().worldManager().loadWorld(template);
-        if (futureWorld.isDone())
+
+        final WorldManager wm = Sponge.server().worldManager();
+        if (wm.worldExists(worldKey))
         {
-            i18n.send(context, POSITIVE, "The world {world} is already loaded!", futureWorld.join());
+            i18n.send(context, NEGATIVE, "A world {name} already exists!", worldKey.asString());
             return;
         }
-        i18n.send(context, NEUTRAL, "Loading {name}...", template.key().asString());
-        futureWorld.whenComplete((w, t) -> {
-            if (w != null)
-            {
-                i18n.send(context, POSITIVE, "World {world} loaded!", w);
-            }
-            else
-            {
-                i18n.send(context, NEGATIVE, "Could not load {name#world}", template.key().asString());
-            }
+
+        ChunkGenerator generator = ChunkGenerator.overworld();
+        if (type == WorldTypes.THE_NETHER.get())
+        {
+            generator = ChunkGenerator.theNether();
+        }
+        else if (type == WorldTypes.THE_END.get())
+        {
+            generator = ChunkGenerator.theEnd();
+        }
+        var watt = WorldArchetypeType.of(type, generator);
+        final WorldGenerationConfig wgenCfg = WorldGenerationConfig.builder().seed(new Random().nextLong())
+                .generateStructures(true).generateBonusChest(false).build();
+        var loadOptions = ServerWorldProperties.LoadOptions.create(WorldArchetype.of(watt, wgenCfg),
+            swp -> {
+                swp.offer(Keys.IS_LOAD_ON_STARTUP, loadOnStartup);
+                if (displayName != null) {
+                    swp.offer(Keys.DISPLAY_NAME, ComponentUtil.fromLegacy(displayName));
+                }
+        });
+
+        // TODO option to not load world, just register it...?
+        var worldFuture = Sponge.server().worldManager().loadWorld(worldKey, loadOptions);
+        worldFuture.whenComplete((b, t) -> {
+            i18n.send(context, POSITIVE, "World {name#key} {txt#display} created!", worldKey.asString(), displayName == null ? worldKey.asString() : displayName);
+            i18n.send(context, NEUTRAL, "Use {name#command} commands to further modify your world", "/worlds mmodify");
         });
     }
 
     @Command(desc = "Loads a world")
     public void load(CommandCause context, ServerWorldProperties world)
     {
-        var template = Sponge.server().dataPackManager().load(DataPacks.WORLD, world.key()).join()
-              .orElseGet(() -> WorldTemplate.builder().from(WorldTemplate.overworld()).key(world.key()).build());
-        // TODO create template from existing properties?
-        final CompletableFuture<ServerWorld> futureWorld = Sponge.server().worldManager().loadWorld(template);
+        var worldKey = world.key();
+        final CompletableFuture<Optional<ServerWorld>> futureWorld = Sponge.server().worldManager().loadWorld(worldKey);
         if (futureWorld.isDone())
         {
             i18n.send(context, NEGATIVE, "The world {world} is already loaded!", futureWorld.join());
@@ -139,7 +164,7 @@ public class WorldsCommands extends DispatcherCommand
         }
         i18n.send(context, NEUTRAL, "Loading {name}...", world.key().asString());
         futureWorld.whenComplete((w, t) -> {
-            if (w != null)
+            if (w.isEmpty())
             {
                 i18n.send(context, POSITIVE, "World {world} loaded!", w);
             }
@@ -200,9 +225,7 @@ public class WorldsCommands extends DispatcherCommand
     }
 
     @Command(desc = "Remove a world", alias = "delete")
-    public void remove(CommandCause context, ResourceKey world,
-                       @Flag @ParameterPermission // TODO (value = "remove-worldfolder", desc = "Allows deleting the world folder")
-                           boolean folder, @Flag boolean unload)
+    public void remove(CommandCause context, ResourceKey world, @Flag boolean unload)
     {
         final WorldManager wm = Sponge.server().worldManager();
         final Optional<ServerWorld> loadedWorld = wm.world(world);
@@ -219,14 +242,6 @@ public class WorldsCommands extends DispatcherCommand
                 if (!ub)
                 {
                     i18n.send(context, NEGATIVE, "Could not unload {world}", world);
-                    return CompletableFuture.completedFuture(false);
-                }
-                if (!folder)
-                {
-                    final WorldTemplate loadedTemplate = Sponge.server().dataPackManager().load(DataPacks.WORLD, world).join().get();
-                    final WorldTemplate noLoadOnStartup = WorldTemplate.builder().from(loadedTemplate).add(Keys.IS_LOAD_ON_STARTUP, false).build();
-                    Sponge.server().dataPackManager().save(noLoadOnStartup);
-                    i18n.send(context, POSITIVE, "The world {world} is now disabled and will not load by itself.", world);
                     return CompletableFuture.completedFuture(false);
                 }
                 return this.deleteUnloadedWorld(context, world);
@@ -327,6 +342,9 @@ public class WorldsCommands extends DispatcherCommand
             i18n.send(context, NEUTRAL, "Commands are not allowed");
         }
         i18n.send(context, NEUTRAL, "Seed: {long}", world.worldGenerationConfig().seed());
+        i18n.send(context, NEUTRAL, "Serialization: {input}", world.serializationBehavior().name());
+        i18n.send(context, NEUTRAL, "View Distance: {integer}", world.viewDistance());
+
 //        if (!world.getGeneratorModifiers().isEmpty())
 //        {
 //            i18n.send(context, NEUTRAL, "Generation is modified by:");

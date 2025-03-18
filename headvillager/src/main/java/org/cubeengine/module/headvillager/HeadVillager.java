@@ -35,7 +35,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.sound.Sound;
@@ -63,12 +62,12 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.InteractEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.merchant.TradeOffer;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.math.vector.Vector3d;
 
 /**
@@ -153,9 +152,9 @@ public class HeadVillager
     }
 
     @Listener
-    public void onRegisterRecipe(RegisterDataPackValueEvent<RecipeRegistration> event)
+    public void onRegisterRecipe(RegisterRegistryValueEvent event)
     {
-        HeadVillagerItems.register(event);
+        event.registry(RegistryTypes.RECIPE, HeadVillagerItems::register);
     }
 
     @SuppressWarnings("unchecked")

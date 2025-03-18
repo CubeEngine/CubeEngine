@@ -23,8 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -37,18 +36,17 @@ import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.effect.potion.PotionEffect;
 import org.spongepowered.api.effect.potion.PotionEffectTypes;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.item.recipe.Recipe;
 import org.spongepowered.api.item.recipe.RecipeTypes;
 import org.spongepowered.api.item.recipe.cooking.CookingRecipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
 import org.spongepowered.api.item.recipe.crafting.ShapelessCraftingRecipe;
 import org.spongepowered.api.registry.RegistryReference;
-import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.util.Color;
 import org.spongepowered.api.util.RandomProvider.Source;
 import org.spongepowered.api.util.Range;
@@ -64,11 +62,13 @@ import org.spongepowered.api.world.biome.provider.MultiNoiseBiomeConfig;
 import org.spongepowered.api.world.difficulty.Difficulties;
 import org.spongepowered.api.world.generation.ChunkGenerator;
 import org.spongepowered.api.world.generation.config.SurfaceRule;
+import org.spongepowered.api.world.generation.config.WorldGenerationConfig;
 import org.spongepowered.api.world.generation.config.noise.NoiseGeneratorConfig;
 import org.spongepowered.api.world.generation.config.noise.NoiseGeneratorConfigs;
 import org.spongepowered.api.world.server.ServerWorld;
-import org.spongepowered.api.world.server.WorldTemplate;
-import org.spongepowered.api.world.server.WorldTemplate.Builder;
+import org.spongepowered.api.world.server.WorldArchetype;
+import org.spongepowered.api.world.server.WorldArchetypeType;
+import org.spongepowered.api.world.server.storage.ServerWorldProperties;
 import org.spongepowered.math.vector.Vector3i;
 
 import static org.spongepowered.api.world.biome.Biomes.*;
@@ -83,80 +83,73 @@ public class TerraItems
     public static final List<RegistryReference<Biome>> CAVE_BIOMES = Arrays.asList(DRIPSTONE_CAVES, LUSH_CAVES);
     private static Terra terra;
 
-    public static void registerRecipes(RegisterDataPackValueEvent<RecipeRegistration> event, Terra terra)
+    public static void registerRecipes(RegisterRegistryValueEvent.RegistryStep<Recipe<?>> event, Terra terra)
     {
         TerraItems.terra = terra;
 
         INK_BOTTLE.offer(Keys.COLOR, Color.BLACK);
         INK_BOTTLE.offer(Keys.CUSTOM_NAME, Component.text("Ink Bottle"));
         INK_BOTTLE.offer(Keys.HIDE_MISCELLANEOUS, true);
-        final RecipeRegistration inkBottleRecipe = ShapelessCraftingRecipe.builder()
+        final var inkBottleRecipe = ShapelessCraftingRecipe.builder()
                               .addIngredients(ItemTypes.GLASS_BOTTLE, ItemTypes.INK_SAC)
                               .result(INK_BOTTLE)
-                              .key(ResourceKey.of(PluginTerra.TERRA_ID, "inkbottle"))
                               .build();
-        event.register(inkBottleRecipe);
+        event.register(ResourceKey.of(PluginTerra.TERRA_ID, "inkbottle"), inkBottleRecipe);
 
         SPLASH_INK_BOTTLE.offer(Keys.COLOR, Color.BLACK);
         SPLASH_INK_BOTTLE.offer(Keys.CUSTOM_NAME, Component.text("Splash Ink Bottle"));
         SPLASH_INK_BOTTLE.offer(Keys.HIDE_MISCELLANEOUS, true);
-        final RecipeRegistration splashInkBottleRecipe = ShapelessCraftingRecipe.builder()
+        final var splashInkBottleRecipe = ShapelessCraftingRecipe.builder()
                               .addIngredients(ItemTypes.GLASS_BOTTLE, ItemTypes.INK_SAC, ItemTypes.GUNPOWDER)
                               .result(SPLASH_INK_BOTTLE)
-                              .key(ResourceKey.of(PluginTerra.TERRA_ID, "splash_inkbottle"))
                               .build();
-        event.register(splashInkBottleRecipe);
+        event.register(ResourceKey.of(PluginTerra.TERRA_ID, "splash_inkbottle"), splashInkBottleRecipe);
 
         TERRA_ESSENCE.offer(Keys.COLOR, Color.WHITE);
         TERRA_ESSENCE.offer(Keys.CUSTOM_NAME, Component.text("Terra Essence"));
         TERRA_ESSENCE.offer(Keys.POTION_EFFECTS, Arrays.asList(PotionEffect.of(PotionEffectTypes.SATURATION.get(), 0, Ticks.of(20))));
         TERRA_ESSENCE.offer(Keys.HIDE_MISCELLANEOUS, true);
         TERRA_ESSENCE.offer(TerraData.TERRA_POTION, true);
-        final RecipeRegistration terraEssenceRecipe = ShapelessCraftingRecipe.builder()
+        final var terraEssenceRecipe = ShapelessCraftingRecipe.builder()
                                .addIngredients(ItemTypes.SUGAR, ItemTypes.ENDER_PEARL)
                                .addIngredients(Ingredient.of(INK_BOTTLE))
                                .result(grid -> TerraItems.getCraftedEssence(), TERRA_ESSENCE)
-                               .key(ResourceKey.of(PluginTerra.TERRA_ID, "terraessence"))
                                .build();
-        event.register(terraEssenceRecipe);
+        event.register(ResourceKey.of(PluginTerra.TERRA_ID, "terraessence"), terraEssenceRecipe);
 
-        final RecipeRegistration randomTerraEssence = ShapelessCraftingRecipe.builder()
+        final var randomTerraEssence = ShapelessCraftingRecipe.builder()
              .addIngredients(ItemTypes.SUGAR, ItemTypes.ENDER_PEARL, ItemTypes.NETHER_STAR)
              .addIngredients(Ingredient.of(INK_BOTTLE))
              .result(grid -> TerraItems.getRandomCraftedEssence(TERRA_ESSENCE), TERRA_ESSENCE)
-             .key(ResourceKey.of(PluginTerra.TERRA_ID, "random_terraessence"))
              .build();
-        event.register(randomTerraEssence);
+        event.register(ResourceKey.of(PluginTerra.TERRA_ID, "random_terraessence"), randomTerraEssence);
 
         SPLASH_TERRA_ESSENCE.offer(Keys.COLOR, Color.WHITE);
         SPLASH_TERRA_ESSENCE.offer(Keys.CUSTOM_NAME, Component.text("Splash Terra Essence"));
         SPLASH_TERRA_ESSENCE.offer(Keys.POTION_EFFECTS, Arrays.asList(PotionEffect.of(PotionEffectTypes.SATURATION.get(), 0, Ticks.of(20))));
         SPLASH_TERRA_ESSENCE.offer(Keys.HIDE_MISCELLANEOUS, true);
         SPLASH_TERRA_ESSENCE.offer(TerraData.TERRA_POTION, true);
-        final RecipeRegistration splashEssence = ShapelessCraftingRecipe.builder()
+        final var splashEssence = ShapelessCraftingRecipe.builder()
                                  .addIngredients(ItemTypes.SUGAR, ItemTypes.ENDER_PEARL)
                                  .addIngredients(Ingredient.of(SPLASH_INK_BOTTLE))
                                  .result(grid -> TerraItems.getRandomCraftedEssence(SPLASH_TERRA_ESSENCE), TERRA_ESSENCE)
-                                 .key(ResourceKey.of(PluginTerra.TERRA_ID, "splash_terraessence"))
                                  .build();
-        event.register(splashEssence);
+        event.register(ResourceKey.of(PluginTerra.TERRA_ID, "splash_terraessence"), splashEssence);
 
-        final RecipeRegistration splashRandomTerraEssence = ShapelessCraftingRecipe.builder()
+        final var splashRandomTerraEssence = ShapelessCraftingRecipe.builder()
                                      .addIngredients(ItemTypes.SUGAR, ItemTypes.ENDER_PEARL, ItemTypes.NETHER_STAR)
                                      .addIngredients(Ingredient.of(INK_BOTTLE))
                                      .result(grid -> TerraItems.getRandomCraftedEssence(SPLASH_TERRA_ESSENCE), TERRA_ESSENCE)
-                                     .key(ResourceKey.of(PluginTerra.TERRA_ID, "splash_random_terraessence"))
                                      .build();
-        event.register(splashRandomTerraEssence);
+        event.register(ResourceKey.of(PluginTerra.TERRA_ID, "splash_random_terraessence"), splashRandomTerraEssence);
 
         final Ingredient coldPotionIngredient = Ingredient.of(ResourceKey.of(PluginTerra.TERRA_ID, "cold_potion"), stack -> isTerraEssence(stack.asImmutable()), ItemStack.of(ItemTypes.POTION));
-        final RecipeRegistration heatUpPotion = CookingRecipe.builder().type(RecipeTypes.CAMPFIRE_COOKING)
+        final var heatUpPotion = CookingRecipe.builder().type(RecipeTypes.CAMPFIRE_COOKING)
                                                      .ingredient(coldPotionIngredient)
                                                      .result(i -> TerraItems.heatedPotion(i), ItemStack.of(ItemTypes.POTION))
                                                      .cookingTime(Ticks.of(20)).experience(0)
-                                                     .key(ResourceKey.of(PluginTerra.TERRA_ID, "heatup-potion"))
                                                      .build();
-        event.register(heatUpPotion);
+        event.register(ResourceKey.of(PluginTerra.TERRA_ID, "heatup-potion"), heatUpPotion);
     }
 
     private static ItemStack heatedPotion(Inventory campFire)
@@ -237,10 +230,8 @@ public class TerraItems
             return false;
         }
 
-        public WorldTemplate createWorldTemplate(ServerPlayer player, ResourceKey worldKey)
+        public ServerWorldProperties.LoadOptions createWorldLoadOptions(ServerPlayer player)
         {
-            final Builder templateBuilder = WorldTemplate.builder().from(WorldTemplate.overworld()).key(worldKey);
-
             final List<RegistryReference<Biome>> biomeList = getBiomes();
             if (this == END) // customize end biomes
             {
@@ -303,40 +294,40 @@ public class TerraItems
 
 
             final MultiNoiseBiomeConfig multiNoiseBiomeConfig = MultiNoiseBiomeConfig.builder().addBiomes(finalBiomes).build();
-            final NoiseGeneratorConfig noiseGeneratorConfig;
-            if (this == NETHER)
-            {
-                noiseGeneratorConfig = NoiseGeneratorConfigs.NETHER.get();
-                templateBuilder.add(Keys.WORLD_TYPE, WorldTypes.THE_NETHER.get());
-            }
-            else if (this == END)
-            {
-                noiseGeneratorConfig = NoiseGeneratorConfig.builder().fromValue(NoiseGeneratorConfigs.FLOATING_ISLANDS.get())
-                                                           .surfaceRule(SurfaceRule.end())
-                                                           .defaultBlock(BlockTypes.END_STONE.get().defaultState())
-                                                           .key(ResourceKey.of(PluginTerra.TERRA_ID, "end"))
-                                                           .build().config();
 
-                templateBuilder.add(Keys.WORLD_TYPE, RegistryTypes.WORLD_TYPE.get().findValue(Terra.WORLD_TYPE_END).get());
-            }
-            else if (this == CAVEWORLD)
-            {
-
-                templateBuilder.add(Keys.SPAWN_POSITION, Vector3i.from(0, 64, 0));
-                final var caves = NoiseGeneratorConfigs.CAVES.get();
-                noiseGeneratorConfig = caves;
-            }
-            else
-            {
-                noiseGeneratorConfig = NoiseGeneratorConfigs.OVERWORLD.get();
-            }
-            templateBuilder.add(Keys.SERIALIZATION_BEHAVIOR, SerializationBehavior.NONE);
-            templateBuilder.add(Keys.DISPLAY_NAME, Component.text("Dream world by " + player.name()));
-            templateBuilder.add(Keys.CHUNK_GENERATOR, ChunkGenerator.noise(BiomeProvider.multiNoise(multiNoiseBiomeConfig), noiseGeneratorConfig));
-            templateBuilder.add(Keys.SEED, random.nextLong());
-            templateBuilder.add(Keys.WORLD_DIFFICULTY, Difficulties.HARD.get());
-            templateBuilder.add(Keys.IS_LOAD_ON_STARTUP, false);
-            return templateBuilder.build();
+            Vector3i spawnPos = switch (this) {
+                case CAVEWORLD -> Vector3i.from(0, 64, 0);
+                default -> null;
+            };
+            var noiseGeneratorConfig = switch (this) {
+                case NETHER -> NoiseGeneratorConfigs.NETHER.get();
+                case END -> NoiseGeneratorConfig.builder().from(NoiseGeneratorConfigs.FLOATING_ISLANDS.get())
+                       .surfaceRule(SurfaceRule.end())
+                       .defaultBlock(BlockTypes.END_STONE.get().defaultState())
+                        .build();
+//                       .key(ResourceKey.of(PluginTerra.TERRA_ID, "end"));
+                case CAVEWORLD -> NoiseGeneratorConfigs.CAVES.get();
+                default -> NoiseGeneratorConfigs.OVERWORLD.get();
+            };
+            var worldType = switch (this) {
+                case NETHER -> WorldTypes.THE_NETHER.get();
+                case END -> WorldTypes.registry().value(Terra.WORLD_TYPE_END);
+                default  -> WorldTypes.OVERWORLD.get();
+            };
+            final var chunkGen = ChunkGenerator.noise(BiomeProvider.multiNoise(multiNoiseBiomeConfig), noiseGeneratorConfig);
+            var wArchetypeType = WorldArchetypeType.of(worldType, chunkGen);
+            var wgenConfig = WorldGenerationConfig.builder().seed(random.nextLong()).build();
+            final var archetype = WorldArchetype.of(wArchetypeType, wgenConfig);
+            var loadOptions = ServerWorldProperties.LoadOptions.create(archetype, worldProperties -> {
+                worldProperties.offer(Keys.SERIALIZATION_BEHAVIOR, SerializationBehavior.NONE);
+                worldProperties.offer(Keys.DISPLAY_NAME, Component.text("Dream world by " + player.name()));
+                worldProperties.offer(Keys.WORLD_DIFFICULTY, Difficulties.HARD.get());
+                worldProperties.offer(Keys.IS_LOAD_ON_STARTUP, false);
+                if (spawnPos != null) {
+                    worldProperties.offer(Keys.SPAWN_POSITION, spawnPos);
+                }
+            });
+            return loadOptions;
         }
     }
 

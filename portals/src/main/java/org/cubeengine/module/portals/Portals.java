@@ -54,9 +54,10 @@ import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.registry.RegistryType;
+import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.scheduler.ScheduledTask;
 import org.spongepowered.api.util.AABB;
 import org.spongepowered.api.util.Ticks;
@@ -106,9 +107,9 @@ public class Portals
     }
 
     @Listener
-    public void onRegisterRecipe(RegisterDataPackValueEvent<RecipeRegistration> event)
+    public void onRegisterRecipe(RegisterRegistryValueEvent event)
     {
-        PortalsItems.registerRecipes(event);
+        event.registry(RegistryTypes.RECIPE, PortalsItems::registerRecipes);
     }
 
     @Listener

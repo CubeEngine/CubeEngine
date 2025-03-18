@@ -26,6 +26,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.cubeengine.libcube.service.command.DefaultParameterProvider;
 import org.cubeengine.libcube.service.command.annotation.ParserFor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.module.vigil.data.LookupData;
 import org.cubeengine.module.vigil.report.block.BlockReport;
 import org.cubeengine.module.vigil.report.block.ExplosionReport;
@@ -45,7 +46,7 @@ import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 
 @Singleton
 @ParserFor(LookupData.class)
-public class LookupDataParser implements ValueParser<LookupData>, ValueCompleter, DefaultParameterProvider<LookupData>
+public class LookupDataParser implements CompletableParser<LookupData>, DefaultParameterProvider<LookupData>
 {
     private Map<String, LookupData> types = new HashMap<>();
     private LookupData defaultType;

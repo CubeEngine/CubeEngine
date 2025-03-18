@@ -35,7 +35,6 @@ import org.cubeengine.libcube.service.command.parser.StringListParser;
 import org.cubeengine.libcube.service.command.parser.UserDefaultParameterProvider;
 import org.cubeengine.libcube.service.command.parser.Vector2iValueParser;
 import org.cubeengine.libcube.service.command.parser.Vector3iValueParser;
-import org.cubeengine.libcube.service.command.parser.WorldTemplateValueParser;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.command.parameter.managed.ValueCompleter;
@@ -61,7 +60,6 @@ import org.spongepowered.api.world.WorldTypes;
 import org.spongepowered.api.world.difficulty.Difficulties;
 import org.spongepowered.api.world.difficulty.Difficulty;
 import org.spongepowered.api.world.server.ServerWorld;
-import org.spongepowered.api.world.server.WorldTemplate;
 import org.spongepowered.api.world.server.storage.ServerWorldProperties;
 import org.spongepowered.api.world.weather.WeatherType;
 import org.spongepowered.math.vector.Vector2i;
@@ -91,7 +89,7 @@ public class ParameterRegistry
         }
     }
 
-    private static <VP extends ValueParser<T> & ValueCompleter,T> void registerSponge(Type type, Supplier<VP> valueParameter)
+    private static <VP extends ValueParameter<T>, T> void registerSponge(Type type, Supplier<VP> valueParameter)
     {
         parsers.put(type, () -> valueParameter.get());
         completers.put(type, () -> valueParameter.get());
@@ -130,7 +128,6 @@ public class ParameterRegistry
         registerSponge(WorldType.class, () -> registryTypeParser("minecraft", RegistryTypes.WORLD_TYPE));
         register(WorldType.class, (DefaultParameterProvider<WorldType>)o -> WorldTypes.OVERWORLD.get());
         register(ServerWorldProperties.class, new ServerWorldPropertiesValueParser());
-        register(WorldTemplate.class, new WorldTemplateValueParser());
 
         registerSponge(SerializationBehavior.class, () -> VariableValueParameters.enumChoices(SerializationBehavior.class));
         register(SerializationBehavior.class, (DefaultParameterProvider<SerializationBehavior>)o -> SerializationBehavior.AUTOMATIC);

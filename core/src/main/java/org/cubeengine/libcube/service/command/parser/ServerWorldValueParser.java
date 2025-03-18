@@ -32,14 +32,12 @@ import org.spongepowered.api.command.exception.CommandException;
 import org.spongepowered.api.command.parameter.ArgumentReader;
 import org.spongepowered.api.command.parameter.CommandContext;
 import org.spongepowered.api.command.parameter.Parameter;
-import org.spongepowered.api.command.parameter.managed.ValueCompleter;
-import org.spongepowered.api.command.parameter.managed.ValueParser;
 import org.spongepowered.api.command.parameter.managed.clientcompletion.ClientCompletionType;
 import org.spongepowered.api.command.parameter.managed.clientcompletion.ClientCompletionTypes;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.world.server.ServerWorld;
 
-public class ServerWorldValueParser implements ValueParser<ServerWorld>, ValueCompleter, DefaultParameterProvider<ServerWorld>
+public class ServerWorldValueParser implements CompletableParser<ServerWorld>, DefaultParameterProvider<ServerWorld>
 {
 
     @Override

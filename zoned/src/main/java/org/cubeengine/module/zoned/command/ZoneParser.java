@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import net.kyori.adventure.audience.Audience;
 import org.cubeengine.libcube.service.command.DefaultParameterProvider;
 import org.cubeengine.libcube.service.command.annotation.ParserFor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.i18n.formatter.MessageType;
 import org.cubeengine.module.zoned.config.ZoneConfig;
@@ -42,7 +43,7 @@ import org.spongepowered.api.world.Locatable;
 import org.spongepowered.api.world.server.ServerWorld;
 
 @ParserFor(ZoneConfig.class)
-public class ZoneParser implements ValueParser<ZoneConfig>, ValueCompleter, DefaultParameterProvider<ZoneConfig>
+public class ZoneParser implements CompletableParser<ZoneConfig>, DefaultParameterProvider<ZoneConfig>
 {
     private final Zoned module;
     private final ZoneManager manager;

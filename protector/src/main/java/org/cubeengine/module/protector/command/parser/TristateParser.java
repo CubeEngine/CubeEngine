@@ -22,18 +22,17 @@ import java.util.List;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
 import org.cubeengine.libcube.service.command.annotation.ParserFor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.spongepowered.api.command.CommandCompletion;
 import org.spongepowered.api.command.exception.ArgumentParseException;
 import org.spongepowered.api.command.parameter.ArgumentReader.Mutable;
 import org.spongepowered.api.command.parameter.CommandContext;
 import org.spongepowered.api.command.parameter.CommandContext.Builder;
 import org.spongepowered.api.command.parameter.Parameter.Key;
-import org.spongepowered.api.command.parameter.managed.ValueCompleter;
-import org.spongepowered.api.command.parameter.managed.ValueParser;
 import org.spongepowered.api.util.Tristate;
 
 @ParserFor(Tristate.class)
-public class TristateParser implements ValueParser<Tristate>, ValueCompleter
+public class TristateParser implements CompletableParser<Tristate>
 {
 
     @Override

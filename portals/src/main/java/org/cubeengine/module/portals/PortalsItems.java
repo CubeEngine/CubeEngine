@@ -24,29 +24,28 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.data.Keys;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.enchantment.Enchantment;
 import org.spongepowered.api.item.enchantment.EnchantmentTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.item.recipe.Recipe;
 import org.spongepowered.api.item.recipe.crafting.CraftingRecipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
 
 public class PortalsItems
 {
-    public static void registerRecipes(RegisterDataPackValueEvent<RecipeRegistration> event)
+    public static void registerRecipes(RegisterRegistryValueEvent.RegistryStep<Recipe<?>> event)
     {
         {
-            final RecipeRegistration recipe = CraftingRecipe.shapedBuilder()
+            final var recipe = CraftingRecipe.shapedBuilder()
                   .aisle(" c ", "cac", " l ")
                   .where('c', Ingredient.of(ItemTypes.COMPASS))
                   .where('a', Ingredient.of(ItemTypes.ARMOR_STAND))
                   .where('l', Ingredient.of(ItemTypes.LODESTONE))
                   .result(portalExit())
-                  .key(ResourceKey.of(PluginPortals.PORTALS_ID, "portal_exit"))
                   .build();
-            event.register(recipe);
+            event.register(ResourceKey.of(PluginPortals.PORTALS_ID, "portal_exit"), recipe);
         }
     }
 

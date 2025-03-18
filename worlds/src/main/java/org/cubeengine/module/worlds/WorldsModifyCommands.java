@@ -25,8 +25,13 @@ import org.cubeengine.libcube.service.command.annotation.Option;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.data.Keys;
+import org.spongepowered.api.entity.living.player.gamemode.GameMode;
+import org.spongepowered.api.registry.RegistryTypes;
+import org.spongepowered.api.world.SerializationBehavior;
+import org.spongepowered.api.world.difficulty.Difficulty;
 import org.spongepowered.api.world.generation.config.WorldGenerationConfig;
 import org.spongepowered.api.world.server.storage.ServerWorldProperties;
+import org.spongepowered.math.vector.Vector3i;
 
 import static org.cubeengine.libcube.service.i18n.formatter.MessageType.POSITIVE;
 
@@ -73,5 +78,86 @@ public class WorldsModifyCommands extends DispatcherCommand
         }
         i18n.send(context, POSITIVE, "{world} will no longer generate structures", world);
     }
+
+    @Command(desc = "Sets world spawn")
+    public void spawn(CommandCause context, ServerWorldProperties world, Vector3i spawnPoint)
+    {
+        world.offer(Keys.SPAWN_POSITION, spawnPoint);
+        i18n.send(context, POSITIVE, "{world} world spawn changed to {vector}", world, spawnPoint);
+    }
+
+    @Command(desc = "Sets view distance")
+    public void viewDistance(CommandCause context, ServerWorldProperties world, int viewDistance)
+    {
+        world.offer(Keys.VIEW_DISTANCE, viewDistance);
+        i18n.send(context, POSITIVE, "{world} view distance changed to {number}", world, viewDistance);
+    }
+
+    @Command(desc = "Sets load on startup")
+    public void autoload(CommandCause context, ServerWorldProperties world, boolean loadOnStartup)
+    {
+        world.offer(Keys.IS_LOAD_ON_STARTUP, loadOnStartup);
+        i18n.send(context, POSITIVE, "{world} load on startup changed to {name}", world, String.valueOf(loadOnStartup));
+    }
+
+    @Command(desc = "Sets spawnchunks loaded")
+    public void spawnChunks(CommandCause context, ServerWorldProperties world, boolean loaded)
+    {
+        world.offer(Keys.PERFORM_SPAWN_LOGIC, loaded);
+        
+        i18n.send(context, POSITIVE, "{world} spawn-chunks loaded changed to {name}", world, String.valueOf(loaded));
+    }
+
+    @Command(desc = "Sets hardcore mode")
+    public void hardcore(CommandCause context, ServerWorldProperties world, boolean hardcore)
+    {
+        world.offer(Keys.HARDCORE, hardcore);
+        i18n.send(context, POSITIVE, "{world} hardcore mode changed to {name}", world, String.valueOf(hardcore));
+    }
+
+    @Command(desc = "Sets command usage")
+    public void commands(CommandCause context, ServerWorldProperties world, boolean allowed)
+    {
+        world.offer(Keys.COMMANDS, allowed);
+        i18n.send(context, POSITIVE, "{world} command usage changed to {name}", world, String.valueOf(allowed));
+    }
+
+    @Command(desc = "Sets pvp")
+    public void pvp(CommandCause context, ServerWorldProperties world, boolean pvp)
+    {
+        world.offer(Keys.PVP, pvp);
+        i18n.send(context, POSITIVE, "{world} pvp changed to {name}", world, String.valueOf(pvp));
+    }
+
+    @Command(desc = "Sets the seed")
+    public void seed(CommandCause context, ServerWorldProperties world, String seed)
+    {
+        world.offer(Keys.SEED, (long) seed.hashCode());
+        i18n.send(context, POSITIVE, "{world} seed changed to {name}", world, seed);
+    }
+
+    @Command(desc = "Sets the serialization behavior")
+    public void serialize(CommandCause context, ServerWorldProperties world, SerializationBehavior serializationBehavior)
+    {
+        world.offer(Keys.SERIALIZATION_BEHAVIOR, serializationBehavior);
+        i18n.send(context, POSITIVE, "{world} serialization behavior changed to {name}", world, serializationBehavior.name());
+    }
+
+    @Command(desc = "Sets the difficulty")
+    public void difficulty(CommandCause context, ServerWorldProperties world, Difficulty difficulty)
+    {
+        world.offer(Keys.WORLD_DIFFICULTY, difficulty);
+        i18n.send(context, POSITIVE, "{world} difficulty changed to {name}", world, difficulty.key(RegistryTypes.DIFFICULTY).asString());
+    }
+
+    @Command(desc = "Sets the default gamemode")
+    public void gamemode(CommandCause context, ServerWorldProperties world, GameMode gameMode)
+    {
+        world.offer(Keys.GAME_MODE, gameMode);
+        i18n.send(context, POSITIVE, "{world} gamemode changed to {name}", world, gameMode.key(RegistryTypes.GAME_MODE).asString());
+    }
+
+    // TODO changing world type?
+    // TODO custom chunk-generators?
 
 }

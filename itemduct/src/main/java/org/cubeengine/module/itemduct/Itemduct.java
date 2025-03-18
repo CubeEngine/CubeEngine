@@ -21,23 +21,20 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.cubeengine.libcube.service.event.ModuleListener;
 import org.cubeengine.libcube.service.filesystem.ConfigLoader;
-import org.cubeengine.libcube.service.filesystem.FileManager;
 import org.cubeengine.module.itemduct.data.ItemductAdvancements;
 import org.cubeengine.module.itemduct.data.ItemductData;
 import org.cubeengine.module.itemduct.data.ItemductItems;
 import org.cubeengine.module.itemduct.listener.ItemductListener;
 import org.cubeengine.processor.Module;
 import org.spongepowered.api.Server;
-import org.spongepowered.api.advancement.Advancement;
-import org.spongepowered.api.advancement.AdvancementTemplate;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.filter.cause.Root;
 import org.spongepowered.api.event.item.inventory.CraftItemEvent;
 import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.plugin.PluginContainer;
 
 /*
@@ -73,17 +70,12 @@ public class Itemduct
 //    }
 
     @Listener
-    public void onRegisterDatapacks(RegisterDataPackValueEvent<RecipeRegistration>event)
+    public void onRegister(RegisterRegistryValueEvent event)
     {
         this.config = cl.loadConfig(ItemductConfig.class);
-        ItemductItems.registerRecipes(event, config); // TODO config is not loaded yet :(
-    }
 
-    @Listener
-    public void onRegisterAdvancements(RegisterDataPackValueEvent<AdvancementTemplate> event)
-    {
-        ItemductAdvancements.init(plugin);
-        ItemductAdvancements.register(event);
+        event.registry(RegistryTypes.RECIPE, step -> ItemductItems.registerRecipes(step, config));
+        event.registry(RegistryTypes.ADVANCEMENT, step -> ItemductAdvancements.init(step, plugin));
     }
 
     @Listener

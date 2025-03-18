@@ -30,11 +30,12 @@ import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.util.Ticks;
-import org.spongepowered.api.world.WorldTypeTemplate;
+import org.spongepowered.api.world.WorldType;
+import org.spongepowered.api.world.WorldTypes;
 import org.spongepowered.plugin.PluginContainer;
 
 /*
@@ -59,14 +60,20 @@ public class Terra
         final Ticks minutes = Ticks.ofWallClockMinutes(Sponge.server(), 10);
         tm.runTimer(this.listener::checkForUnload, Ticks.ofWallClockSeconds(Sponge.server(), 10), minutes);
         tm.runTimer(task -> this.listener.doGenerate(), Ticks.of(20), Ticks.of(20));
-        final var template = WorldTypeTemplate.theEnd().key(WORLD_TYPE_END).build();
-        Sponge.server().dataPackManager().save(template);
     }
 
     @Listener
-    public void onRegisterRecipe(RegisterDataPackValueEvent<RecipeRegistration>event)
+    private void onRegisterRegistryValue(final RegisterRegistryValueEvent event) {
+        event.registry(RegistryTypes.WORLD_TYPE, r ->
+                r.register(WORLD_TYPE_END, WorldType.builder().from(WorldTypes.THE_END.get())
+                        .build()));
+    }
+
+
+    @Listener
+    public void onRegisterRecipe(RegisterRegistryValueEvent event)
     {
-        TerraItems.registerRecipes(event, this);
+        event.registry(RegistryTypes.RECIPE, step -> TerraItems.registerRecipes(step, this));
     }
 
     @Listener

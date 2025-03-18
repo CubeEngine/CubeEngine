@@ -23,6 +23,7 @@ import java.util.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.cubeengine.libcube.service.command.annotation.ParserFor;
+import org.cubeengine.libcube.service.command.parser.CompletableParser;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.module.roles.service.RolesPermissionService;
 import org.cubeengine.module.roles.service.subject.FileSubject;
@@ -38,7 +39,7 @@ import org.spongepowered.api.service.permission.Subject;
 
 @Singleton
 @ParserFor(FileSubject.class)
-public class FileSubjectParser implements ValueParser<FileSubject>, ValueCompleter
+public class FileSubjectParser implements CompletableParser<FileSubject>
 {
     private RolesPermissionService service;
     private I18n i18n;

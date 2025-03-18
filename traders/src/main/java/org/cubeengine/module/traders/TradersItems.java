@@ -23,10 +23,10 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.data.Keys;
-import org.spongepowered.api.event.lifecycle.RegisterDataPackValueEvent;
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.recipe.RecipeRegistration;
+import org.spongepowered.api.item.recipe.Recipe;
 import org.spongepowered.api.item.recipe.crafting.Ingredient;
 import org.spongepowered.api.item.recipe.crafting.ShapedCraftingRecipe;
 import org.spongepowered.api.profile.GameProfile;
@@ -35,29 +35,26 @@ import org.spongepowered.api.profile.property.ProfileProperty;
 public interface TradersItems {
 
 
-    static void register(RegisterDataPackValueEvent<RecipeRegistration> event)
+    static void register(RegisterRegistryValueEvent.RegistryStep<Recipe<?>> event)
     {
-        RecipeRegistration fisherRecipe = ShapedCraftingRecipe.builder().aisle("eee", "ehe", "eee")
+        var fisherRecipe = ShapedCraftingRecipe.builder().aisle("eee", "ehe", "eee")
                             .where('e', Ingredient.of(ItemTypes.EMERALD_BLOCK))
                             .where('h', Ingredient.of(ItemTypes.CONDUIT))
                             .result(conduitHead())
-                            .key(ResourceKey.of(PluginTraders.TRADERS_ID, "fisher"))
                             .build();
-        RecipeRegistration icemanRecipe = ShapedCraftingRecipe.builder().aisle("eee", "ehe", "eee")
+        var icemanRecipe = ShapedCraftingRecipe.builder().aisle("eee", "ehe", "eee")
                                                         .where('e', Ingredient.of(ItemTypes.EMERALD_BLOCK))
                                                         .where('h', Ingredient.of(ItemTypes.BLUE_ICE))
                                                         .result(iceHead())
-                                                        .key(ResourceKey.of(PluginTraders.TRADERS_ID, "ice"))
                                                         .build();
-        RecipeRegistration sandmanRecipe = ShapedCraftingRecipe.builder().aisle("eee", "ehe", "eee")
+        var sandmanRecipe = ShapedCraftingRecipe.builder().aisle("eee", "ehe", "eee")
                                                               .where('e', Ingredient.of(ItemTypes.EMERALD_BLOCK))
                                                               .where('h', Ingredient.of(ItemTypes.CHISELED_SANDSTONE))
                                                               .result(sandHead())
-                                                              .key(ResourceKey.of(PluginTraders.TRADERS_ID, "sand"))
                                                               .build();
-        event.register(fisherRecipe);
-        event.register(icemanRecipe);
-        event.register(sandmanRecipe);
+        event.register(ResourceKey.of(PluginTraders.TRADERS_ID, "fisher"), fisherRecipe);
+        event.register(ResourceKey.of(PluginTraders.TRADERS_ID, "ice"), icemanRecipe);
+        event.register(ResourceKey.of(PluginTraders.TRADERS_ID, "sand"),sandmanRecipe);
     }
 
     static ItemStack sandHead()
