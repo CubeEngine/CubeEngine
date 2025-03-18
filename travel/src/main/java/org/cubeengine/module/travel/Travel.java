@@ -32,7 +32,7 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 
 @Singleton
-@Module(dependencies = @Dependency(value = "cubeengine-zoned", version = "[1.1.0-SNAPSHOT,)", optional = true))
+@Module(dependencies = @Dependency(value = "cubeengine_zoned", version = "[1.1.0-SNAPSHOT,)", optional = true))
 public class Travel
 {
     @ModuleConfig private TravelConfig config;

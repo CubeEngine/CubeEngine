@@ -117,7 +117,7 @@ public class MarkdownGenerator implements Generator
             sb.append("\n## Dependencies:\n");
             for (PluginDependency dep : plugDep)
             {
-                if (dep.id().equals("cubeengine-core") || dep.id().equals("spongeapi"))
+                if (dep.id().equals("cubeengine_core") || dep.id().equals("spongeapi"))
                 {
                     continue;
                 }

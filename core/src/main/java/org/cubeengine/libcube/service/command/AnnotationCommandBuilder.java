@@ -175,7 +175,7 @@ public class AnnotationCommandBuilder
     public String getBasePerm(PluginContainer plugin)
     {
         final String id = plugin.metadata().id();
-        if (id.startsWith("cubeengine-"))
+        if (id.startsWith("cubeengine_"))
         {
             return "cubeengine." + id.substring(11);
         }

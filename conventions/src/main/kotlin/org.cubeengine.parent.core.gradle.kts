@@ -30,7 +30,7 @@ dependencies {
     compileOnly("org.spongepowered:spongeapi:$spongeVersion")
 
 
-    "org.cubeengine:plugin-gen:1.0.10-SNAPSHOT".also {
+    "org.cubeengine:plugin-gen:1.1.0".also {
         compileOnly(it)
         annotationProcessor(it)
     }

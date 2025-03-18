@@ -369,7 +369,7 @@ public class InformationCommands extends PermissionContainer
 
     }
 
-    // TODO only load when cubeengine-worlds is not present
+    // TODO only load when cubeengine_worlds is not present
 //    @Command(desc = "Displays all loaded worlds", alias = {"worldlist","worlds"})
 //    public void listWorlds(CommandCause context)
 //    {

@@ -42,7 +42,7 @@ public interface PermissionData
 
     static void register(RegisterDataEvent event)
     {
-        final ResourceKey rkey = ResourceKey.of(PluginRoles.ROLES_ID, "permissiondata");
+        final ResourceKey rkey = ResourceKey.of(PluginRoles.ROLES_ID.replace("_", "-"), "permissiondata");
         @SuppressWarnings("unchecked")
         final DataStore dataStore = DataStore.builder()
                                              .pluginData(rkey)

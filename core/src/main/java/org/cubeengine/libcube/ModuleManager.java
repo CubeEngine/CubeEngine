@@ -280,9 +280,9 @@ public class ModuleManager
     public String getModuleId(PluginContainer plugin)
     {
         String id = plugin.metadata().id();
-        if (id.startsWith("cubeengine-"))
+        if (id.startsWith("cubeengine_"))
         {
-            return id.substring("cubeengine-".length());
+            return id.substring("cubeengine_".length());
         }
         return id;
     }

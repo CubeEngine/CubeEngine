@@ -32,11 +32,11 @@ import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
 public interface MultiverseData
 {
     Key<Value<String>> UNIVERSE = Key.builder()
-                                     .key(ResourceKey.of(PluginMultiverse.MULTIVERSE_ID, "current-universe"))
+                                     .key(ResourceKey.of(PluginMultiverse.MULTIVERSE_ID.replace("_", "-"), "current-universe"))
                                      .elementType(String.class).build();
 
     Key<MapValue<String, DataView>> DATA = Key.builder()
-                                              .key(ResourceKey.of(PluginMultiverse.MULTIVERSE_ID, "player-data"))
+                                              .key(ResourceKey.of(PluginMultiverse.MULTIVERSE_ID.replace("_", "-"), "player-data"))
                                               .mapElementType(String.class, DataView.class).build();
 
     static void register(RegisterDataEvent event)

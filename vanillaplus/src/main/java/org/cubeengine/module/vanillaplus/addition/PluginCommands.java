@@ -53,7 +53,7 @@ import static org.spongepowered.api.Platform.Component.IMPLEMENTATION;
 @Singleton
 public class PluginCommands extends PermissionContainer
 {
-    private static final String ID_PREFIX = "cubeengine-";
+    private static final String ID_PREFIX = "cubeengine_";
     public static final String NAME_PREFIX = "CubeEngine - ";
 
     private I18n i18n;

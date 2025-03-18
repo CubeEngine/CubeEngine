@@ -30,7 +30,7 @@ public interface SafeLoginData
 {
 
     Key<Value<Boolean>> FLYMODE = Key.builder()
-         .key(ResourceKey.of(PluginVanillaPlus.VANILLAPLUS_ID, "flymore"))
+         .key(ResourceKey.of(PluginVanillaPlus.VANILLAPLUS_ID.replace("_", "-"), "flymore"))
          .elementType(Boolean.class).build();
 
     static void register(RegisterDataEvent event)

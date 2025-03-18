@@ -43,6 +43,7 @@ import org.cubeengine.module.portals.command.PortalCommands;
 import org.cubeengine.module.portals.config.Destination;
 import org.cubeengine.module.portals.config.DestinationConverter;
 import org.cubeengine.module.portals.config.PortalConfig;
+import org.cubeengine.module.zoned.PluginZoned;
 import org.cubeengine.module.zoned.Zoned;
 import org.cubeengine.processor.Dependency;
 import org.cubeengine.processor.Module;
@@ -70,7 +71,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.cubeengine.libcube.service.filesystem.FileExtensionFilter.YAML;
 
 @Singleton
-@Module(dependencies = @Dependency(value = "cubeengine-zoned", version = "[1.1.0-SNAPSHOT,)"))
+@Module(dependencies = @Dependency(value = PluginZoned.ZONED_ID, version= "[1.1.0-SNAPSHOT,)"))
 public class Portals
 {
     @Inject private Reflector reflector;

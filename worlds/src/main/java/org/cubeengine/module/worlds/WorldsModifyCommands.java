@@ -93,13 +93,6 @@ public class WorldsModifyCommands extends DispatcherCommand
         i18n.send(context, POSITIVE, "{world} view distance changed to {number}", world, viewDistance);
     }
 
-    @Command(desc = "Sets load on startup")
-    public void autoload(CommandCause context, ServerWorldProperties world, boolean loadOnStartup)
-    {
-        world.offer(Keys.IS_LOAD_ON_STARTUP, loadOnStartup);
-        i18n.send(context, POSITIVE, "{world} load on startup changed to {name}", world, String.valueOf(loadOnStartup));
-    }
-
     @Command(desc = "Sets spawnchunks loaded")
     public void spawnChunks(CommandCause context, ServerWorldProperties world, boolean loaded)
     {
