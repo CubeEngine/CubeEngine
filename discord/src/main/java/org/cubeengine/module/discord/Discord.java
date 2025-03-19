@@ -295,7 +295,8 @@ public class Discord {
         {
             if (!onlinePlayer.get(DiscordData.MUTED).orElse(false))
             {
-                Component content = attachments.append(autoLink(message, i18n.translate(onlinePlayer, "Open Link")));
+//                Component content = attachments.append(autoLink(message, i18n.translate(onlinePlayer, "Open Link")));
+                Component content = attachments.append(message);
 
                 Map<String, Component> replacements = new HashMap<>();
                 replacements.put("NAME", name);
