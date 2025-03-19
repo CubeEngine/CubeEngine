@@ -7,6 +7,7 @@ dependencies {
     implementation("net.dv8tion:JDA:5.3.0") {
         exclude(module="opus-java")
         exclude(group = "com.fasterxml.jackson.core", module = "jackson-core")
+        exclude("org.slf4j")
     }
 
     tasks.shadowJar {
