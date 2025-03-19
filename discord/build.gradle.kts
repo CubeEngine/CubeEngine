@@ -8,6 +8,7 @@ dependencies {
         exclude(module="opus-java")
         exclude(group = "com.fasterxml.jackson.core", module = "jackson-core")
         exclude("org.slf4j")
+        exclude("com.google.code.gson")
     }
 
     tasks.shadowJar {
