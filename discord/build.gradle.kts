@@ -4,17 +4,8 @@ plugins {
 }
 
 dependencies {
-    implementation("com.discord4j:discord4j-core:3.3.0-RC1") {
-        exclude(group = "com.fasterxml.jackson.core", module = "jackson-core")
-        exclude(group = "io.netty", module = "netty-codec")
-        exclude(group = "io.netty", module = "netty-transport")
-        exclude(group = "io.netty", module = "netty-common")
-        exclude(group = "io.netty", module = "netty-buffer")
-        exclude(group = "io.netty", module = "netty-handler")
-        exclude(group = "io.netty", module = "netty-transport-native-epoll")
-        exclude(group = "io.netty", module = "netty-transport-native-unix-common")
-        exclude(group = "io.netty", module = "netty-resolver-dns")
-        exclude(group = "org.checkerframework", module = "checker-qual")
+    implementation("net.dv8tion:JDA:5.3.0") {
+        exclude(module="opus-java")
     }
 
     tasks.shadowJar {
