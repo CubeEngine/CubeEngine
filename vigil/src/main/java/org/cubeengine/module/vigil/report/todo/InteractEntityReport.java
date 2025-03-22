@@ -15,10 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.cubeengine.module.vigil.report.entity.interact;
+package org.cubeengine.module.vigil.report.todo;
 
-import org.cubeengine.module.vigil.report.entity.EntityReport;
+import net.kyori.adventure.audience.Audience;
+import org.cubeengine.libcube.service.i18n.I18n;
+import org.cubeengine.module.vigil.report.BaseReport;
+import org.cubeengine.module.vigil.report.Report;
+import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.event.entity.InteractEntityEvent;
+import org.spongepowered.api.item.ItemTypes;
+import org.spongepowered.api.item.inventory.ItemStack;
 
 /* TODO
 entity
@@ -31,7 +37,18 @@ vehicle
 -enter
 -exit
 -use-furnace-minecart
+
+damage
  */
-public abstract class InteractEntityReport<T extends InteractEntityEvent> extends EntityReport<T>
+public abstract class InteractEntityReport<T extends InteractEntityEvent> extends BaseReport<T> implements Report.Readonly
 {
+    @Override
+    public ItemStack getIcon(final I18n i18n, final Audience audience) {
+        final var icon = ItemStack.of(ItemTypes.CHEST);
+        var tr = i18n.translate(audience, "Inventory Changes");
+        icon.offer(Keys.CUSTOM_NAME, tr);
+        // TODO
+        return icon;
+    }
+
 }

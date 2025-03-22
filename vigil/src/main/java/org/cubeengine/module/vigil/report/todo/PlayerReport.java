@@ -15,18 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.cubeengine.module.vigil.report.entity;
+package org.cubeengine.module.vigil.report.todo;
 
 import org.cubeengine.module.vigil.report.BaseReport;
-import org.cubeengine.module.vigil.report.Report;
 import org.spongepowered.api.event.Event;
 
-/* TODO
-- damage entity?
+/* TODO player
+-teleport
+-xp
+
+-player-death
+
+item
+-craft
+-enchant
  */
-public abstract class EntityReport<T extends Event> extends BaseReport<T> implements Report.Readonly
+public abstract class PlayerReport<T extends Event> extends BaseReport<T>
 {
-    public static final String ENTITY = "entity";
-    public static final String ENTITY_DATA = "data";
-    public static final String LIVING = "isLiving";
 }

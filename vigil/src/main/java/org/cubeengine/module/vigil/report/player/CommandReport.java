@@ -15,45 +15,35 @@
  * You should have received a copy of the GNU General Public License
  * along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.cubeengine.module.vigil.report.inventory;
+package org.cubeengine.module.vigil.report.player;
 
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.module.vigil.reporting.Receiver;
 import org.cubeengine.module.vigil.action.Action;
+import org.cubeengine.module.vigil.action.StringAction;
 import org.cubeengine.module.vigil.report.BaseReport;
 import org.cubeengine.module.vigil.reporting.Recall;
-import org.cubeengine.module.vigil.report.Report;
+import org.cubeengine.module.vigil.report.Report.Readonly;
 import org.cubeengine.module.vigil.reporting.PreparedReport;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.Order;
+import org.spongepowered.api.event.command.ExecuteCommandEvent;
 import org.spongepowered.api.event.filter.cause.First;
-import org.spongepowered.api.event.item.inventory.container.InteractContainerEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.time.Duration;
 
-public class InventoryOpenReport extends BaseReport<InteractContainerEvent.Open> implements Report.Readonly
-{
-    @Override
-    public void showReportLine(Receiver receiver, final PreparedReport.ReportLine reportLine)
-    {
-        final var actions = reportLine.actions();
-        Action action = actions.get(0);
-        receiver.sendReport(this, actions, actions.size(),
-                            "{txt} open {txt}",
-                            "{txt} open {txt} x{}",
-                            Recall.causeAsComponent(action), Component.text("?"), actions.size());
-    }
+public class CommandReport extends BaseReport<ExecuteCommandEvent.Post> implements Readonly {
 
     @Override
     public ItemStack getIcon(final I18n i18n, final Audience audience) {
-        final var icon = ItemStack.of(ItemTypes.DISPENSER);
-        var tr = i18n.translate(audience, "Inventory Opened");
+        final var icon = ItemStack.of(ItemTypes.COMMAND_BLOCK);
+        var tr = i18n.translate(audience, "Commands").color(NamedTextColor.WHITE);
         icon.offer(Keys.CUSTOM_NAME, tr);
         // TODO
         return icon;
@@ -61,23 +51,25 @@ public class InventoryOpenReport extends BaseReport<InteractContainerEvent.Open>
 
 
     @Override
-    public Action observe(InteractContainerEvent.Open event)
-    {
-        var location = ChangeInventoryReport.containerLocation(event.container());
-        if (location == null) {
-            return null;
-        }
-        return newActionAt(event.cause(), location);
+    public Action observe(ExecuteCommandEvent.Post event) {
+        var player = event.cause().first(ServerPlayer.class).get(); // event-filter ensures this is present
+        return newActionAt(event.cause(), player.serverLocation()).withStringAction(StringAction.COMMAND, event.command());
     }
 
-    @Listener(order = Order.POST)
-    public void listen(InteractContainerEvent.Open event, @First Player player)
-    {
+    @Override
+    public void showReportLine(Receiver receiver, final PreparedReport.ReportLine reportLine) {
+        var actions = reportLine.actions();
+        Action action = actions.getFirst();
+        receiver.sendReportX(this, actions, actions.size(), "{txt} used /{input}", Recall.causeAsComponent(action), action.stringAction.data());
+    }
+
+    @Listener
+    public void onCommand(ExecuteCommandEvent.Post event, @First Player player) {
         report(observe(event));
     }
 
-
-    @Override public Duration maxDiff() {
-        return Duration.ofHours(1);
+    @Override
+    public Duration maxDiff() {
+        return Duration.ofMinutes(30);
     }
 }

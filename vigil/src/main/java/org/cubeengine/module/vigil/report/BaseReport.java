@@ -18,7 +18,10 @@
 package org.cubeengine.module.vigil.report;
 
 import org.cubeengine.module.vigil.Vigil;
+import org.cubeengine.module.vigil.action.Action;
+import org.spongepowered.api.event.Cause;
 import org.spongepowered.api.event.Event;
+import org.spongepowered.api.world.server.ServerLocation;
 import org.spongepowered.api.world.server.ServerWorld;
 
 public abstract class BaseReport<T extends Event> implements Report
@@ -30,10 +33,19 @@ public abstract class BaseReport<T extends Event> implements Report
         this.vigil = vigil;
     }
 
-    protected Action newReport()
+    protected Action newAction(final Cause cause)
     {
-        return new Action(getClass().getName());
+
+        return new Action(getClass().getName(), cause);
     }
+
+    protected Action newActionAt(final Cause cause, ServerLocation location)
+    {
+
+        return new Action(getClass().getName(), cause, location);
+    }
+
+
 
     protected void report(Action action)
     {
@@ -44,7 +56,7 @@ public abstract class BaseReport<T extends Event> implements Report
     }
 
     /**
-     * Observes an event an creates an action for it
+     * Observes an event and creates an action for it
      *
      * @param event the event to observe
      * @return the events action

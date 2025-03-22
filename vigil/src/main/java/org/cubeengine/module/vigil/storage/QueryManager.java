@@ -17,76 +17,69 @@
  */
 package org.cubeengine.module.vigil.storage;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.mongodb.MongoTimeoutException;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Indexes;
-import org.bson.Document;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.i18n.I18nTranslate.ChatType;
 import org.cubeengine.libcube.service.i18n.formatter.MessageType;
-import org.cubeengine.module.bigdata.Bigdata;
 import org.cubeengine.module.vigil.Lookup;
-import org.cubeengine.module.vigil.Receiver;
-import org.cubeengine.module.vigil.report.Action;
-import org.cubeengine.module.vigil.report.Report;
-import org.cubeengine.module.vigil.report.ReportActions;
+import org.cubeengine.module.vigil.Vigil;
+import org.cubeengine.module.vigil.action.Causer;
+import org.cubeengine.module.vigil.action.StoredCause;
+import org.cubeengine.module.vigil.reporting.Receiver;
+import org.cubeengine.module.vigil.action.Action;
 import org.cubeengine.module.vigil.report.ReportManager;
+import org.cubeengine.module.vigil.reporting.PreparedReport;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.TaskExecutorService;
 import org.spongepowered.plugin.PluginContainer;
 
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
-import static java.util.stream.Collectors.toList;
+import static org.cubeengine.libcube.service.i18n.formatter.MessageType.CRITICAL;
 
 @Singleton
 public class QueryManager
 {
-    private final Queue<Action> actions = new ConcurrentLinkedQueue<>();
+    private final BlockingQueue<Action> actions = new LinkedBlockingQueue<>();
     private final ExecutorService storeExecuter;
     private PluginContainer plugin;
-    private Future<?> storeFuture;
+    private final Vigil vigil;
     private TaskExecutorService queryShowExecutor;
     private Map<UUID, CompletableFuture<Void>> queryFuture = new HashMap<>();
-    private final Semaphore storeLatch = new Semaphore(1);
 
-    private int batchSize = 2000; // TODO config
-    private MongoCollection<Document> mongo;
-    private Bigdata bigdata;
     private ReportManager reportManager;
     private I18n i18n;
 
-    private List<Consumer<Action>> callbacks = new ArrayList<>();
-
     private Map<UUID, Lookup> lastLookups = new HashMap<>();
 
+    // TODO add statistics
+
+    private AtomicLong actionsProcessed = new AtomicLong();
+
     @Inject
-    public QueryManager(ThreadFactory tf, Bigdata bigdata, ReportManager reportManager, I18n i18n, PluginContainer plugin)
+    public QueryManager(ThreadFactory tf, ReportManager reportManager, I18n i18n, PluginContainer plugin, Vigil vigil)
     {
-        this.bigdata = bigdata;
         this.reportManager = reportManager;
         this.i18n = i18n;
-        this.storeExecuter = newSingleThreadExecutor(tf);
         this.plugin = plugin;
+        this.vigil = vigil;
+        this.storeExecuter = newSingleThreadExecutor(tf);
+        this.storeExecuter.submit(this::store);
     }
 
     public void initQueryShowExecutor()
@@ -97,17 +90,14 @@ public class QueryManager
         }
     }
 
-    public MongoCollection<Document> vigilCollection()
+    private VigilRepository repo;
+    public VigilRepository repository()
     {
-        if (this.mongo == null)
+        if (this.repo == null)
         {
-            this.mongo = bigdata.getDatabase().getCollection("vigil");
-            this.mongo.createIndex(Indexes.hashed("type"));
-            this.mongo.createIndex(Indexes.descending("date"));
-            this.mongo.createIndex(Indexes.ascending("data.location.Position_X", "data.location.Position_Z", "data.location.Position_Y"));
-            this.mongo.createIndex(Indexes.hashed("data.location.WorldUuid"));
+            this.repo = new VigilRepository(this.plugin.logger()).init(vigil.getConfig());
         }
-        return this.mongo;
+        return this.repo;
     }
 
     /**
@@ -120,80 +110,39 @@ public class QueryManager
         if (!this.storeExecuter.isShutdown())
         {
             actions.add(action);
-            // Start inserting queued actions ; if not already running
-            if (storeLatch.availablePermits() > 0 && (storeFuture == null || storeFuture.isDone()))
-            {
-                storeFuture = storeExecuter.submit(() -> store(batchSize));
-            }
-
-            callbacks.forEach(c -> c.accept(action));
         }
     }
 
-    public void addCallback(Consumer<Action> callback) {
-        this.callbacks.add(callback);
-    }
-
-    /**
-     * Attempts to store up to {@code max} {@link Action}s
-     * @param max the max amount of actions to store in one batch insert
-     */
-    private void store(int max)
+    private void store()
     {
-        // TODO add statistics
-
-        final Queue<Action> storing = new LinkedList<>();
-
-        try
+        while (true)
         {
-            storeLatch.acquire();
-            if (actions.isEmpty())
+            Action toStore = null;
+            try
             {
-                return;
+                toStore = actions.take();
+                if (toStore == Action.SHUTDOWN_SERVER) {
+                    return;
+                }
+                repository().store(toStore);
+                actionsProcessed.incrementAndGet();
             }
-
-            for (int i = 0; i < max && !actions.isEmpty(); i++)
+            catch (InterruptedException e)
             {
-                storing.offer(actions.poll());
+                plugin.logger().error("Error taking next action", e);
             }
-
-            List<Document> storeList = storing.stream().map(Action::getDocument).collect(toList());
-            vigilCollection().insertMany(storeList);
-        }
-        catch (MongoTimeoutException e)
-        {
-            System.out.println(e.getMessage());
-        }
-        catch (Exception e)
-        {
-
-            // TODO better exception handling
-            System.err.print("[Vigil] " + e.getMessage() + "\n");
-            System.err.println("The following documents were discarded:");
-            for (Action action : storing)
+            catch (Exception e)
             {
-                System.err.println(action.getDocument().toString());
-            }
-//            actions.addAll(storing); // read actions to store later // TODO this may cause duplicates!!
-        }
-        finally
-        {
-            // Release latch up to 1 pe rmit
-            if (storeLatch.availablePermits() == 0)
-            {
-                storeLatch.release();
-            }
-            // More actions available ; rerun
-            if (!actions.isEmpty())
-            {
-                storeFuture = storeExecuter.submit(() -> store(this.batchSize));
+                plugin.logger().error("Error storing action {}", toStore, e);
             }
         }
+
     }
 
-    public void queryAndShow(Lookup lookup, Player player) // TODO lookup object
+    public void queryAndShow(Lookup lookup, Player player)
     {
         this.initQueryShowExecutor();
+        // TODO check if last lookup is the exact same
         this.lastLookups.put(player.uniqueId(), lookup);
 
         // TODO lookup cancel previous?
@@ -203,96 +152,39 @@ public class QueryManager
             i18n.send(ChatType.ACTION_BAR, player, MessageType.NEGATIVE, "There is another lookup active!");
             return;
         }
-        Query query = buildQuery(lookup);
 
-        future = CompletableFuture.supplyAsync(() -> lookup(lookup, query)) // Async MongoDB Lookup
-                                                                               .thenApply(result -> this.prepareReports(lookup, player, result)) // Still Async Prepare Reports
-                                                                               .thenAcceptAsync(r -> this.show(lookup, player, r), queryShowExecutor)// Resync to show information
+
+        var receiver = new Receiver(player, i18n, lookup);
+        future = CompletableFuture.supplyAsync(() -> doLookup(lookup)) // Async MongoDB Lookup
+                   .thenApply(result -> new PreparedReport(receiver, reportManager, result)) // Still Async Prepare Reports
+                   .thenAcceptAsync(PreparedReport::doShow, queryShowExecutor)// Resync to show information
             .exceptionally(t -> {
+                receiver.getI18n().send(receiver.getSender(), CRITICAL, "An error occurred in a report: {input}", "?"); // TODO
+                for (final var action : actions) {
+                    System.out.println("ACTION ID: " + action.id);
+                    System.out.println(action);
+                }
                 plugin.logger().error("Error showing reports", t);
                 return null;
             });
         queryFuture.put(player.uniqueId(), future);
     }
 
-    private List<Action> lookup(Lookup lookup, Query query)
+    private List<Action> doLookup(Lookup lookup)
     {
+
         lookup.time(Lookup.LookupTiming.LOOKUP);
-        List<Action> actions = new ArrayList<>();
-        FindIterable<Document> results = query.find(vigilCollection()).sort(new Document("date", -1));
-        for (Document result : results)
-        {
-            actions.add(new Action(result));
-        }
+        var actions = repository().find(lookup);
+        actions.stream().filter(a -> a.causes.causes().isEmpty()).forEach(a -> a.causes.causes().add(Map.of(StoredCause.CauserReason.DEFAULT,
+                Causer.unknown())));
         lookup.time(Lookup.LookupTiming.LOOKUP);
         return actions;
     }
 
-    private List<ReportActions> prepareReports(Lookup lookup, Player player, List<Action> results)
-    {
-        lookup.time(Lookup.LookupTiming.REPORT);
-
-        List<ReportActions> reportActions = new ArrayList<>();
-        ReportActions last = null;
-        for (Action action : results)
-        {
-            Report report = reportManager.reportOf(action);
-            if (last == null)
-            {
-                last = new ReportActions(report);
-                reportActions.add(last);
-            }
-            if (!last.add(action, report, lookup))
-            {
-                last = new ReportActions(report);
-                reportActions.add(last);
-                last.add(action, report, lookup);
-            }
-        }
-
-        lookup.time(Lookup.LookupTiming.REPORT);
-        return reportActions;
-    }
-
-    private void show(Lookup lookup, Player player, List<ReportActions> reportActions)
-    {
-        new Receiver(player, i18n, lookup).sendReports(reportActions);
-    }
-
-    private Query buildQuery(Lookup lookup)
-    {
-        // Build query from lookup
-        Query query = new Query();
-
-        // TODO lookup settings
-        query.world(lookup.getWorld());
-
-        List<String> reportFilters = lookup.getSettings().getReports();
-        if (!reportFilters.isEmpty())
-        {
-            query.reportFilters(reportFilters);
-        }
-
-        if (lookup.getRadius() != 0)
-        {
-            query.radius(lookup.getPosition(), lookup.getRadius());
-        }
-        else if (lookup.getPosition() != null)
-        {
-            query.position(lookup.getPosition());
-        }
-
-        if (lookup.prepared() != null)
-        {
-            query.prepared(lookup.prepared());
-        }
-
-        return query;
-    }
 
     public void purge()
     {
-        this.vigilCollection().deleteMany(new Document());
+        this.repository().purge();
     }
 
     public Optional<Lookup> getLast(Player player)
@@ -302,18 +194,18 @@ public class QueryManager
 
     public void shutdown()
     {
-        System.out.println("Shutting down Vigil");
         if (this.queryShowExecutor != null)
         {
             this.queryShowExecutor.shutdown();
         }
         try
         {
-            if (this.storeExecuter != null)
-            {
-                this.storeExecuter.shutdown();
-                this.storeExecuter.awaitTermination(30, TimeUnit.SECONDS);
+            if (!this.actions.isEmpty()) {
+                plugin.logger().info("Waiting for {} actions to be stored", this.actions.size());
             }
+            this.actions.add(Action.SHUTDOWN_SERVER);
+            this.storeExecuter.shutdown();
+            this.storeExecuter.awaitTermination(30, TimeUnit.SECONDS);
         }
         catch (InterruptedException e)
         {

@@ -34,32 +34,22 @@
  */
 package org.cubeengine.module.vigil.report;
 
-import java.util.List;
-import java.util.Objects;
+import java.time.Duration;
 import java.util.Optional;
 
-import org.cubeengine.module.vigil.Receiver;
-import org.spongepowered.api.data.persistence.DataQuery;
-
-import static java.util.Collections.emptyList;
+import net.kyori.adventure.audience.Audience;
+import org.cubeengine.libcube.service.i18n.I18n;
+import org.cubeengine.module.vigil.reporting.Receiver;
+import org.cubeengine.module.vigil.action.Action;
+import org.cubeengine.module.vigil.reporting.PreparedReport;
+import org.spongepowered.api.item.inventory.ItemStack;
 
 public interface Report
 {
-    DataQuery WORLD = DataQuery.of("WorldKey");
-    DataQuery X = DataQuery.of("Position", "X");
-    DataQuery Y = DataQuery.of("Position", "Y");
-    DataQuery Z = DataQuery.of("Position", "Z");
-    String CAUSE = "cause";
-    String CAUSE_TYPE = "type";
-    String CAUSE_PLAYER_UUID = "UUID";
-    String CAUSE_NAME = "name";
-    String CAUSE_TARGET = "target";
-    String CAUSE_INDIRECT = "indirect";
-    String LOCATION = "location";
-
-    String MULTIACTION = "multiaction";
-    String FULLCAUSELIST = "fullcauselist";
-    String CAUSECONTEXT = "causecontext";
+    default boolean filterable() {
+        return true;
+    }
+    ItemStack getIcon(final I18n i18n, final Audience audience);
 
     static Optional<? extends Class<? extends Report>> getReport(String name)
     {
@@ -89,33 +79,15 @@ public interface Report
         return Optional.ofNullable(clazz);
     }
 
-    enum CauseType
-    {
-        CAUSE_PLAYER,
-        CAUSE_BLOCK, // Indirect
-        CAUSE_TNT,
-        CAUSE_DAMAGE,
-        CAUSE_ENTITY
-    }
-
     /**
      * Shows the action to given CommandSource
-     *  @param actions   the action to show
-     * @param receiver the CommandSource
+     *
+     * @param receiver   the CommandSource
+     * @param reportLine
      */
-    void showReport(List<Action> actions, Receiver receiver);
+    void showReportLine(Receiver receiver, final PreparedReport.ReportLine reportLine);
 
-    /**
-     * Returns whether the actions can be grouped
-     *
-     *
-     * @param lookup
-     * @param action      the first action
-     * @param otherAction
-     * @param otherReport
-     * @return whether the actions can be grouped
-     */
-    boolean group(Object lookup, Action action, Action otherAction, Report otherReport);
+
 
     /**
      * Applies the action to the world
@@ -133,50 +105,8 @@ public interface Report
      */
     void unapply(Action action, boolean noOp);
 
-    interface SimpleGrouping extends Report
-    {
-        @Override
-        default boolean group(Object lookup, Action action, Action otherAction, Report otherReport)
-        {
-            if (!this.equals(otherReport))
-            {
-                return false;
-            }
-            if (!Recall.cause(action).equals(Recall.cause(otherAction)))
-            {
-                return false;
-            }
-            // TODO compare cause
-            return !groupBy().stream().anyMatch(key -> !Objects.equals(action.getData(key), otherAction.getData(key)));
-        }
+     Duration maxDiff();
 
-        default List<String> groupBy()
-        {
-            return emptyList();
-        }
-    }
-
-    interface ReportGrouping extends Report
-    {
-
-        @Override
-        default boolean group(Object lookup, Action action, Action otherAction, Report otherReport)
-        {
-            if (!getReportsList().contains(otherReport.getClass()))
-            {
-                return false;
-            }
-
-            if (!Recall.cause(action).equals(Recall.cause(otherAction)))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        List<Class<? extends Report>> getReportsList();
-    }
 
     interface Readonly extends Report
     {
@@ -184,12 +114,4 @@ public interface Report
         default void unapply(Action action, boolean noOp) {}
     }
 
-    interface NonGrouping extends Report
-    {
-        @Override
-        default boolean group(Object lookup, Action action, Action otherAction, Report otherReport)
-        {
-            return false;
-        }
-    }
 }

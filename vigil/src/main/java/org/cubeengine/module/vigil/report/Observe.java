@@ -17,332 +17,173 @@
  */
 package org.cubeengine.module.vigil.report;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import org.cubeengine.module.vigil.report.entity.EntityReport;
-import org.cubeengine.module.vigil.report.inventory.ChangeInventoryReport;
+
+import org.cubeengine.module.vigil.action.Action;
+import org.cubeengine.module.vigil.action.BlockChange;
+import org.cubeengine.module.vigil.action.BlockData;
+import org.cubeengine.module.vigil.action.Causer;
+import org.cubeengine.module.vigil.action.StoredCause.CauserReason;
+import org.cubeengine.module.vigil.action.EntityChange;
+import org.cubeengine.module.vigil.action.InventoryChange;
+import org.cubeengine.module.vigil.action.LocatableChange;
+import org.cubeengine.module.vigil.action.StoredCause;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockState;
-import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.block.BlockTypes;
+import org.spongepowered.api.block.entity.BlockEntity;
+import org.spongepowered.api.block.entity.Piston;
 import org.spongepowered.api.block.transaction.BlockTransactionReceipt;
 import org.spongepowered.api.data.Keys;
-import org.spongepowered.api.data.Transaction;
-import org.spongepowered.api.data.persistence.DataContainer;
-import org.spongepowered.api.data.persistence.DataQuery;
-import org.spongepowered.api.data.persistence.DataView;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.explosive.fused.PrimedTNT;
 import org.spongepowered.api.entity.living.Agent;
 import org.spongepowered.api.entity.living.Living;
-import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.Cause;
-import org.spongepowered.api.event.EventContextKey;
 import org.spongepowered.api.event.cause.entity.damage.source.DamageSource;
-import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.registry.RegistryTypes;
 import org.spongepowered.api.world.LocatableBlock;
 import org.spongepowered.api.world.server.ServerLocation;
 
-import static java.util.stream.Collectors.toList;
-import static org.cubeengine.module.vigil.report.Report.CauseType.*;
-import static org.cubeengine.module.vigil.report.block.BlockReport.*;
+import static org.cubeengine.module.vigil.action.Causer.Type.BLOCK;
+import static org.cubeengine.module.vigil.action.Causer.Type.DAMAGE;
+import static org.cubeengine.module.vigil.action.Causer.Type.PLAYER;
+import static org.cubeengine.module.vigil.action.Causer.Type.TNT;
+import static org.cubeengine.module.vigil.action.StoredCause.CauserReason.DETONATOR;
+import static org.cubeengine.module.vigil.action.StoredCause.CauserReason.INDIRECT;
+import static org.cubeengine.module.vigil.action.StoredCause.CauserReason.DEFAULT;
 
-public class Observe
-{
-    public static Map<String, Object> causes(Cause causes)
-    {
-        Map<String, Object> data = new LinkedHashMap<>();
-        List<Object> causeList = new ArrayList<>();
-        data.put(Report.FULLCAUSELIST, causeList);
-        Set<Object> set = new HashSet<>();
-        for (Object namedCause : new LinkedHashSet<>(causes.all()))
-        {
-            Map<String, Object> causeData = cause(namedCause, set);
-            if (causeData != null)
-            {
-                causeList.add(causeData);
-            }
-        }
+public class Observe {
 
-        HashMap<Object, Object> context = new HashMap<>();
-        data.put(Report.CAUSECONTEXT, context);
+    public static StoredCause causes(Cause causes) {
+        var causeList = causes.all().stream().distinct()
+                .map(Observe::causer)
+                .filter(Objects::nonNull)
+                .filter(m -> !m.isEmpty())
+                .distinct() // removes duplicate causes
+                .toList();
 
-        for (EventContextKey<?> key : causes.context().keySet())
-        {
-            final Map<String, Object> cause = cause(causes.context().get(key).get(), new HashSet<>());
-            if (cause != null)
-            {
-                context.put(key.key().asString(), cause);
-            }
-        }
 
-        return data;
+        var context = causes.context().asMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey().key().asString(),
+                        e -> Observe.causer(e.getValue())));
+
+        return new StoredCause(context, causeList);
     }
 
-    public static Map<String, Object> cause(Object cause, Set<Object> set)
-    {
-        return cause(cause, true, set);
-    }
+    private static Map<CauserReason, Causer> causer(Object cause) {
 
-    public static Map<String, Object> cause(Object cause, boolean doRecursion, Set<Object> set)
-    {
-        if (set.contains(cause))
-        {
-            return null;
-        }
-        if (cause instanceof DamageSource damageSource)
-        {
-            if (damageSource.source().isPresent())
-            {
-                Entity source = damageSource.source().orElse(null);
-                Map<String, Object> sourceCause = Observe.cause(source, set);
-                if (damageSource.indirectSource().isPresent())
-                {
-                    Map<String, Object> indirectCause = Observe.cause(damageSource.indirectSource().get(), set);
-                    if (sourceCause == null)
-                    {
-                        return indirectCause;
-                    }
-                    set.add(indirectCause);
-                    sourceCause.put(CAUSE_INDIRECT, indirectCause);
+        if (cause instanceof DamageSource dmg) {
+            if (dmg.source().isPresent()) {
+                Map<CauserReason, Causer> map = new HashMap<>(Observe.entityCauser(dmg.source().orElse(null), true, StoredCause.CauserReason.DEFAULT));
+                if (dmg.indirectSource().isPresent() && dmg.source().get() != dmg.indirectSource().get()) {
+                    map.putAll(Observe.entityCauser(dmg.indirectSource().get(), true, INDIRECT));
                 }
-                set.add(source);
-                return sourceCause;
+                return map;
             }
 
-            if (damageSource.blockSnapshot().isPresent())
-            {
-                return Observe.cause(damageSource.blockSnapshot().get(), set);
+            if (dmg.blockSnapshot().isPresent()) {
+                return Map.of(DEFAULT, Observe.blockCauser(dmg.blockSnapshot().get().state()));
             }
-            return Observe.damageCause(damageSource);
+            return Map.of(DEFAULT, Observe.damageCause(dmg));
 
         }
-        if (cause instanceof User)
-        {
-            return userCause((User) cause);
+        if (cause instanceof UUID uuid) {
+            return Map.of(DEFAULT, userCauser(uuid));
         }
-        else if (cause instanceof Player)
-        {
-            return playerCause((Player) cause);
+        if (cause instanceof User user) {
+            return Map.of(DEFAULT, userCauser(user));
         }
-        else if (cause instanceof LocatableBlock)
-        {
-            return blockCause(((LocatableBlock) cause).blockState());
+        if (cause instanceof BlockEntity be) {
+            return Map.of(DEFAULT, blockCauser(be.block()));
         }
-        else if (cause instanceof BlockSnapshot)
-        {
-            return blockCause(((BlockSnapshot) cause).state());
+        if (cause instanceof LocatableBlock block) {
+            return Map.of(DEFAULT, blockCauser(block.blockState()));
         }
-        else if (cause instanceof PrimedTNT)
-        {
-            return tntCause(((PrimedTNT)cause));
+        if (cause instanceof BlockSnapshot snap) {
+            return Map.of(DEFAULT, blockCauser(snap.state()));
         }
-        else if (cause instanceof Entity)
-        {
-            return entityCause(((Entity) cause), doRecursion, set);
+        if (cause instanceof Entity) {
+            return entityCauser(((Entity) cause), true, DEFAULT);
         }
         // TODO other causes that interest us
-        return null;
+        return Map.of();
     }
 
-    private static Map<String, Object> damageCause(DamageSource cause)
-    {
-        Map<String, Object> data = new HashMap<>();
-        data.put(CAUSE_TYPE, CAUSE_DAMAGE.toString());
-        data.put(CAUSE_NAME, cause.type().key(RegistryTypes.DAMAGE_TYPE).asString());
-        return data;
+    private static Causer damageCause(DamageSource cause) {
+        return Causer.of(DAMAGE, cause.type().key(RegistryTypes.DAMAGE_TYPE));
     }
 
-    private static Map<String, Object> tntCause(PrimedTNT cause)
-    {
-        Map<String, Object> data = new HashMap<>();
+    private static Map<CauserReason, Causer> tntCauser(PrimedTNT cause) {
+        Map<CauserReason, Causer> map = new HashMap<>();
+
+        var eType = cause.type().key(RegistryTypes.ENTITY_TYPE);
+        map.put(DEFAULT, Causer.of(TNT, eType));
+
         cause.get(Keys.DETONATOR).ifPresent(detonator -> {
-            if (detonator instanceof Player)
-            {
-                data.put(CAUSE_NAME, ((Player)detonator).name());
-                data.put(CAUSE_PLAYER_UUID, detonator.uniqueId());
-            }
-            else
-            {
-                data.put(CAUSE_NAME, detonator.type().key(RegistryTypes.ENTITY_TYPE).asString());
+            if (detonator instanceof ServerPlayer pd) {
+                map.put(DETONATOR, playerCauser(pd));
+            } else {
+                map.putAll(entityCauser(detonator, false, DETONATOR));
             }
         });
-        data.put(CAUSE_TYPE, CAUSE_TNT.toString());
-        return data;
+        return map;
     }
 
-    private static Map<String, Object> entityCause(Entity cause, boolean doRecursion, Set<Object> set)
-    {
-        Map<String, Object> data = new HashMap<>();
-        data.put(CAUSE_TYPE, CAUSE_ENTITY.toString());
-        data.put(CAUSE_NAME, cause.type().key(RegistryTypes.ENTITY_TYPE).asString());
-
-        if (doRecursion && cause instanceof Agent)
-        {
-            cause.get(Keys.TARGET_ENTITY).ifPresent(targetEntity -> data.put(CAUSE_TARGET, cause(targetEntity, false, new HashSet<>())));
+    private static Map<CauserReason, Causer> entityCauser(Entity cause, boolean doRecursion, CauserReason reason) {
+        switch (cause) {
+            case null -> {
+                return Map.of();
+            }
+            case ServerPlayer player -> {
+                return Map.of(reason, playerCauser(player));
+            }
+            case PrimedTNT primedTNT when doRecursion -> {
+                return tntCauser(primedTNT);
+            }
+            default -> {
+                var map = new HashMap<CauserReason, Causer>();
+                map.put(reason, Causer.ofEntity(cause));
+                if (doRecursion && cause instanceof Agent agent) {
+                    agent.targetEntity().ifPresent(agentTarget ->
+                            map.putAll(Observe.entityCauser(agentTarget.get(), false, StoredCause.CauserReason.AGENT_TARGET)));
+                }
+                return map;
+            }
         }
-        return data;
     }
 
-    public static Map<String, Object> blockCause(BlockState block)
-    {
-        BlockType type = block.type();
-        Map<String, Object> data = new HashMap<>();
-        data.put(CAUSE_TYPE, CAUSE_BLOCK.toString());
-        data.put(CAUSE_NAME, type.key(RegistryTypes.BLOCK_TYPE).asString());
-        return data;
+    public static Causer blockCauser(BlockState block) {
+        return Causer.of(BLOCK, block.type().key(RegistryTypes.BLOCK_TYPE));
     }
 
-    public static Map<String, Object> playerCause(Player player)
-    {
-        Map<String, Object> data = new HashMap<>();
-        data.put(CAUSE_TYPE, CAUSE_PLAYER.toString());
-
-        data.put(CAUSE_PLAYER_UUID, player.uniqueId());
-        data.put(CAUSE_NAME, player.name());
+    public static Causer playerCauser(ServerPlayer player) {
+        var causer = Causer.ofPlayer(PLAYER, player);
         // TODO configurable data.put("ip", player.getConnection().getAddress().getAddress().getHostAddress());
-        return data;
+        return causer;
     }
 
-    public static Map<String, Object> userCause(User player)
-    {
-        Map<String, Object> data = new HashMap<>();
-        data.put(CAUSE_TYPE, CAUSE_PLAYER.toString());
-
-        data.put(CAUSE_PLAYER_UUID, player.uniqueId());
-        data.put(CAUSE_NAME, player.name());
-        // TODO configurable data.put("ip", player.getConnection().getAddress().getAddress().getHostAddress());
-        return data;
+    public static Causer userCauser(UUID player) {
+        return new Causer(PLAYER, player, null, null);
     }
 
-    public static void fromContainter(Map<String, Object> data, DataContainer container, DataQuery query)
-    {
-        container.get(query).ifPresent(value -> data.put(query.asString('_'), value));
+    public static Causer userCauser(User player) {
+        var causer = Causer.ofUser(PLAYER, player);
+        return causer;
     }
 
-    public static Map<String, Object> location(ServerLocation location)
-    {
-        if (location == null)
-        {
-            throw new IllegalArgumentException("The location should not be null");
-        }
-
-        Map<String, Object> info = new HashMap<>();
-
-        info.put(WORLD.asString("_"), location.world().key().toString());
-        // TODO worldname also recall it
-        info.put(X.asString("_"), location.blockX());
-        info.put(Y.asString("_"), location.blockY());
-        info.put(Z.asString("_"), location.blockZ());
-
-        return info;
-    }
-
-    // Observe
-    public static Map<String, Object> blockSnapshot(BlockSnapshot block)
-    {
-        Map<String, Object> info = new HashMap<>();
-
-        info.put(BLOCK_STATE.asString("_"), toRawData(block.state().toContainer()));
-
-        DataContainer blockContainer = block.toContainer();
-        Optional<List<DataView>> data = blockContainer.getViewList(BLOCK_DATA);
-        data.ifPresent(dataViews -> info.put(BLOCK_DATA.asString("_"), toRawData(dataViews)));
-
-        Optional<Object> unsafe = blockContainer.get(BLOCK_UNSAFE_DATA);
-        unsafe.ifPresent(o -> info.put(BLOCK_UNSAFE_DATA.asString("_"), toRawData(o)));
-
-        return info;
-    }
-
-    /**
-     * Converts potentialDataViews into corresponding String -> Object Maps
-     * @param data the data to convert
-     * @return the converted DataView or the original data
-     */
-    public static Object toRawData(Object data)
-    {
-        if (data instanceof DataQuery)
-        {
-            return ((DataQuery)data).asString("_");
-        }
-        if (data instanceof DataView)
-        {
-            return ((DataView)data).values(false).entrySet().stream()
-                                   .collect(Collectors.toMap(e -> toRawData(e.getKey()),
-                                                             e -> toRawData(e.getValue())));
-        }
-        if (data instanceof Map)
-        {
-            return ((Map<?,?>)data).entrySet().stream()
-                                   .collect(Collectors.toMap(e -> toRawData(e.getKey()),
-                                                             e -> toRawData(e.getValue())));
-        }
-        if (data instanceof List)
-        {
-            return ((List<?>)data).stream().map(Observe::toRawData).collect(toList());
-        }
-        if (data.getClass().isEnum())
-        {
-            return ((Enum)data).name();
-        }
-        if (data instanceof int[])
-        {
-            return Arrays.stream(((int[]) data)).boxed().collect(toList());
-        }
-
-        return data;
-    }
-
-    /**
-     * Observes a BlockTransaction
-     *
-     * @param transaction the transaction to observe
-     * @return the observed data
-     */
-    public static Map<String, Object> transactions(Transaction<BlockSnapshot> transaction)
-    {
-        Map<String, Object> data = new HashMap<>();
-        BlockSnapshot original = transaction.original();
-        if (original.location().isPresent())
-        {
-            //System.out.print(transaction.getFinal().getLocation().get().getPosition() +  " " + transaction.getFinal().getState().getType() + "\n");
-            //data.put(LOCATION, location(transaction.getFinal().getLocation().get()));
-            ORIGINAL.put(data, blockSnapshot(original));
-            REPLACEMENT.put(data, blockSnapshot(transaction.finalReplacement()));
-        }
-        return data;
-    }
-
-    /**
-     * Observes a BlockTransactionReceipt
-     *
-     * @param transaction the transaction to observe
-     * @return the observed data
-     */
-    public static Map<String, Object> transactions(BlockTransactionReceipt transaction)
-    {
-        Map<String, Object> data = new HashMap<>();
-        BlockSnapshot original = transaction.originalBlock();
-        if (original.location().isPresent())
-        {
-            //System.out.print(transaction.getFinal().getLocation().get().getPosition() +  " " + transaction.getFinal().getState().getType() + "\n");
-            //data.put(LOCATION, location(transaction.getFinal().getLocation().get()));
-            ORIGINAL.put(data, blockSnapshot(original));
-            REPLACEMENT.put(data, blockSnapshot(transaction.finalBlock()));
-        }
-        return data;
+    public static BlockData blockSnapshot(BlockSnapshot block) {
+        final var blockState = block.state().toContainer();
+        var blockContainer = block.toContainer();
+        return new BlockData(block.state().type().key(RegistryTypes.BLOCK_TYPE), blockState, blockContainer);
     }
 
     /**
@@ -351,32 +192,26 @@ public class Observe
      * @param transactions the transaction to observe
      * @return the observed data
      */
-    public static List<Map<String, Object>> transactions(List<SlotTransaction> transactions)
-    {
-        List<Map<String, Object>> list = new ArrayList<>();
-        for (SlotTransaction transaction : transactions)
-        {
-            Map<String, Object> data = new HashMap<>();
-            ItemStackSnapshot originalStack = transaction.original();
-            ItemStackSnapshot finalStack = transaction.finalReplacement();
-            data.put(ChangeInventoryReport.ORIGINAL, toRawData(originalStack.toContainer()));
-            data.put(ChangeInventoryReport.REPLACEMENT, toRawData(finalStack.toContainer()));
-            data.put(ChangeInventoryReport.SLOT_INDEX, transaction.slot().get(Keys.SLOT_INDEX).orElse(-1));
-            list.add(data);
-        }
-        return list;
+    public static List<InventoryChange> transactions(List<SlotTransaction> transactions) {
+        return transactions.stream().map(transaction ->
+                new InventoryChange(transaction.original().toContainer(),
+                        transaction.finalReplacement().toContainer(),
+                        transaction.slot().get(Keys.SLOT_INDEX).orElse(-1))).toList();
     }
 
-    /**
-     * Observes an EntitySnapshot
-     * @param entity the entity
-     * @return the observed data
-     */
-    public static Map<String, Object> entity(Entity entity)
-    {
-        Map<String, Object> data = new HashMap<>();
-        data.put(EntityReport.ENTITY_DATA, toRawData(entity.createSnapshot().toContainer()));
-        data.put(EntityReport.LIVING, entity instanceof Living);
-        return data;
+    public static EntityChange entityDeath(final Action action, Entity entity) {
+        final var type = entity.type().key(RegistryTypes.ENTITY_TYPE);
+        return new EntityChange(action, entity.serverLocation().position(), type, entity.createSnapshot().toContainer(), null, entity instanceof Living);
+    }
+
+    public static LocatableChange position(final ServerLocation location) {
+        return new LocatableChange(location.position());
+    }
+
+    public static BlockChange blockChange(final Action action, final BlockTransactionReceipt receipt, final ServerLocation at) {
+        var op = receipt.operation().key(RegistryTypes.OPERATION).asString();
+        final var original = blockSnapshot(receipt.originalBlock());
+        final var replacement = blockSnapshot(receipt.finalBlock());
+        return new BlockChange(action, at.position(), op, original, replacement);
     }
 }

@@ -17,30 +17,33 @@
  */
 package org.cubeengine.module.vigil.report.inventory;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import org.cubeengine.module.vigil.Receiver;
-import org.cubeengine.module.vigil.report.Action;
-import org.cubeengine.module.vigil.report.Observe;
-import org.cubeengine.module.vigil.report.Recall;
+import org.cubeengine.libcube.service.i18n.I18n;
+import org.cubeengine.module.vigil.reporting.Receiver;
+import org.cubeengine.module.vigil.action.Action;
+import org.cubeengine.module.vigil.report.BaseReport;
+import org.cubeengine.module.vigil.reporting.Recall;
 import org.cubeengine.module.vigil.report.Report;
-import org.cubeengine.module.vigil.report.ReportUtil;
+import org.cubeengine.module.vigil.reporting.PreparedReport;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.item.inventory.ChangeInventoryEvent;
 import org.spongepowered.api.event.item.inventory.container.ClickContainerEvent;
 import org.spongepowered.api.item.ItemTypes;
-import org.spongepowered.api.item.inventory.BlockCarrier;
 import org.spongepowered.api.item.inventory.Container;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.item.inventory.type.CarriedInventory;
+import org.spongepowered.api.world.Locatable;
+import org.spongepowered.api.world.server.ServerLocation;
 
 import static org.spongepowered.api.item.inventory.ItemStackComparators.ITEM_DATA;
 import static org.spongepowered.api.item.inventory.ItemStackComparators.TYPE;
@@ -52,28 +55,35 @@ inventory
 -move
 -item-pickup
  */
-public class ChangeInventoryReport extends InventoryReport<ChangeInventoryEvent> implements Report.Readonly
+public class ChangeInventoryReport extends BaseReport<ClickContainerEvent> implements Report.Readonly
 {
-    public static final String INVENTORY_CHANGES = "inventory-changes";
-    public static final String ORIGINAL = "original";
-    public static final String REPLACEMENT = "replacement";
-    public static final String SLOT_INDEX = "slot-index";
     private static final Comparator<ItemStack> COMPARATOR = TYPE.get().thenComparing(ITEM_DATA.get());
 
+
     @Override
-    public void showReport(List<Action> actions, Receiver receiver)
+    public ItemStack getIcon(final I18n i18n, final Audience audience) {
+        final var icon = ItemStack.of(ItemTypes.BARREL);
+        var tr = i18n.translate(audience, "Inventory Changes");
+        icon.offer(Keys.CUSTOM_NAME, tr);
+        // TODO
+        return icon;
+    }
+
+    @Override
+    public void showReportLine(Receiver receiver, final PreparedReport.ReportLine reportLine)
     {
-        Component cause = Recall.cause(actions.get(0));
+        final var actions = reportLine.actions();
+        Component cause = Recall.causeAsComponent(actions.get(0));
 
         LinkedList<Transaction<ItemStack>> transactions = new LinkedList<>();
 
         for (Action action : actions)
         {
-            List<Map<String, Object>> changes = action.getData(INVENTORY_CHANGES);
-            for (Map<String, Object> change : changes)
+            var changes = action.inventoryChanges;
+            for (var change : changes)
             {
-                ItemStack originStack = Recall.item(((Map<String, Object>) change.get(ORIGINAL))).get().asMutable();
-                ItemStack finalStack = Recall.item(((Map<String, Object>) change.get(REPLACEMENT))).get().asMutable();
+                var originStack = Recall.itemStack(change.originalStack());
+                var finalStack = Recall.itemStack(change.replacementStack());
 
                 if (COMPARATOR.compare(originStack, finalStack) == 0)
                 {
@@ -155,34 +165,20 @@ public class ChangeInventoryReport extends InventoryReport<ChangeInventoryEvent>
             }
             if (stack1.type().isAnyOf(ItemTypes.AIR))
             {
-                receiver.sendReport(this, actions, "{txt} inserted {txt}", cause, ReportUtil.name(stack2.asImmutable()));
+                receiver.sendReport(this, actions, "{txt} inserted {txt}", cause, Recall.stack(stack2.asImmutable(), stack2.quantity()));
             }
             else if (stack2.type().isAnyOf(ItemTypes.AIR))
             {
-                receiver.sendReport(this, actions, "{txt} took {txt}", cause, ReportUtil.name(stack1.asImmutable()));
+                receiver.sendReport(this, actions, "{txt} took {txt}", cause, Recall.stack(stack1.asImmutable(), stack1.quantity()));
             }
             else
             {
-                receiver.sendReport(this, actions, "{txt} swapped {txt} with {txt}", cause, ReportUtil.name(stack1.asImmutable()), ReportUtil.name(stack2.asImmutable()));
+                receiver.sendReport(this, actions, "{txt} swapped {txt} with {txt}", cause, Recall.stack(stack1.asImmutable(), stack1.quantity()), Recall.stack(stack2.asImmutable(), stack2.quantity()));
             }
         }
     }
 
-    @Override
-    public boolean group(Object lookup, Action action, Action otherAction, Report otherReport)
-    {
-        if (!this.equals(otherReport))
-        {
-            return false;
-        }
-        if (Recall.location(action).equals(Recall.location(otherAction))
-            && Recall.cause(action).equals(Recall.cause(otherAction)))
-        {
-            return true;
-        }
-        // TODO group by location
-        return false;
-    }
+
 
     @Override
     public void apply(Action action, boolean noOp)
@@ -193,35 +189,54 @@ public class ChangeInventoryReport extends InventoryReport<ChangeInventoryEvent>
     @Listener
     public void listen(ClickContainerEvent event)
     {
+        report(observe(event));
+    }
+
+    private static List<SlotTransaction> collectTransactions(final ClickContainerEvent event) {
         List<SlotTransaction> upperTransactions = new ArrayList<>();
-        int upperSize = event.inventory().viewed().get(0).capacity();
+        int upperSize = event.inventory().viewed().getFirst().capacity();
         for (SlotTransaction transaction : event.transactions())
         {
-            Integer affectedSlot = transaction.slot().get(Keys.SLOT_INDEX).orElse(-1);
+            // TODO slot parent is not player check instead?
+            int affectedSlot = transaction.slot().get(Keys.SLOT_INDEX).orElse(-1);
             boolean upper = affectedSlot != -1 && affectedSlot < upperSize;
             if (upper)
             {
                 upperTransactions.add(transaction);
             }
         }
-
-        final Container inventory = event.inventory();
-        ((CarriedInventory)inventory).carrier().ifPresent(carrier -> {
-            if (carrier instanceof BlockCarrier)
-            {
-                Action action = this.observe(event);
-                action.addData(INVENTORY_CHANGES, Observe.transactions(upperTransactions));
-                action.addData(Report.LOCATION, Observe.location(((BlockCarrier) carrier).serverLocation()));
-                this.report(action);
-            }
-        });
+        return upperTransactions;
     }
 
     @Override
-    public Action observe(ChangeInventoryEvent event)
+    public Action observe(ClickContainerEvent event)
     {
-        Action action = newReport();
-        action.addData(CAUSE, Observe.causes(event.cause()));
-        return action;
+        final var container = event.container();
+        var location = containerLocation(container);
+        if (location == null) {
+            return null;
+        }
+        var transactions = collectTransactions(event);
+        if (transactions.isEmpty()) {
+            return null;
+        }
+        return newActionAt(event.cause(), location).withInventoryChanges(transactions);
+    }
+
+    public static ServerLocation containerLocation(final Container inventory) {
+        if (inventory instanceof CarriedInventory<?> carried) {
+            return carried.carrier().map(carrier -> {
+                if (carrier instanceof Locatable locatableCarrier) {
+                    return locatableCarrier.serverLocation();
+                }
+                return null;
+            }).orElse(null);
+        }
+        return null;
+    }
+
+    @Override
+    public Duration maxDiff() {
+        return Duration.ofMinutes(1);
     }
 }

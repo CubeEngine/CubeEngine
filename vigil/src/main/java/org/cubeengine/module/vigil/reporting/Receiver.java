@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.cubeengine.module.vigil;
+package org.cubeengine.module.vigil.reporting;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
+
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -32,16 +32,16 @@ import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.libcube.service.i18n.I18nTranslate.ChatType;
 import org.cubeengine.libcube.util.StringUtils;
 import org.cubeengine.libcube.util.TimeUtil;
-import org.cubeengine.module.vigil.report.Action;
-import org.cubeengine.module.vigil.report.Recall;
+import org.cubeengine.module.vigil.Lookup;
+import org.cubeengine.module.vigil.action.Action;
+import org.cubeengine.module.vigil.action.LocatableChange;
 import org.cubeengine.module.vigil.report.Report;
-import org.cubeengine.module.vigil.report.ReportActions;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.adventure.SpongeComponents;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.service.pagination.PaginationList.Builder;
 import org.spongepowered.api.util.locale.LocaleSource;
-import org.spongepowered.api.world.server.ServerLocation;
 
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.separator;
@@ -62,25 +62,25 @@ public class Receiver
         this.lookup = lookup;
     }
 
-    // TODO translate msgs on this method
     public void sendReport(Report report, List<Action> actions, String msg, Object... args)
     {
         Component reports = text(report.getClass().getSimpleName());
-        if (report instanceof Report.ReportGrouping)
-        {
-            reports = text(((Report.ReportGrouping) report).getReportsList().stream().map(Class::getSimpleName).collect(Collectors.joining("/")));
-        }
         Component trans = i18n.translate(cmdSource, NEUTRAL, msg, args).hoverEvent(HoverEvent.showText(reports));
         sendReport(actions, trans);
+    }
+
+    public void sendReportX(Report report, List<Action> actions, int x, String msg, Object... args)
+    {
+        Component reports = text(report.getClass().getSimpleName());
+        Component trans = i18n.translate(cmdSource, NEUTRAL, msg, args);
+        var withTimes = trans.append(Component.text(" x")).append(Component.text(x).color(NamedTextColor.GOLD));
+        var withHover = (x == 1 ? trans : withTimes).hoverEvent(HoverEvent.showText(reports));
+        sendReport(actions, withHover);
     }
 
     public void sendReport(Report report, List<Action> actions, int size, String msgSingular, String msgPlural, Object... args)
     {
         Component reports = text(report.getClass().getSimpleName());
-        if (report instanceof Report.ReportGrouping)
-        {
-            reports = text(((Report.ReportGrouping) report).getReportsList().stream().map(Class::getSimpleName).collect(Collectors.joining("/")));
-        }
         Component trans = i18n.translateN(cmdSource, NEUTRAL, size, msgSingular, msgPlural, args).hoverEvent(HoverEvent.showText(reports));
         sendReport(actions, trans);
     }
@@ -97,13 +97,15 @@ public class Receiver
         Action firstAction = actions.get(0);
         Action lastAction = actions.get(actions.size() - 1);
 
-        Component date = lookup.getSettings().isNoDate() ? null : getDatePrefix(firstAction, lastAction);
-        Component loc = lookup.getSettings().isShowLocation() ? null : getLocation(actions, firstAction, lastAction);
+        Component date = lookup.settings().isNoDate() ? null : getDatePrefix(firstAction, lastAction);
+        Component loc = lookup.settings().isShowLocation() ? null : getLocation(actions);
         if (date != null && loc != null)
         {
             lines.add(
                 date.append(Component.space()).append(i18n.translate(cmdSource, "at"))
-                    .append(Component.space()).append(loc).append(Component.newline()).append(text("  ")).append(trans));
+                    .append(Component.space()).append(loc)
+//                        .append(Component.newline())
+                        .append(text("  ")).append(trans));
         }
         else
         {
@@ -120,63 +122,56 @@ public class Receiver
         }
     }
 
-    private Component getLocation(List<Action> actions, Action firstAction, Action lastAction)
+    private Component getLocation(List<Action> actions)
     {
-        final boolean singleAction = firstAction == lastAction;
-        boolean singleLocation = true;
-        if (!singleAction)
-        {
-            final ServerLocation firstLoc = Recall.location(firstAction);
-            for (Action action : actions)
-            {
-                final ServerLocation loc = Recall.location(action);
-                if (!firstLoc.equals(loc))
-                {
-                    singleLocation = false;
-                    break;
-                }
-            }
+        var worlds = actions.stream().map(a -> a.world).distinct().toList();
+        if (worlds.size() > 1) {
+            // TODO
+            return Component.text("multiple worlds");
         }
-        if (singleAction || singleLocation)
-        {
-            ServerLocation location = Recall.location(firstAction);
-            final Component worldName = location.world().properties().displayName().orElse(
-                text(location.worldKey().asString()));
-            final Component text = Component.join(separator(text(":", NamedTextColor.WHITE)),
-                                                  text(location.blockX()), text(location.blockY()), text(location.blockZ()))
-                                                .hoverEvent(HoverEvent.showText(i18n.translate(cmdSource, NEUTRAL, "Click to teleport to the location in {txt#world}", worldName)))
-                                                .clickEvent(SpongeComponents.executeCallback(c -> showTeleport(location)));
-            if (lookup.getSettings().isFullLocation())
+        var worldKey = worlds.getFirst();
+        var worldExists = Sponge.server().worldManager().worldExists(worldKey);
+        var world = Sponge.server().worldManager().world(worldKey);
+        Component worldName = Component.text(worldKey.asString());
+        if (worldExists) {
+            worldName = world.flatMap(w -> w.properties().displayName()).orElse(worldName);
+        }
+        var positions = actions.stream().flatMap(action -> action.locatables.stream()).map(LocatableChange::blockPos).distinct().toList();
+        if (positions.size() == 1) {
+            var pos = positions.getFirst();
+            Component text = Component.join(separator(text(":", NamedTextColor.WHITE)), text(pos.x()), text(pos.y()), text(pos.z()));
+            if (worldExists) {
+                if (cmdSource instanceof ServerPlayer player && world.isPresent()) {
+                    var hoverEvent = HoverEvent.showText(i18n.translate(cmdSource, NEUTRAL, "Click to teleport to the location in {txt#world}", worldName));
+                    var clickEvent = SpongeComponents.executeCallback(c -> player.setLocation(world.get().location(pos.toDouble().add(0.5, 0.5, 0.5))));
+                    text = text.hoverEvent(hoverEvent).clickEvent(clickEvent);
+                } else {
+                    var hoverEvent = HoverEvent.showText(i18n.translate(cmdSource, NEGATIVE, "Cannot teleport to unloaded world {txt#world}", worldName));
+                    text = text.hoverEvent(hoverEvent);
+                }
+            } else {
+                text = text.append(Component.space()).append(i18n.translate(cmdSource, NEGATIVE, "World {txt#world} does not exist!", worldName));
+            }
+
+            if (lookup.settings().isFullLocation())
             {
                 return Component.space().append(i18n.translate(cmdSource, "in")).append(Component.space()).append(worldName.color(NamedTextColor.GRAY));
             }
             return text;
         }
-        return text("range"); // TODO
-    }
-
-    private void showTeleport(ServerLocation loc)
-    {
-        if (cmdSource instanceof Player)
-        {
-            ((Player)cmdSource).setLocation(loc.add(0.5,0.5,0.5));
-        }
-        else
-        {
-            i18n.send(cmdSource, CRITICAL, "Cannot tp non player!");
-        }
+        return Component.text("range"); // TODO
     }
 
     private Component getDatePrefix(Action firstAction, Action lastAction)
     {
         if (firstAction == lastAction)
         {
-            Date date = firstAction.getDate();
+            var date = firstAction.timestamp;
             String dLong = dateLong.format(date);
             boolean sameDay = dateLong.format(new Date()).equals(dLong);
             String tLong = timeLong.format(date);
             Component full = text(dLong, NamedTextColor.GRAY).append(Component.space()).append(text(tLong));
-            if (lookup.getSettings().isFullDate())
+            if (lookup.settings().isFullDate())
             {
                 return full;
             }
@@ -193,8 +188,8 @@ public class Receiver
         }
         else
         {
-            Date firstDate = firstAction.getDate();
-            Date lastDate = lastAction.getDate();
+            var firstDate = firstAction.timestamp;
+            var lastDate = lastAction.timestamp;
 
             String fdLong = dateLong.format(firstDate);
             String ldLong = dateLong.format(lastDate);
@@ -205,7 +200,7 @@ public class Receiver
             final Component fFull = text(fdLong, NamedTextColor.GRAY).append(Component.space()).append(ftLong);
             final Component lFull = text(ldLong, NamedTextColor.GRAY).append(Component.space()).append(ltLong);
             final TextComponent dash = text(" - ", NamedTextColor.WHITE);
-            if (lookup.getSettings().isFullDate())
+            if (lookup.settings().isFullDate())
             {
                 return fFull.append(dash).append(lFull);
             }
@@ -228,9 +223,9 @@ public class Receiver
         }
     }
 
-    public void sendReports(List<ReportActions> reportActions)
+    public void sendReports(List<PreparedReport.ReportLine> reportLines)
     {
-        if (reportActions.isEmpty())
+        if (reportLines.isEmpty())
         {
             if (cmdSource instanceof Player)
             {
@@ -242,7 +237,7 @@ public class Receiver
         }
 
         cmdSource.sendMessage(text(StringUtils.repeat("-", 53), NamedTextColor.GOLD));
-        for (ReportActions reportAction : reportActions)
+        for (PreparedReport.ReportLine reportAction : reportLines)
         {
             reportAction.showReport(this);
         }

@@ -17,71 +17,148 @@
  */
 package org.cubeengine.module.vigil.storage;
 
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
-import org.bson.Document;
-import org.bson.conversions.Bson;
+import java.util.Set;
+import java.util.UUID;
+
 import org.spongepowered.api.ResourceKey;
+import org.spongepowered.api.util.AABB;
 import org.spongepowered.math.vector.Vector3i;
 
-import static org.cubeengine.module.vigil.report.Action.DATA;
-import static org.cubeengine.module.vigil.report.Action.TYPE;
-import static org.cubeengine.module.vigil.report.Report.*;
-import static org.cubeengine.module.vigil.report.block.BlockReport.BLOCK_CHANGES;
+public class Query {
 
-public class Query
-{
-    private List<Bson> andFilters = new ArrayList<>();
+    private Set<Table> tables = new HashSet<>();
 
-    public FindIterable<Document> find(MongoCollection<Document> collection)
-    {
-        return collection.find(Filters.and(andFilters));
+
+    public Query() {
+        this.tables.add(Tables.ACTION);
+        this.fromSql = "\nFROM %s".formatted(Tables.ACTION);
+        this.projection.add(Tables.ACTION.idColumn());
+        this.projection.add(Tables.ACTION.column("timestamp"));
+        this.projection.add(Tables.ACTION.column("report_type"));
+        this.projection.add(Tables.ACTION.column("world"));
     }
 
-    public Query world(ResourceKey world)
-    {
-        final Bson block = Filters.eq(String.join(".", DATA.name, BLOCK_CHANGES.name, LOCATION, WORLD.asString("_")), world.asString());
-        final Bson other = Filters.eq(String.join(".", DATA.name, LOCATION, WORLD.asString("_")), world.asString());
-        andFilters.add(Filters.or(block, other));
+    private List<Column> projection = new ArrayList<>();
+    private String fromSql;
+    private List<String> whereClauses = new ArrayList<>();
+    private List<Object> whereParams = new ArrayList<>();
+
+    private boolean distinct = true;
+
+
+    private void addJoin(Table rightTable, Column leftColumn, Column rightColumn) {
+        if (this.tables.add(rightTable)) {
+            fromSql += "\nJOIN %s ON %s = %s".formatted(rightTable, leftColumn, rightColumn);
+        }
+    }
+
+    private void addWhere(Column column, SQLOperator op, Object value) {
+        whereClauses.add("%s %s ?".formatted(column, op));
+        whereParams.add(value);
+    }
+
+    private QueryOrGroup withOrGroup() {
+        return new QueryOrGroup(this, new ArrayList<>(), new ArrayList<>());
+    }
+
+    public Query filterPlayers(Set<UUID> players) {
+        if (!players.isEmpty()) {
+            addJoin(Tables.CAUSE, Tables.ACTION.idColumn(), Tables.CAUSE.fkColumn(Tables.ACTION));
+            addWhere(Tables.CAUSE.column("type"), SQLOperator.EQ, "PLAYER");
+            addWhere(Tables.CAUSE.column("context").coalesce("''"), SQLOperator.NEQ, "sponge:creator");
+            try (var orGroup = withOrGroup()) {
+                for (final var player : players) {
+                    orGroup.addWhere(Tables.CAUSE.column("uuid"), SQLOperator.EQ, player);
+                }
+            }
+        }
         return this;
     }
 
-    public Query position(Vector3i pos)
-    {
-        final Bson blockX = Filters.eq(String.join(".", DATA.name, LOCATION, X.asString("_")), pos.x());
-        final Bson blockY = Filters.eq(String.join(".", DATA.name, LOCATION, Y.asString("_")), pos.y());
-        final Bson blockZ = Filters.eq(String.join(".", DATA.name, LOCATION, Z.asString("_")), pos.z());
-
-        andFilters.add(Filters.and(blockX, blockY, blockZ));
+    public Query withReports(Set<String> reports) {
+        try (var queryOrGroup = withOrGroup()) {
+            for (final var report : reports) {
+                queryOrGroup.addWhere(Tables.ACTION.column("report_type"), SQLOperator.EQ, report);
+            }
+        }
         return this;
     }
 
-    public Query radius(Vector3i pos, int radius)
-    {
-        final String xLoc = String.join(".", DATA.name, LOCATION, X.asString("_"));
-        final Bson gtX = Filters.gt(xLoc, pos.x() - radius);
-        final Bson ltX = Filters.lt(xLoc, pos.x() + radius);
-
-        final String zLoc = String.join(".", DATA.name, LOCATION, Z.asString("_"));
-        final Bson gtZ = Filters.gt(zLoc, pos.z() - radius);
-        final Bson ltZ = Filters.lt(zLoc, pos.z() + radius);
-
-        andFilters.add(Filters.and(gtX, ltX, gtZ, ltZ));
+    Query inBoundingBox(AABB bb) {
+        if (bb == null) {
+            return this;
+        }
+        addJoin(Tables.LOCATABLE, Tables.ACTION.idColumn(), Tables.LOCATABLE.fkColumn(Tables.ACTION));
+        addWhere(Tables.LOCATABLE.column("block_x"), SQLOperator.GE, bb.min().toInt().x());
+        addWhere(Tables.LOCATABLE.column("block_x"), SQLOperator.LE, bb.max().toInt().x());
+        addWhere(Tables.LOCATABLE.column("block_y"), SQLOperator.GE, bb.min().toInt().y());
+        addWhere(Tables.LOCATABLE.column("block_y"), SQLOperator.LE, bb.max().toInt().y());
+        addWhere(Tables.LOCATABLE.column("block_z"), SQLOperator.GE, bb.min().toInt().z());
+        addWhere(Tables.LOCATABLE.column("block_z"), SQLOperator.LE, bb.max().toInt().z());
         return this;
     }
 
-    public Query reportFilters(List<String> reports)
-    {
-        andFilters.add(Filters.in(TYPE.name, reports));
+
+    public String serialize() {
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append("SELECT %s ".formatted(distinct ? "DISTINCT" : ""));
+        queryBuilder.append(String.join(",\n\t", projection.stream().map(Column::toString).toList()));
+        queryBuilder.append(fromSql);
+        queryBuilder.append("\nWHERE 1=1");
+        whereClauses.forEach(clause -> queryBuilder.append("\nAND %s".formatted(clause)));
+        return queryBuilder.toString();
+    }
+
+    public Query inTimeLimit(final Duration timeLimit) {
+
+        addWhere(Tables.ACTION.column("timestamp"), SQLOperator.GE, Timestamp.from(Instant.now().minus(timeLimit)));
         return this;
     }
 
-    public Query prepared(Document prepared)
-    {
-        this.andFilters.add(prepared);
+    public Query inWorld(final ResourceKey world) {
+        if (world == null) {
+            return this;
+        }
+        addWhere(Tables.ACTION.column("world"), SQLOperator.EQ, world.asString());
         return this;
+    }
+
+    public Query atPosition(final Vector3i position) {
+        if (position == null) {
+            return this;
+        }
+        addJoin(Tables.LOCATABLE, Tables.ACTION.idColumn(), Tables.LOCATABLE.fkColumn(Tables.ACTION));
+        addWhere(Tables.LOCATABLE.column("block_x"), SQLOperator.EQ, position.x());
+        addWhere(Tables.LOCATABLE.column("block_y"), SQLOperator.EQ, position.y());
+        addWhere(Tables.LOCATABLE.column("block_z"), SQLOperator.EQ, position.z());
+        return this;
+    }
+
+
+    public Object[] whereParams() {
+        return this.whereParams.toArray();
+    }
+
+    private record QueryOrGroup(Query query, List<String> whereClauses, List<Object> whereParams) implements AutoCloseable {
+
+        public void addWhere(Column column, SQLOperator op, Object value) {
+            whereClauses.add("%s %s ?".formatted(column, op));
+            whereParams.add(value);
+        }
+
+        @Override
+        public void close() {
+            if (!whereClauses.isEmpty()) {
+                var grouped = String.join("\nOR ", whereClauses);
+                query.whereClauses.add("(\n%s\n)".formatted(grouped));
+                query.whereParams.addAll(whereParams);
+            }
+        }
     }
 }

@@ -17,27 +17,26 @@
  */
 package org.cubeengine.module.vigil.report.entity;
 
-import java.util.List;
-import java.util.Optional;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.HoverEvent;
-import org.bson.Document;
-import org.cubeengine.module.vigil.Receiver;
-import org.cubeengine.module.vigil.report.Action;
-import org.cubeengine.module.vigil.report.Observe;
-import org.cubeengine.module.vigil.report.Recall;
-import org.cubeengine.module.vigil.report.Report;
-import org.cubeengine.module.vigil.report.ReportUtil;
+import org.cubeengine.libcube.service.i18n.I18n;
+import org.cubeengine.module.vigil.action.EntityChange;
+import org.cubeengine.module.vigil.action.StoredCause;
+import org.cubeengine.module.vigil.reporting.Receiver;
+import org.cubeengine.module.vigil.action.Action;
+import org.cubeengine.module.vigil.report.BaseReport;
+import org.cubeengine.module.vigil.reporting.Recall;
+import org.cubeengine.module.vigil.reporting.PreparedReport;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.entity.EntitySnapshot;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.AttackEntityEvent;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
+import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.inventory.ItemStackComparators;
-import org.spongepowered.api.item.inventory.ItemStackSnapshot;
-import org.spongepowered.api.registry.RegistryTypes;
+
+import java.time.Duration;
 
 /* TODO
 death
@@ -54,139 +53,104 @@ death
 -vehicle-break
 
  */
-public class DestructReport extends EntityReport<DestructEntityEvent>
-{
+public class DestructReport extends BaseReport<DestructEntityEvent> {
     @Override
-    public void showReport(List<Action> actions, Receiver receiver)
-    {
+    public ItemStack getIcon(final I18n i18n, final Audience audience) {
+        final var icon = ItemStack.of(ItemTypes.ROTTEN_FLESH);
+        var tr = i18n.translate(audience, "Entity Deaths");
+        icon.offer(Keys.CUSTOM_NAME, tr);
+        // TODO
+        return icon;
+    }
+
+    @Override
+    public void showReportLine(Receiver receiver, final PreparedReport.ReportLine reportLine) {
+        final var actions = reportLine.actions();
         Action action = actions.get(0);
         //Optional<BlockSnapshot> orig = action.getCached(BLOCKS_ORIG, Recall::origSnapshot).get(0);
 
-        Component cause = Recall.cause(action);
-        EntitySnapshot entity = Recall.entity(action);
-        Boolean isLiving = action.< Document>getData(EntityReport.ENTITY).getBoolean(EntityReport.LIVING);
-        if (entity.type() == EntityTypes.ITEM.get())
-        {
-            Component name = ReportUtil.name(entity);
-            ItemStack i = entity.get(Keys.ITEM_STACK_SNAPSHOT).map(ItemStackSnapshot::asMutable).orElse(null);
-            Component item = Component.text("?");
-            if (i != null)
-            {
-                item = i.get(Keys.DISPLAY_NAME).get().hoverEvent(HoverEvent.showText(Component.text(i.type().key(RegistryTypes.ITEM_TYPE).asString())));
+        Component cause = Recall.causeAsComponent(action);
+        var entityType = Recall.entity(action);
+
+        // TODO locatables are not grouped into reportline atm
+        boolean isLiving = reportLine.locatables().stream().filter(EntityChange.class::isInstance)
+                .map(EntityChange.class::cast).map(EntityChange::living).findFirst().orElse(false);
+
+        if (EntityTypes.ITEM.get().equals(entityType)) {
+            var item = Recall.entitySnapshot(action);
+            final var stack = Recall.stackFromEntitySnapshot(item);
+            // var stack = item.get(Keys.ITEM_STACK_SNAPSHOT).orElse(null); // TODO support keys for EntitySnapshot in Sponge API
+            if (stack != null) {
+                // TODO sum multiple item quantity
+                var quantity = stack.quantity();
+                var name = Recall.stack(stack.asImmutable(), quantity);
+
+                var firstCause = action.causes.causes().getFirst().get(StoredCause.CauserReason.DEFAULT);
+                switch (firstCause.type()) {
+                    case PLAYER -> receiver.sendReport(this, actions, "{txt#cause} picked up {txt#item}", cause, name);
+                    case BLOCK, DAMAGE, TNT -> receiver.sendReport(this, actions, "{txt#cause} destroyed {txt#item}", cause, name);
+                    case ENTITY -> {
+                        if (item.uniqueId().map(uuid -> uuid.equals(firstCause.uuid())).orElse(false)) {
+                            receiver.sendReport(this, actions, "{txt#item} despawned", name);
+                        } else {
+                            receiver.sendReport(this, actions, "{txt#cause} picked up {txt#item}", cause, name);
+                        }
+                    }
+                }
+                return;
             }
-            int count = 0;
-            for (Action a : actions)
-            {
-                count += Recall.entity(a).get(Keys.ITEM_STACK_SNAPSHOT).map(ItemStackSnapshot::quantity).orElse(0);
-            }
-            if (count == 0)
-            {
-                count = actions.size();
+        }
+        if (isLiving) {
+            receiver.sendReport(this, actions, actions.size(),
+                    "{txt} killed {txt}",
+                    "{txt} killed {txt} x{}",
+                    cause, Recall.entityType(entityType), actions.size());
+            return;
+        }
+
+        if (EntityTypes.EXPERIENCE_ORB.get().equals(entityType)) {
+            int exp = 0;
+            for (Action a : actions) {
+                EntitySnapshot orb = Recall.entitySnapshot(a);
+                exp += Recall.expFromEntitySnapshot(orb);
             }
 
-            receiver.sendReport(this, actions, count,
-                                "{txt} destroyed {txt}",
-                                "{txt} destroyed {txt} x{}",
-                                cause, name.append(Component.text(": ")).append(Component.text(count)));
-        }
-        else if (isLiving)
-        {
             receiver.sendReport(this, actions, actions.size(),
-                                "{txt} killed {txt}",
-                                "{txt} killed {txt} x{}",
-                                cause, ReportUtil.name(entity), actions.size());
+                    "{txt} picked up an ExpOrb worth {2:amount} points",
+                    "{txt} picked up {amount} ExpOrbs worth {amount} points",
+                    cause, actions.size(), exp);
+            return;
         }
-        else if (entity.type().equals(EntityTypes.EXPERIENCE_ORB.get()))
-        {
-            Integer exp = 0;
-            for (Action a : actions)
-            {
-                EntitySnapshot orb = Recall.entity(a);
-                exp += orb.get(Keys.EXPERIENCE).orElse(0);
-            }
-
-            receiver.sendReport(this, actions, actions.size(),
-                                "{txt} picked up an ExpOrb worth {2:amount} points",
-                                "{txt} picked up {amount} ExpOrbs worth {amount} points",
-                                cause, actions.size(), exp);
-        }
-        else
-        {
-            receiver.sendReport(this, actions, actions.size(),
-                                "{txt} destroyed {txt}",
-                                "{txt} destroyed {txt} x{}",
-                                cause, ReportUtil.name(entity), actions.size());
-        }
+        receiver.sendReport(this, actions, actions.size(),
+                "{txt} destroyed {txt}",
+                "{txt} destroyed {txt} x{}",
+                cause, Recall.entityType(entityType), actions.size());
     }
 
-    @Override
-    public boolean group(Object lookup, Action action, Action otherAction, Report otherReport)
-    {
-        if (!this.equals(otherReport))
-        {
-            return false;
-        }
-
-        if (!action.getData(CAUSE).equals(otherAction.getData(CAUSE)))
-        {
-            // TODO check same cause better
-            return false;
-        }
-
-        EntitySnapshot e1 = Recall.entity(action);
-        EntitySnapshot e2 = Recall.entity(otherAction);
-        if (e1.type() != e2.type())
-        {
-            return false;
-        }
-
-        if (e1.type() == EntityTypes.ITEM.get())
-        {
-            Optional<ItemStackSnapshot> i1 = Recall.entity(otherAction).get(Keys.ITEM_STACK_SNAPSHOT);
-            Optional<ItemStackSnapshot> i2 = Recall.entity(action).get(Keys.ITEM_STACK_SNAPSHOT);
-            if (!i1.isPresent() && i2.isPresent())
-            {
-                return false;
-            }
-            if (ItemStackComparators.DEFAULT.get().compare(
-                i1.map(ItemStackSnapshot::asMutable).orElse(null),
-                i2.map(ItemStackSnapshot::asMutable).orElse(null)) != 0)
-            {
-                return false;
-            }
-        }
-
-        // TODO in short timeframe (minutes? configurable)
-
-        return true;
-    }
 
     @Override
-    public void apply(Action action, boolean noOp)
-    {
+    public void apply(Action action, boolean noOp) {
 
     }
 
     @Override
-    public Action observe(DestructEntityEvent event)
-    {
-        Action action = newReport();
-        action.addData(ENTITY, Observe.entity(event.entity()));
-        action.addData(CAUSE, Observe.causes(event.cause()));
-        action.addData(LOCATION, Observe.location(event.entity().serverLocation()));
-        return action;
+    public void unapply(final Action action, final boolean noOp) {
+
+    }
+
+    @Override
+    public Action observe(DestructEntityEvent event) {
+        return newAction(event.cause()).addEntityDeath(event.entity());
     }
 
     @Listener
-    public void onAttack(AttackEntityEvent event)
-    {
+    public void onAttack(AttackEntityEvent event) {
         //System.out.print(event.getCause()+ "\n");
         //System.out.print(event.getTargetEntity() + "\n");
     }
 
     @Listener
-    public void onDestruct(DestructEntityEvent event)
-    {
+    public void onDestruct(DestructEntityEvent event) {
     /* TODO    if (event.getCause().get("CombinedItem", Object.class).isPresent())
         {
             // Ignore CombinedItem
@@ -199,12 +163,17 @@ public class DestructReport extends EntityReport<DestructEntityEvent>
             return;
         }
         */
+        // TODO picked up by player entity has empty item stack inside :/
 
-        if (!isActive(event.entity().serverLocation().world()))
-        {
+        if (!isActive(event.entity().serverLocation().world())) {
             return;
         }
 
         report(observe(event));
+    }
+
+    @Override
+    public Duration maxDiff() {
+        return Duration.ofMinutes(30);
     }
 }

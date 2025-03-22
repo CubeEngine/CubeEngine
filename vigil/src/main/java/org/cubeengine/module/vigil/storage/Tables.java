@@ -15,17 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.cubeengine.module.vigil.report.inventory;
+package org.cubeengine.module.vigil.storage;
 
-import org.cubeengine.module.vigil.report.BaseReport;
-import org.spongepowered.api.event.Event;
+public class Tables {
 
-/* TODO
-item
--craft
--enchant
- */
-public abstract class InventoryReport<T extends Event> extends BaseReport<T>
-{
-
+    public static final Table LOCATABLE = new Table("locatable", "l");
+    public static final Table ACTION = new Table("action", "a");
+    public static final Table CAUSE = new Table("cause", "c");
 }

@@ -25,12 +25,14 @@ import com.google.inject.Singleton;
 import org.cubeengine.module.vigil.Vigil;
 import org.cubeengine.module.vigil.report.block.BlockReport;
 import org.cubeengine.module.vigil.report.entity.DestructReport;
-import org.cubeengine.module.vigil.report.entity.player.ChatReport;
-import org.cubeengine.module.vigil.report.entity.player.JoinReport;
-import org.cubeengine.module.vigil.report.entity.player.QuitReport;
+import org.cubeengine.module.vigil.report.inventory.InventoryOpenReport;
+import org.cubeengine.module.vigil.report.player.ChatReport;
+import org.cubeengine.module.vigil.report.player.CommandReport;
+import org.cubeengine.module.vigil.report.player.JoinQuitReport;
 import org.cubeengine.module.vigil.report.inventory.ChangeInventoryReport;
 import org.cubeengine.libcube.service.event.EventManager;
 import org.cubeengine.libcube.service.i18n.I18n;
+import org.cubeengine.module.vigil.action.Action;
 
 @Singleton
 public class ReportManager
@@ -47,15 +49,16 @@ public class ReportManager
         this.module = module;
         this.em = em;
         this.i18n = i18n;
-        // TODO ReportManager to be able to call showReport(Action) on it
-        // TODO also allow classloading additional Reports from module folder
         register(BlockReport.class);
-        // TODO register(ExplosionReport.class);
-        register(ChangeInventoryReport.class);
-        register(ChatReport.class);
-        register(JoinReport.class);
-        register(QuitReport.class);
         register(DestructReport.class);
+        register(ChangeInventoryReport.class);
+        register(InventoryOpenReport.class);
+        register(CommandReport.class);
+        register(ChatReport.class);
+        register(JoinQuitReport.class);
+//        register(InteractEntityReport.class);
+//        register(PlayerReport.class);
+//        register(SpawnReport.class);
     }
 
     public void register(Class<? extends Report> report)
@@ -78,7 +81,7 @@ public class ReportManager
 
     public Report reportOf(Action action)
     {
-        String type = Action.TYPE.get(action.getDocument());
+        String type = action.reportType;
         return reports.getOrDefault(type, new UnkownReport(i18n, type));
     }
 

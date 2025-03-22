@@ -15,17 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.cubeengine.module.vigil.report.entity.player;
+package org.cubeengine.module.vigil.action;
 
-import org.cubeengine.module.vigil.report.entity.EntityReport;
-import org.spongepowered.api.event.Event;
+import org.spongepowered.api.ResourceKey;
+import org.spongepowered.api.data.persistence.DataContainer;
 
-/* TODO player
--teleport
--xp
+public class BlockData {
 
--player-death
- */
-public abstract class PlayerReport<T extends Event> extends EntityReport<T>
-{
+    private final ResourceKey block;
+    private final DataContainer state; // TODO toRawData
+    private final DataContainer snapshot;  // TODO toRawData
+
+
+    public BlockData(final ResourceKey key, final DataContainer blockState, final DataContainer block) {
+        this.block = key;
+        this.state = blockState;
+        this.snapshot = block;
+    }
+
+    public DataContainer state() {
+        return state;
+    }
+
+    public DataContainer snapshot() {
+        return this.snapshot;
+    }
+
+    public ResourceKey block() {
+        return block;
+    }
 }

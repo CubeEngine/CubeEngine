@@ -25,18 +25,15 @@ import org.cubeengine.libcube.service.filesystem.ModuleConfig;
 import org.cubeengine.module.vigil.commands.VigilCommands;
 import org.cubeengine.module.vigil.data.VigilData;
 import org.cubeengine.module.vigil.storage.QueryManager;
-import org.cubeengine.processor.Dependency;
 import org.cubeengine.processor.Module;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.RegisterDataEvent;
 import org.spongepowered.api.event.lifecycle.StoppingEngineEvent;
 
-import static org.cubeengine.module.bigdata.PluginBigdata.BIGDATA_ID;
-import static org.cubeengine.module.bigdata.PluginBigdata.BIGDATA_VERSION;
 
 @Singleton
-@Module(dependencies = @Dependency(value = BIGDATA_ID, version = BIGDATA_VERSION))
+@Module() // TODO depend on zoned for rect visualization?
 public class Vigil
 {
     @Inject private QueryManager qm;

@@ -17,34 +17,38 @@
  */
 package org.cubeengine.module.vigil.report.block;
 
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.JoinConfiguration;
-import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import org.bson.Document;
-import org.cubeengine.module.vigil.Receiver;
-import org.cubeengine.module.vigil.report.Action;
-import org.cubeengine.module.vigil.report.Observe;
-import org.cubeengine.module.vigil.report.Recall;
-import org.cubeengine.module.vigil.report.Report;
-import org.spongepowered.api.block.BlockSnapshot;
+import org.cubeengine.libcube.service.i18n.I18n;
+import org.cubeengine.module.vigil.action.Causer;
+import org.cubeengine.module.vigil.action.StoredCause;
+import org.cubeengine.module.vigil.reporting.Receiver;
+import org.cubeengine.module.vigil.action.Action;
+import org.cubeengine.module.vigil.action.BlockChange;
+import org.cubeengine.module.vigil.reporting.Recall;
+import org.cubeengine.module.vigil.report.BaseReport;
+import org.cubeengine.module.vigil.reporting.PreparedReport;
+import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.transaction.BlockTransactionReceipt;
 import org.spongepowered.api.data.Keys;
+import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
-import org.spongepowered.api.registry.RegistryTypes;
+import org.spongepowered.api.item.ItemTypes;
+import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.tag.BlockTypeTags;
 import org.spongepowered.api.world.server.ServerLocation;
 
-import static net.kyori.adventure.text.Component.*;
-import static net.kyori.adventure.text.JoinConfiguration.separator;
-import static org.cubeengine.module.vigil.report.ReportUtil.name;
 import static org.spongepowered.api.block.BlockTypes.AIR;
 
 /* TODO Break
@@ -102,274 +106,306 @@ cake
 button
 
 bonemeal?
+
+TODO explosion
+creeper
+enderdrag
+entity?
+fireball
+tnt
+wither
  */
-public class BlockReport extends BaseBlockReport<ChangeBlockEvent.Post>
-{
+public class BlockReport extends BaseReport<ChangeBlockEvent.Post> {
+
     @Override
-    public void showReport(List<Action> actions, Receiver receiver)
-    {
-        Action action = actions.get(0);
-        boolean samelocGroup = action.getData("samelocgroup") == null ? false : true;
-        Optional<BlockSnapshot> orig = action.getCached(BLOCKS_ORIG, Recall::origSnapshot);
-        Optional<BlockSnapshot> repl = action.getCached(BLOCKS_REPL, Recall::replSnapshot);
+    public ItemStack getIcon(final I18n i18n, final Audience audience) {
+        final var icon = ItemStack.of(ItemTypes.STONE);
+        var tr = i18n.translate(audience, "Block Changes");
+        icon.offer(Keys.CUSTOM_NAME, tr);
+        // TODO
+        return icon;
+    }
 
-        if (samelocGroup)
-        {
-            Component cause = Recall.cause(action);
-            List<Component> replacements = new ArrayList<>();
-            for (Action action1 : actions)
-            {
-                final BlockSnapshot repl1 = action1.getCached(BLOCKS_REPL, Recall::replSnapshot).orElse(BlockSnapshot.empty());
-                orig = action1.getCached(BLOCKS_ORIG, Recall::replSnapshot);
-                replacements.add(name(repl1, receiver));
-            }
-            Collections.reverse(replacements);
-            final JoinConfiguration separator = separator(text("↴", NamedTextColor.GRAY).append(newline()));
+    private enum BlockOp {
+        BREAK, FLUID_REMOVE, PLACE, MODIFY, REPLACE
+    }
 
-            if (repl.isPresent() && !repl.get().state().type().isAnyOf(AIR))
-            {
-                Component replacementText = name(repl.get(), receiver).append(
-                    text("...").hoverEvent(HoverEvent.showText(join(separator, replacements))));
-                if (orig.isPresent() && !orig.get().state().type().equals(AIR.get()))
-                {
-                    if (repl.get().equals(orig.get()))
-                    {
-                        receiver.sendReport(this, actions, "{txt} ended up leaving {txt}", cause, replacementText);
+    @Override
+    public void showReportLine(Receiver receiver, final PreparedReport.ReportLine reportLine) {
+        var actions = reportLine.actions();
+        Action firstAction = actions.getFirst();
+        var causer = firstAction.firstCauser(StoredCause.CauserReason.DEFAULT);
+        var causeComponent = Recall.causeAsComponent(firstAction);
+
+        Map<BlockOp, List<BlockChange>> changeByOp = new HashMap<>();
+        List<BlockChange> allBlockChanges = new ArrayList<>();
+        List<BlockOp> allOps = new ArrayList<>();
+
+        BlockOp lastOp = null;
+        for (final var locatable : reportLine.locatables()) {
+            if (locatable instanceof BlockChange bc) {
+                // TODO cache this
+                var orig = Recall.blockState(bc.original()).orElse(AIR.get().defaultState());
+                var repl = Recall.blockState(bc.replacement()).orElse(AIR.get().defaultState());
+
+                if (repl.type().is(BlockTypeTags.AIR)) {
+                    if (orig.fluidState().isEmpty()) {
+                        lastOp = BlockOp.BREAK;
+                    } else {
+                        lastOp = BlockOp.FLUID_REMOVE;
                     }
-                    else
-                    {
-                        receiver.sendReport(this, actions, "{txt} ended up replacing {txt} with {txt}", cause, name(orig.get(), receiver), replacementText);
+                } else {
+                    if (repl.type().equals(orig.type())) {
+                        lastOp = BlockOp.MODIFY;
+                    } else if (orig.type().is(BlockTypeTags.AIR)) {
+                        lastOp = BlockOp.PLACE;
+                    } else {
+                        lastOp = BlockOp.REPLACE;
                     }
                 }
-                else
-                {
-                    receiver.sendReport(this, actions, "{txt} ended up placing {txt}", cause, replacementText);
+                changeByOp.computeIfAbsent(lastOp, k -> new ArrayList<>()).add(bc);
+                allBlockChanges.add(bc);
+                allOps.add(lastOp);
+            }
+        }
+
+        if (changeByOp.size() > 1) {
+            if (reportLine.positions().size() == 1) {
+                // more than one operation at the same location
+                sendReportSingleChange(receiver, lastOp, actions, causeComponent, allBlockChanges, allOps, causer);
+            } else {
+                // TODO hover show details
+                var stats = hoverStatsByOp(changeByOp);
+                receiver.sendReport(this, actions, "{txt} changed {} blocks", causeComponent, allBlockChanges.size());
+            }
+            return;
+        }
+        for (final var entry : changeByOp.entrySet()) {
+            final var op = entry.getKey();
+            final var changes = entry.getValue();
+
+            if (allBlockChanges.size() == 1) {
+                sendReportSingleChange(receiver, op, actions, causeComponent, changes, allOps, causer);
+            } else {
+                // TODO single block type
+
+                // TODO hover show details
+                var hover = hoverStatsByBlock(op, changeByOp.get(op));
+                switch (op) {
+                    case BREAK -> receiver.sendReport(this, actions, "{txt} broke {} blocks", causeComponent, changes.size());
+                    case FLUID_REMOVE -> receiver.sendReport(this, actions, "{txt} removed {} fluids", causeComponent, changes.size());
+                    case PLACE -> {
+                        if (changes.stream().map(bc -> bc.replacement().block()).distinct().count() == 1) {
+                            var repl = Recall.blockTypeAsComponent(changes.getFirst().replacement().block());
+                            receiver.sendReport(this, actions, "{txt} placed {txt#block} x {}", causeComponent, repl, changes.size());
+                        } else {
+                            receiver.sendReport(this, actions, "{txt} placed {} blocks", causeComponent, changes.size());
+                        }
+                    }
+                    case MODIFY -> sendModifyReport(receiver, actions, causer, causeComponent, changes);
+                    case REPLACE -> sendReplaceBlockReport(receiver, actions, causer, changes, causeComponent);
+                }
+            }
+
+
+        }
+    }
+
+    private void sendModifyReport(final Receiver receiver, final List<Action> actions, final Causer causer, final Component causeComponent, final List<BlockChange> changes) {
+        long originalTypes = changes.stream().map(bc -> bc.original().block()).distinct().count();
+        if (originalTypes == 1) {
+            var origKey = changes.getFirst().original().block();
+            var origName = Recall.blockTypeAsComponent(origKey);
+            var orig = Recall.blockType(origKey).orElse(AIR.get());
+            var interactions = 0;
+            // TODO more interactable blocks
+            if (orig.is(BlockTypeTags.BUTTONS) || orig.is(BlockTypeTags.PRESSURE_PLATES) || orig.isAnyOf(BlockTypes.LEVER)) {
+                interactions = changes.size();
+            }
+            if (orig.is(BlockTypeTags.DOORS) || orig.is(BlockTypeTags.BEDS)) {
+                interactions = changes.size() / 2;
+            }
+            if (interactions > 0 && (causer.type().equals(Causer.Type.PLAYER) || causer.type().equals(Causer.Type.ENTITY))) {
+                receiver.sendReportX(this, actions, interactions, "{txt} used {txt#block}", causeComponent, origName);
+                return;
+            }
+
+            if (orig.is(BlockTypeTags.CROPS)) {
+                if (causer.type().equals(Causer.Type.BLOCK) && causer.resourceKey().equals(origKey)) {
+                    receiver.sendReportX(this, actions, changes.size(), "{txt} grew", causeComponent);
+                } else {
+                    receiver.sendReportX(this, actions, changes.size(), "{txt} grew {txt#block}", causeComponent, origName);
                 }
                 return;
             }
-            if (repl.get().equals(orig.get()))
-            {
-                final Component origText = name(orig.get(), receiver).append(text("...").hoverEvent(HoverEvent.showText(
-                    join(separator, replacements))));
-                    receiver.sendReport(this, actions, "{txt} ended up leaving {txt}", cause, origText);
-            }
-            else
-            {
-                final Component origText = name(orig.get(), receiver).append(text("...").hoverEvent(HoverEvent.showText(
-                    join(separator, replacements))));
-                    receiver.sendReport(this, actions, "{txt} ended up breaking {txt}", cause, origText);
-            }
 
+            // TODO plant grow
+            receiver.sendReportX(this, actions, changes.size(), "{txt} modified {txt#block}", causeComponent, origName);
             return;
         }
+        // TODO plant grow detection?
+        receiver.sendReport(this, actions, "{txt} modified {} blocks", causeComponent, changes.size());
+    }
 
-        if (repl.isPresent() && !repl.get().state().type().isAnyOf(AIR))
-        {
-            if (orig.isPresent() && orig.get().state().type() == repl.get().state().type())
-            {
-                showReportModify(actions, receiver, action, orig.get(), repl.get(), samelocGroup);
+
+
+    private void sendReplaceBlockReport(Receiver receiver, List<Action> actions, Causer causer, List<BlockChange> changes, Component causeComponent) {
+        long replacementTypes = changes.stream().map(bc -> bc.replacement().block()).distinct().count();
+        long originalTypes = changes.stream().map(bc -> bc.original().block()).distinct().count();
+        if (replacementTypes == 1 && originalTypes == 1) {
+            var orig = Recall.blockTypeAsComponent(changes.getFirst().original().block());
+            var repl = Recall.blockTypeAsComponent(changes.getLast().replacement().block());
+            // TODO trample detection
+            // TODO fluid mix
+            if (causer.type().equals(Causer.Type.BLOCK) && causer.resourceKey().equals(changes.getFirst().replacement().block())) {
+                // single replacement type same as cause
+                receiver.sendReportX(this, actions, changes.size(), "{txt#block} spread to {txt#block}", causeComponent, orig);
                 return;
             }
-            showReportPlace(actions, receiver, action, orig, repl.get(), samelocGroup);
+            if (causer.type().equals(Causer.Type.ENTITY) && causer.resourceKey().equals(EntityTypes.SHEEP.location())) {
+                receiver.sendReportX(this, actions, changes.size(), "{txt} ate {txt#block}", causeComponent, orig);
+                return;
+            }
+            receiver.sendReport(this, actions, "{txt} replaced {txt#block} with {txt#block}", causeComponent, orig, repl);
             return;
         }
-        if (orig.isPresent())
-        {
-            showReportBreak(actions, receiver, action, orig.get(), samelocGroup);
-            return;
-        }
-        throw new IllegalStateException();
+        // TODO hover show details
+        receiver.sendReport(this, actions, "{txt} replaced {} blocks", causeComponent, changes.size());
     }
 
-    private void showReportModify(List<Action> actions, Receiver receiver, Action action, BlockSnapshot orig, BlockSnapshot repl, boolean samelocGroup)
-    {
-        Component cause = Recall.cause(action);
 
-        final Optional<Integer> growth = repl.get(Keys.GROWTH_STAGE);
-        if (growth.isPresent())
-        {
-// TODO max growth is gone?
-//                        if (growth.get().equals(growth.get().getMaxValue()))
-//                        {
-//                            receiver.sendReport(this, actions, actions.size(),
-//                                                "{txt} let {txt} grow to maturity",
-//                                                "{txt} let {txt} grow to maturity x{}",
-//                                                cause, name(orig.get(), receiver), actions.size());
-//                            return;
-//                        }
-            receiver.sendReport(this, actions, actions.size(),
-                                "{txt} let {txt} grow",
-                                "{txt} let {txt} grow x{}",
-                                cause, name(orig, receiver), actions.size());
-            return;
-        }
-        // TODO other modifyables
-        receiver.sendReport(this, actions, actions.size(),
-                            "{txt} modified {txt}",
-                            "{txt} modified {txt} x{}",
-                            cause, name(orig, receiver), actions.size());
+
+    private Component hoverStatsByBlock(final BlockOp op, final List<BlockChange> changes) {
+        var builder = Component.empty().toBuilder();
+        var byType = changes.stream().map(bc -> {
+            var orig = Recall.blockState(bc.original()).map(BlockState::type).orElse(AIR.get());
+            var repl = Recall.blockState(bc.replacement()).map(BlockState::type).orElse(AIR.get());
+            return switch (op) {
+                case BREAK, FLUID_REMOVE, MODIFY, REPLACE -> orig;
+                case PLACE -> repl;
+            };
+        }).collect(Collectors.groupingBy(bs -> bs, Collectors.counting()));
+        byType.forEach((type, count) ->
+                builder.append(type).append(Component.space()).append(Component.text(count)).append(Component.newline()));
+        return builder.build();
     }
 
-    private void showReportPlace(List<Action> actions, Receiver receiver, Action action, Optional<BlockSnapshot> orig, BlockSnapshot repl, boolean samelocGroup)
-    {
-        Component cause = Recall.cause(action);
-        if (orig.isPresent() && !orig.get().state().type().equals(AIR.get()))
-        {
-            receiver.sendReport(this, actions, actions.size(),
-                                "{txt} replaced {txt} with {txt}",
-                                "{txt} replaced {txt} with {txt} x{}",
-                                cause, name(orig.get(), receiver), name(repl, receiver), actions.size());
+    private Component hoverStatsByOp(final Map<BlockOp, List<BlockChange>> changeByOp) {
+        var builder = Component.empty().toBuilder();
+        changeByOp.forEach((op, blockChanges) -> {
+            if (!blockChanges.isEmpty()) {
+                builder.append(Component.text(op.name())).append(Component.space()).append(Component.text(blockChanges.size()))
+                        .append(Component.newline());
+            }
+        });
+        return builder.build();
+    }
+
+    private void sendReportSingleChange(final Receiver receiver, final BlockOp op, final List<Action> actions, final Component cause,
+            final List<BlockChange> changes,
+            final List<BlockOp> allOps, Causer causer) {
+
+        if (changes.size() > 1) {
+            // TODO hover show details
+            var hover = hoverChanges(receiver, cause, changes, allOps);
         }
-        else
-        {
-            receiver.sendReport(this, actions, actions.size(),
-                                "{txt} placed {txt}",
-                                "{txt} placed {txt} x{}",
-                                cause, name(repl, receiver), actions.size());
+        var orig = Recall.blockTypeAsComponent(Recall.blockState(changes.getFirst().original()).map(BlockState::type).orElse(AIR.get()));
+        var repl = Recall.blockTypeAsComponent(Recall.blockState(changes.getLast().replacement()).map(BlockState::type).orElse(AIR.get()));
+        switch (op) {
+            // TODO hover info for signs etc.
+            // TODO fading/decay leaves/snow
+            // TODO entity forming
+            case BREAK -> receiver.sendReport(this, actions, "{txt} broke {txt#block}", cause, orig);
+            case FLUID_REMOVE -> receiver.sendReport(this, actions, "{txt} removed {txt#fluid}", cause, orig);
+            // TODO ignite/fire spread
+            // TODO fluid flow
+            // TODO tree grow
+            case PLACE -> receiver.sendReport(this, actions, "{txt} placed {txt#block}", cause, repl);
+            case MODIFY -> sendModifyReport(receiver, actions, causer, cause, changes);
+            case REPLACE -> sendReplaceBlockReport(receiver, actions, causer, changes, cause);
         }
     }
 
-    private void showReportBreak(List<Action> actions, Receiver receiver, Action action, BlockSnapshot orig, boolean samelocGroup)
-    {
-        receiver.sendReport(this, actions, actions.size(),
-                            "{txt} broke {txt}",
-                            "{txt} broke {txt} x{}",
-                            Recall.cause(action), name(orig, receiver), actions.size());
+
+
+
+    private Component hoverChanges(final Receiver receiver, final Component cause, final List<BlockChange> changes, final List<BlockOp> allOps) {
+        var builder = Component.empty().toBuilder();
+        for (var i = changes.size() - 1; i >= 0; i--) {
+            var change = changes.get(i);
+            var op = allOps.get(i);
+            var orig = Recall.blockState(change.original()).map(BlockState::type).orElse(AIR.get()).asComponent();
+            var repl = Recall.blockState(change.replacement()).map(BlockState::type).orElse(AIR.get()).asComponent();
+            var i18n = receiver.getI18n();
+            var sender = receiver.getSender();
+
+            var changeText = switch (op) {
+                case BREAK -> i18n.translate(sender, "{txt} broke {txt#block}", cause, orig);
+                case FLUID_REMOVE -> i18n.translate(sender, "{txt} removed {txt#fluid}", cause, orig);
+                case PLACE -> i18n.translate(sender, "{txt} placed {txt#block}", cause, repl);
+                case MODIFY -> i18n.translate(sender, "{txt} modified {txt#block}", cause, orig);
+                // TODO no need to repeat prev. in between
+                case REPLACE -> i18n.translate(sender, "{txt} replaced {txt#block} with {txt#block}", cause, orig, repl);
+            };
+            builder.append(Component.text("↴").append(Component.space())).append(changeText).append(Component.newline());
+        }
+        return builder.build();
     }
 
-    protected void report(ChangeBlockEvent.Post event)
-    {
-        for (BlockTransactionReceipt receipt : event.receipts())
-        {
-            if (receipt.originalBlock().equals(receipt.finalBlock()))
-            {
+    @Listener(order = Order.POST)
+    public void listen(ChangeBlockEvent.Post event) {
+        report(observe(event));
+    }
+
+    @Override
+    protected Action observe(ChangeBlockEvent.Post event) {
+        final var action = newAction(event.cause());
+
+        for (BlockTransactionReceipt receipt : event.receipts()) {
+            if (receipt.originalBlock().equals(receipt.finalBlock())) {
+                continue;
+            }
+            if (receipt.originalBlock().location().isEmpty()) {
                 continue;
             }
             final ServerLocation loc = receipt.originalBlock().location().get();
-            if (!isActive(loc.world()))
-            {
+            if (!isActive(loc.world())) {
                 continue;
             }
-            if (isRedstoneChange(receipt.originalBlock().state(), receipt.finalBlock().state()))
-            {
+            if (isRedstoneChange(receipt.originalBlock().state(), receipt.finalBlock().state())) {
                 continue;
             }
-
-            final Action action = observe(event);
-            action.addData(BLOCK_CHANGES, Observe.transactions(receipt));
-            action.addData(LOCATION, Observe.location(loc));
-            action.addData(OPERATION, receipt.operation().key(RegistryTypes.OPERATION).asString());
-
-            report(action);
+            action.addBlockChange(receipt, loc);
         }
+
+        return action;
     }
 
-    private static boolean isRedstoneChange(BlockState origState, BlockState finalState)
-    {
-        if (!origState.type().equals(finalState.type()))
-        {
+
+    private static boolean isRedstoneChange(BlockState origState, BlockState finalState) {
+        if (!origState.type().equals(finalState.type())) {
             return false;
         }
         return origState.type().isAnyOf(BlockTypes.REDSTONE_WIRE, BlockTypes.REPEATER, BlockTypes.COMPARATOR,
-                                           BlockTypes.REDSTONE_TORCH, BlockTypes.REDSTONE_WALL_TORCH,
-                                           BlockTypes.DROPPER, BlockTypes.DISPENSER, BlockTypes.HOPPER);
+                BlockTypes.REDSTONE_TORCH, BlockTypes.REDSTONE_WALL_TORCH,
+                BlockTypes.DROPPER, BlockTypes.DISPENSER, BlockTypes.HOPPER);
     }
 
 
-    protected boolean group(Optional<BlockSnapshot> repl1, Optional<BlockSnapshot> repl2)
-    {
-        if ((repl1.isPresent() && !repl2.isPresent()) || (!repl1.isPresent() && repl2.isPresent()))
-        {
-            return false;
-        }
-
-        if (repl1.isPresent() && repl2.isPresent())
-        {
-            if (!repl1.get().world().equals(repl2.get().world()))
-            {
-                return false;
-            }
-             if (!repl1.get().state().equals(repl2.get().state()))
-            {
-                return false;
-            }
-        }
-        return true;
+    @Override
+    public void apply(Action action, boolean noOp) {
+        // TODO noOp preview
+        //        action.getCached(BLOCKS_REPL, Recall::replSnapshot).get().restore(true, BlockChangeFlags.NONE);
     }
 
     @Override
-    public boolean group(Object lookup, Action action, Action otherAction, Report otherReport)
-    {
-        if (!this.getClass().equals(otherReport.getClass()))
-        {
-            return false;
-        }
-
-        if (this.isSameLocationGroup(lookup, action, otherAction, otherReport))
-        {
-            action.addData("samelocgroup", true);
-            otherAction.addData("samelocgroup", true);
-            return true;
-        }
-
-        Optional<BlockSnapshot> orig1 = action.getCached(BLOCKS_ORIG, Recall::origSnapshot);
-        Optional<BlockSnapshot> orig2 = otherAction.getCached(BLOCKS_ORIG, Recall::origSnapshot);
-
-        if (!group(orig1, orig2))
-        {
-            return false;
-        }
-
-        Optional<BlockSnapshot> repl1 = action.getCached(BLOCKS_ORIG, Recall::origSnapshot);
-        Optional<BlockSnapshot> repl2 = otherAction.getCached(BLOCKS_ORIG, Recall::origSnapshot);
-
-        if (!group(repl1, repl2))
-        {
-            return false;
-        }
-
-        final Document thisCause = action.getData(CAUSE);
-        final Document otherCause = otherAction.getData(CAUSE);
-        if (!thisCause.get(FULLCAUSELIST).equals(otherCause.get(FULLCAUSELIST)))
-        {
-            return false;
-        }
-
-        // TODO in short timeframe (minutes? configurable)
-        return true;
+    public void unapply(Action action, boolean noOp) {
+        // TODO noOp preview
+        //        action.getCached(BLOCKS_ORIG, Recall::origSnapshot).get().restore(true, BlockChangeFlags.NONE);
     }
 
-    private boolean isSameLocationGroup(Object lookup, Action action, Action otherAction, Report otherReport)
-    {
-        if (!action.getData(LOCATION).equals(otherAction.getData(LOCATION)))
-        {
-            return false;
-        }
-        final Document thisCause = action.getData(CAUSE);
-        final Document otherCause = otherAction.getData(CAUSE);
-        if (!thisCause.get(FULLCAUSELIST).equals(otherCause.get(FULLCAUSELIST)))
-        {
-            return false;
-        }
-
-        if (action.getDate().getTime() - otherAction.getDate().getTime() > 1000 * 60)
-        {
-            return false;
-        }
-
-        Optional<BlockSnapshot> orig1 = action.getCached(BLOCKS_ORIG, Recall::origSnapshot);
-        Optional<BlockSnapshot> orig2 = otherAction.getCached(BLOCKS_ORIG, Recall::origSnapshot);
-        Optional<BlockSnapshot> repl1 = action.getCached(BLOCKS_REPL, Recall::replSnapshot);
-        Optional<BlockSnapshot> repl2 = otherAction.getCached(BLOCKS_REPL, Recall::replSnapshot);
-
-
-        return orig1.isPresent() && repl2.isPresent() && orig1.get().equals(repl2.get());
-    }
-
-
-    @Listener(order = Order.POST)
-    public void listen(ChangeBlockEvent.Post event)
-    {
-        report(event);
+    @Override
+    public Duration maxDiff() {
+        return Duration.ofMinutes(1);
     }
 }

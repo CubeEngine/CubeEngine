@@ -15,69 +15,68 @@
  * You should have received a copy of the GNU General Public License
  * along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.cubeengine.module.vigil.report.inventory;
+package org.cubeengine.module.vigil.report.player;
 
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.cubeengine.libcube.service.i18n.I18n;
 import org.cubeengine.module.vigil.reporting.Receiver;
 import org.cubeengine.module.vigil.action.Action;
+import org.cubeengine.module.vigil.action.StringAction;
 import org.cubeengine.module.vigil.report.BaseReport;
 import org.cubeengine.module.vigil.reporting.Recall;
-import org.cubeengine.module.vigil.report.Report;
+import org.cubeengine.module.vigil.report.Report.Readonly;
 import org.cubeengine.module.vigil.reporting.PreparedReport;
 import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.filter.cause.First;
-import org.spongepowered.api.event.item.inventory.container.InteractContainerEvent;
+import org.spongepowered.api.event.message.PlayerChatEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.time.Duration;
 
-public class InventoryOpenReport extends BaseReport<InteractContainerEvent.Open> implements Report.Readonly
+public class ChatReport extends BaseReport<PlayerChatEvent.Submit> implements Readonly
 {
     @Override
-    public void showReportLine(Receiver receiver, final PreparedReport.ReportLine reportLine)
-    {
-        final var actions = reportLine.actions();
-        Action action = actions.get(0);
-        receiver.sendReport(this, actions, actions.size(),
-                            "{txt} open {txt}",
-                            "{txt} open {txt} x{}",
-                            Recall.causeAsComponent(action), Component.text("?"), actions.size());
-    }
-
-    @Override
     public ItemStack getIcon(final I18n i18n, final Audience audience) {
-        final var icon = ItemStack.of(ItemTypes.DISPENSER);
-        var tr = i18n.translate(audience, "Inventory Opened");
+        final var icon = ItemStack.of(ItemTypes.WRITTEN_BOOK);
+        icon.offer(Keys.ENCHANTMENT_GLINT_OVERRIDE, false);
+        var tr = i18n.translate(audience, "Chat");
         icon.offer(Keys.CUSTOM_NAME, tr);
         // TODO
         return icon;
     }
 
+    @Override
+    public void showReportLine(Receiver receiver, final PreparedReport.ReportLine reportLine)
+    {
+        var actions = reportLine.actions();
+        Action action = actions.getFirst();
+        var chat = action.stringAction.data();
+        receiver.sendReport(this, actions, actions.size(), "{txt} wrote {input}", "{txt} spammed {input} x{}",
+                Recall.causeAsComponent(action), chat, actions.size());
+    }
 
     @Override
-    public Action observe(InteractContainerEvent.Open event)
+    public Action observe(PlayerChatEvent.Submit event)
     {
-        var location = ChangeInventoryReport.containerLocation(event.container());
-        if (location == null) {
-            return null;
-        }
-        return newActionAt(event.cause(), location);
+        final var player = event.cause().first(ServerPlayer.class).get(); // event-filter ensures this is present
+        final var plainMsg = PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
+        return newActionAt(event.cause(), player.serverLocation()).withStringAction(StringAction.CHAT, plainMsg);
     }
 
     @Listener(order = Order.POST)
-    public void listen(InteractContainerEvent.Open event, @First Player player)
+    public void onChat(PlayerChatEvent.Submit event, @First Player player)
     {
         report(observe(event));
     }
 
-
-    @Override public Duration maxDiff() {
-        return Duration.ofHours(1);
+    @Override
+    public Duration maxDiff() {
+        return Duration.ofMinutes(10);
     }
 }

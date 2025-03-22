@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
-    compileOnly(project(":bigdata"))
-    // TODO worldedit?
+    implementation("org.postgresql:postgresql:42.7.5")
+    implementation("com.zaxxer:HikariCP:6.2.1")
+
 }

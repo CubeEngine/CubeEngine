@@ -166,13 +166,13 @@ public class ItemModifyCommands extends PermissionContainer
         {
             if (item.get(Keys.STORED_ENCHANTMENTS).isPresent())
             {
-                List<Enchantment> list = item.get(Keys.STORED_ENCHANTMENTS).get();
+                List<Enchantment> list = new ArrayList<>(item.get(Keys.STORED_ENCHANTMENTS).get());
                 list.add(ench);
                 item.offer(Keys.STORED_ENCHANTMENTS, list);
                 return;
             }
 
-            List<Enchantment> list = item.getOrElse(Keys.APPLIED_ENCHANTMENTS, new ArrayList<>());
+            List<Enchantment> list = new ArrayList<>(item.getOrElse(Keys.APPLIED_ENCHANTMENTS, new ArrayList<>()));
             list.add(ench);
             item.offer(Keys.APPLIED_ENCHANTMENTS, list);
             context.setItemInHand(HandTypes.MAIN_HAND, item);

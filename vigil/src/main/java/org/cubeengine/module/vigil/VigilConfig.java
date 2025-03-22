@@ -19,6 +19,7 @@ package org.cubeengine.module.vigil;
 
 import org.cubeengine.libcube.service.config.ConfigWorld;
 import org.cubeengine.module.vigil.report.Report;
+import org.cubeengine.reflect.Section;
 import org.cubeengine.reflect.annotations.Comment;
 import org.cubeengine.reflect.codec.yaml.ReflectedYaml;
 import org.spongepowered.api.ResourceKey;
@@ -32,12 +33,27 @@ import java.util.Map;
 
 public class VigilConfig extends ReflectedYaml
 {
+    public Persistence persistence;
+
+    public static class Persistence implements Section
+    {
+        public String host = "localhost";
+        public int port = 5432;
+
+        public Authentication authentication;
+
+        public static class Authentication implements Section
+        {
+            public String database = "vigil";
+            public String username = "postgres";
+            public String password;
+        }
+    }
+
     @Comment({"Class names of disabled Reports for each world.",
-              "org.cubeengine.module.vigil.report can be ommitted"})
+              "org.cubeengine.module.vigil.report can be omitted"})
     public Map<ConfigWorld, List<String>> disabledReports = new HashMap<>();
 
-    @Comment("Custom prepared reports. Values are MongoDB query string (Json format)")
-    public Map<String, String> preparedReports = new HashMap<>();
 
     private transient Map<ResourceKey, List<Class<? extends Report>>> disabledReportsMap = new HashMap<>();
 

@@ -20,42 +20,80 @@ package org.cubeengine.module.vigil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.bson.Document;
-import org.cubeengine.module.vigil.data.LookupData;
-import org.cubeengine.module.vigil.data.VigilData;
+import org.cubeengine.module.vigil.data.LookupSettings;
 import org.cubeengine.module.vigil.report.Report;
 import org.spongepowered.api.ResourceKey;
-import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.util.AABB;
 import org.spongepowered.api.world.server.ServerLocation;
 import org.spongepowered.math.vector.Vector3i;
 
+
+
+// locatable: chat, command, join, quit, teleport, death, inventory_open, craft/enchant
+// entity:  spawn destruct/kill, interact
+// block: change explosion inventory_change
+
+
+// Scenarios
+//
+// BLOCK STUFF ONLY
+// find griefing around location
+// SELECT //
+// - count block breaks
+// - min date
+// - max date
+// where around xyz
+// where timelimit  (24h?)
+// group by player, timerange (1min)
+// ----
+// then filter by player+timelimit
+// SELECT
+// -- count block breaks
+// -- min date max date
+// where around xyz
+// where timelimit
+// where player
+// group by player, timerange (1min), blocktype
+// ----
+// expand search zone by 5 blocks? show delta
+
+
+// BLOCK STUFF only?
+// check one specific block
+// where xyz
+// where timelimit
+// group by player, timerange same as above...
+// check for inventory?
+
+// GENERAL PLAYER SEARCH
+// on specific player
+// group by blocks in area?
+// group by chat
+
+// inventory specific search
+
+
+// TODO teleport report
+
+
 public class Lookup
 {
+
     private Map<LookupTiming, Long> timingStart = new HashMap<>();
     private Map<LookupTiming, Long> timingTime = new HashMap<>();
 
-    private LookupData settings;
+    private LookupSettings settings;
 
     private ResourceKey world;
-    private Vector3i position;
-    private int radius = 0;
-    private Document prepared;
+    private transient Vector3i position;
+    private AABB boundingBox;
 
-    public Lookup(Document prepared)
-    {
-        this.settings = new LookupData();
-        this.prepared = prepared;
-    }
 
-    public Lookup(LookupData settings)
+    public String player;
+
+    public Lookup(LookupSettings settings)
     {
         this.settings = settings;
-    }
-
-    public Lookup(ItemStack itemInHand)
-    {
-        this.settings = new LookupData();
-        VigilData.syncFromStack(itemInHand, this.settings);
     }
 
     public Lookup with(ServerLocation loc)
@@ -65,28 +103,28 @@ public class Lookup
         return this;
     }
 
-    public Lookup withRadius(Integer radius)
-    {
-        if (radius != null)
-        {
-            this.radius = radius;
+
+    public AABB boundingBox() {
+        switch (this.settings.areaMode) {
+            case SINGLE -> {
+                return null;
+            }
+            case RADIUS -> {
+                if (boundingBox == null) {
+                    final int radius = this.settings.radius;
+                    this.boundingBox = AABB.of(Vector3i.from(position.x() - radius, position.y() - radius, position.z() - radius),
+                            Vector3i.from(position.x() + radius, position.y() + radius, position.z() + radius));
+                }
+                return boundingBox;
+            }
+            case AREA -> {
+                // TODO implement on LookupData
+                return AABB.of(position, position);
+            }
         }
-        else
-        {
-            this.radius = 200;
-        }
-        return this;
+        return boundingBox;
     }
 
-    public Lookup withReport(Report report)
-    {
-        if (report != null)
-        {
-            List<String> reports = this.settings.getReports();
-            reports.add(report.getClass().getName());
-        }
-        return this;
-    }
 
     public Lookup copy()
     {
@@ -97,25 +135,21 @@ public class Lookup
         return lookup;
     }
 
-    public ResourceKey getWorld()
+    public ResourceKey world()
     {
         return world;
     }
 
-    public Vector3i getPosition()
+    public Vector3i position()
     {
         return position;
     }
 
-    public LookupData getSettings()
+    public LookupSettings settings()
     {
         return settings;
     }
 
-    public int getRadius()
-    {
-        return radius;
-    }
 
     public void time(LookupTiming timing)
     {
@@ -137,15 +171,11 @@ public class Lookup
         return timingTime.get(timing);
     }
 
-    public Document prepared()
-    {
-        return this.prepared;
-    }
-
     public enum LookupTiming
     {
         LOOKUP,
-        REPORT
+        REPORT,
+        PREPARE
     }
 
 }

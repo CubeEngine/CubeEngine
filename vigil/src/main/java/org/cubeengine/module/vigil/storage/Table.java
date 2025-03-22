@@ -15,30 +15,27 @@
  * You should have received a copy of the GNU General Public License
  * along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.cubeengine.module.vigil.report.entity.spawn;
+package org.cubeengine.module.vigil.storage;
 
-import org.cubeengine.module.vigil.report.BaseReport;
-import org.spongepowered.api.event.entity.SpawnEntityEvent;
+public record Table(String name, String alias) {
 
-/* TODO
-spawn
--egg
--natural
--other
--spawner
--hanging place
+    @Override
+    public String toString() {
+        return "%s as %s".formatted(name, alias);
+    }
 
-- vehicle place
+    public Column idColumn() {
+        return new Column(this, "id", null);
+    }
 
--item-drop
--drops (attach to death event)
+    public Column fkColumn(Table table) {
+        return new Column(this, table.name + "_id", null);
+    }
 
--launch-projectile
---use-firework
---use-potion
---arrow?
- */
-public abstract class SpawnReport<T extends SpawnEntityEvent> extends BaseReport<T>
-{
+
+    public Column column(String column) {
+        return new Column(this, column, null);
+    }
+
 
 }

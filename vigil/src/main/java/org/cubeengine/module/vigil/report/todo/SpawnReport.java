@@ -15,50 +15,43 @@
  * You should have received a copy of the GNU General Public License
  * along with CubeEngine.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.cubeengine.module.vigil.report;
+package org.cubeengine.module.vigil.report.todo;
 
 import net.kyori.adventure.audience.Audience;
-import org.cubeengine.module.vigil.reporting.Receiver;
 import org.cubeengine.libcube.service.i18n.I18n;
-import org.cubeengine.module.vigil.reporting.PreparedReport;
+import org.cubeengine.module.vigil.report.BaseReport;
+import org.spongepowered.api.data.Keys;
+import org.spongepowered.api.event.entity.SpawnEntityEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 
-import java.time.Duration;
+/* TODO
+spawn
+-egg
+-natural
+-other
+-spawner
+-hanging place
 
-public class UnkownReport implements Report, Report.Readonly
+- vehicle place
+
+-item-drop
+-drops (attach to death event)
+
+-launch-projectile
+--use-firework
+--use-potion
+--arrow?
+ */
+public abstract class SpawnReport<T extends SpawnEntityEvent> extends BaseReport<T>
 {
-
-    @Override
-    public boolean filterable() {
-        return false;
-    }
-
     @Override
     public ItemStack getIcon(final I18n i18n, final Audience audience) {
-        return ItemStack.of(ItemTypes.AIR);
+        final var icon = ItemStack.of(ItemTypes.VILLAGER_SPAWN_EGG);
+        var tr = i18n.translate(audience, "Spawns");
+        icon.offer(Keys.CUSTOM_NAME, tr);
+        // TODO
+        return icon;
     }
 
-    private I18n i18n;
-    private String type;
-
-    public UnkownReport(I18n i18n, String type)
-    {
-        this.i18n = i18n;
-        this.type = type;
-    }
-
-    @Override
-    public void showReportLine(Receiver receiver, final PreparedReport.ReportLine reportLine)
-    {
-        var actions = reportLine.actions();
-        receiver.sendReport(this, actions, actions.size(),
-                "Unknown Report {input}","Unknown Report {input} {size}",
-                type, actions.size());
-    }
-
-    @Override
-    public Duration maxDiff() {
-        return Duration.ofDays(1);
-    }
 }
