@@ -15,6 +15,7 @@ java {
 }
 
 tasks.withType<JavaCompile>().configureEach {
+    options.generatedSourceOutputDirectory = project.layout.buildDirectory.dir("generated/sources")
     options.compilerArgs.addAll(
         listOf(
             "-Xlint:deprecation",
