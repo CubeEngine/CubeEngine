@@ -65,6 +65,7 @@ import org.spongepowered.api.event.entity.DamageEntityEvent;
 import org.spongepowered.api.event.filter.Getter;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.item.inventory.UseItemStackEvent;
+import org.spongepowered.api.event.sound.PlaySoundEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.scheduler.ScheduledTask;
@@ -327,7 +328,7 @@ public class TerraListener
     }
 
     @Listener
-    public void onFatalDamage(DamageEntityEvent event, @Getter("entity") ServerPlayer player)
+    public void onFatalDamage(DamageEntityEvent.Post event, @Getter("entity") ServerPlayer player)
     {
         if (event.willCauseDeath() && player.world().key().namespace().equals(PluginTerra.TERRA_ID))
         {
@@ -390,6 +391,8 @@ public class TerraListener
                 if (player.world().key().namespace().equals(PluginTerra.TERRA_ID))
                 {
                     i18n.send(ChatType.ACTION_BAR, player, MessageType.NEGATIVE, "It feels wrong to do that here.");
+                    player.world().playSound(Sound.sound(SoundTypes.EVENT_MOB_EFFECT_RAID_OMEN, Source.PLAYER, 5, 10), player.position());
+                    event.setCancelled(true);
                     return;
                 }
                 final Essence essence = TerraItems.getEssenceForItem(itemInHand.asImmutable()).get();

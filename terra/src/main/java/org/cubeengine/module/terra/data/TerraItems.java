@@ -52,6 +52,7 @@ import org.spongepowered.api.util.RandomProvider.Source;
 import org.spongepowered.api.util.Range;
 import org.spongepowered.api.util.Ticks;
 import org.spongepowered.api.world.SerializationBehavior;
+import org.spongepowered.api.world.WorldType;
 import org.spongepowered.api.world.WorldTypes;
 import org.spongepowered.api.world.biome.AttributedBiome;
 import org.spongepowered.api.world.biome.Biome;
@@ -263,7 +264,7 @@ public class TerraItems
                 }
                 else
                 {
-                    var list = overworldBiomeDefaults.stream().filter(ab -> ab.biome().equals(biome)).toList();
+                    var list = overworldBiomeDefaults.stream().filter(ab -> ab.biome().location().equals(biome.location())).toList();
                     for (final AttributedBiome attributedBiome : list)
                     {
                         final var defaultAttributes = attributedBiome.attributes();
@@ -312,6 +313,7 @@ public class TerraItems
             var worldType = switch (this) {
                 case NETHER -> WorldTypes.THE_NETHER.get();
                 case END -> WorldTypes.registry().value(Terra.WORLD_TYPE_END);
+                case CAVEWORLD -> WorldTypes.OVERWORLD_CAVES.get();
                 default  -> WorldTypes.OVERWORLD.get();
             };
             final var chunkGen = ChunkGenerator.noise(BiomeProvider.multiNoise(multiNoiseBiomeConfig), noiseGeneratorConfig);
