@@ -17,6 +17,7 @@
  */
 package org.cubeengine.module.vigil.data;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -31,7 +32,6 @@ import org.spongepowered.api.data.persistence.DataSerializable;
 import org.spongepowered.api.data.persistence.DataView;
 import org.spongepowered.api.data.persistence.InvalidDataException;
 import org.spongepowered.api.data.persistence.Queries;
-import org.spongepowered.api.event.Cause;
 
 public class LookupSettings implements DataSerializable {
 
@@ -44,6 +44,7 @@ public class LookupSettings implements DataSerializable {
     public static final DataQuery RADIUS = DataQuery.of("radius");
     public static final DataQuery AREAMODE = DataQuery.of("areamode");
     public static final DataQuery PLAYER_FILTERS = DataQuery.of("playerFilters");
+    public static final DataQuery TIME_LIMIT = DataQuery.of("timeLimit");
 
 
 
@@ -63,6 +64,7 @@ public class LookupSettings implements DataSerializable {
 
     private Set<String> reports = new HashSet<>();
     private Set<UUID> playerFilters = new HashSet<>();
+    public Duration limitTime = Duration.ofHours(24);
 
     public void toggleFilterPlayer(final UUID player) {
         if (this.playerFilters.contains(player)) {
@@ -81,6 +83,10 @@ public class LookupSettings implements DataSerializable {
     }
 
     // ------ GETTERS ------
+
+    public Duration limitTime() {
+        return this.limitTime;
+    }
 
     public Set<UUID> playerFilters() {
         return this.playerFilters;
@@ -130,6 +136,7 @@ public class LookupSettings implements DataSerializable {
         container.set(RADIUS, radius);
         container.set(AREAMODE, areaMode.name());
         container.set(PLAYER_FILTERS, playerFilters);
+        container.set(TIME_LIMIT, limitTime.toMinutes());
         return container;
     }
 
@@ -141,6 +148,7 @@ public class LookupSettings implements DataSerializable {
         copy.fullLocation = this.fullLocation;
         copy.showDetailedInventory = this.showDetailedInventory;
         copy.reports = this.reports;
+        copy.limitTime = this.limitTime;
         return copy;
     }
 
@@ -161,6 +169,7 @@ public class LookupSettings implements DataSerializable {
             lookupSettings.radius = container.getInt(RADIUS).orElse(5);
             lookupSettings.areaMode = container.getString(AREAMODE).map(AreaMode::valueOf).orElse(AreaMode.SINGLE);
             lookupSettings.playerFilters.addAll(container.getObjectList(PLAYER_FILTERS, UUID.class).orElse(List.of()));
+            lookupSettings.limitTime = container.getLong(TIME_LIMIT).map(Duration::ofMinutes).orElse(Duration.ofHours(24));
 
             return Optional.of(lookupSettings);
 

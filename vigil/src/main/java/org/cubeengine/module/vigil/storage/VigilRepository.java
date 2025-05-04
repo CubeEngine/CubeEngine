@@ -38,7 +38,6 @@ import org.spongepowered.math.vector.Vector3i;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -96,7 +95,7 @@ public class VigilRepository {
             var query = new Query()
                     .inBoundingBox(lookup.boundingBox())
                     .atPosition(singlePos)
-                    .inTimeLimit(Duration.ofHours(24))
+                    .inTimeLimit(lookup.settings().limitTime())
                     .withReports(lookup.settings().reports())
                     .filterPlayers(lookup.settings().playerFilters())
                     .inWorld(lookup.world());
