@@ -54,7 +54,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class ConfigurationMenu implements SlotClickHandler {
 
@@ -201,7 +203,7 @@ public class ConfigurationMenu implements SlotClickHandler {
     }
 
 
-    private ViewableInventory.Custom vigilReportAddPlayerConfigurationInventory() {
+    private ViewableInventory.Custom vigilCauseFilterAddPlayerConfigInventory() {
         var builder = ViewableInventory.builder().type(ContainerTypes.GENERIC_9X3);
 
         // TODO online players, then separate for offline players
@@ -228,7 +230,7 @@ public class ConfigurationMenu implements SlotClickHandler {
         return builder.completeStructure().plugin(plugin).build();
     }
 
-    private ViewableInventory.Custom vigilReportPlayerConfigurationInventory() {
+    private ViewableInventory.Custom vigilCauseFilterPlayerConfigInventory() {
         var builder = ViewableInventory.builder().type(ContainerTypes.GENERIC_9X3);
 
         final GameProfile plusProfile = GameProfile.of(UUID.fromString("c0bbeabc-c17a-45af-995c-6d5b6e048442"), "Chat Plus").withProperty(
@@ -249,7 +251,7 @@ public class ConfigurationMenu implements SlotClickHandler {
             var profile = Sponge.server().gameProfileManager().profile(playerFilter).join();
             final var headStack = headOfProfile(profile);
             final var playerName = Component.text(profile.name().get()).color(NamedTextColor.DARK_GREEN);
-            headStack.offer(Keys.CUSTOM_NAME, i18n.translate(player, "Remove {txt} from filter", playerName).color(NamedTextColor.YELLOW));
+            headStack.offer(Keys.CUSTOM_NAME, i18n.translate(player, "Remove {txt} from Cause Filter", playerName).color(NamedTextColor.YELLOW));
             builder.dummySlots(1, i++).item(headStack);
         }
         return builder.completeStructure().plugin(plugin).build();
@@ -286,9 +288,18 @@ public class ConfigurationMenu implements SlotClickHandler {
         return builder.completeStructure().plugin(plugin).build();
     }
 
+
+    private <T> ItemStack buildItem(final Supplier<ItemType> type, final ConfigAction action, final ConfigSection section,
+            final Component title,
+            final Stream<T> loreObjects,
+            final Function<T, Component> loreFunction)
+    {
+        return this.buildItem(type, action, section, null, title, loreObjects.map(loreFunction).toArray(Component[]::new));
+    }
+
     private ItemStack buildItem(final Supplier<ItemType> type, final ConfigAction action, final ConfigSection section,
             final LookupSettings.AreaMode areaMode, final Component title,
-            final Component lore) {
+            final Component... lore) {
         var item = ItemStack.of(type, 1);
         item.offer(VigilData.CONFIG_ACTION, action);
         item.offer(VigilData.CONFIG_SECTION, section);
@@ -306,20 +317,29 @@ public class ConfigurationMenu implements SlotClickHandler {
 
     private ViewableInventory.Custom vigilMainConfigurationInventory() {
         var areaMode = buildItem(ItemTypes.SCULK_SENSOR, ConfigAction.SUB_CONFIG, ConfigSection.AREA_MODE, null,
-                configureAreaModeTitle().color(NamedTextColor.GOLD),
-                i18n.translate(player, "Configure Area Mode").color(NamedTextColor.YELLOW)
+                i18n.translate(player, "Configure Area Mode").color(NamedTextColor.GOLD),
+                configureAreaModeTitle().color(NamedTextColor.YELLOW)
         );
 
-        var reports = ItemStack.of(ItemTypes.CALIBRATED_SCULK_SENSOR, 1);
-        reports.offer(VigilData.CONFIG_ACTION, ConfigAction.SUB_CONFIG);
-        reports.offer(VigilData.CONFIG_SECTION, ConfigSection.REPORTS);
+        var reports = buildItem(ItemTypes.CALIBRATED_SCULK_SENSOR, ConfigAction.SUB_CONFIG, ConfigSection.REPORTS,
+                i18n.translate(player, "Configure Active Reports").color(NamedTextColor.GOLD),
+                reportManager.getReports().entrySet().stream().filter(e -> data.reports().contains(e.getKey())),
+                        e -> Component.text(" - ").color(NamedTextColor.GRAY).append(e.getValue().getIcon(i18n, player).get(Keys.CUSTOM_NAME).get().color(NamedTextColor.YELLOW)));
 
-        var players = buildItem(ItemTypes.PLAYER_HEAD, ConfigAction.SUB_CONFIG, ConfigSection.PLAYERS, null,
-                i18n.translate(player, "Configure Player Filters").color(NamedTextColor.GOLD), null);
+        var players = buildItem(ItemTypes.PLAYER_HEAD, ConfigAction.SUB_CONFIG, ConfigSection.PLAYERS,
+                i18n.translate(player, "Configure Cause Filter: Players").color(NamedTextColor.GOLD),
+                data.playerFilters().stream().map(uuid -> Sponge.server().gameProfileManager().profile(uuid).join()),
+                p -> Component.text(" - ").color(NamedTextColor.GRAY).append(Component.text(p.name().orElse(p.uuid().toString())).color(NamedTextColor.DARK_GREEN)));
+        if (data.playerFilters().isEmpty()) {
+            players.offer(Keys.LORE, List.of(i18n.translate(player, "Shows Any").color(NamedTextColor.GRAY)));
+        }
         players.offer(VigilData.CONFIG_OPERATION, ConfigOp.SUB);
+        // TODO non-player causes?
+        // enderman/creeper
+        // fire/tnt/plants
 
         var limit = buildItem(ItemTypes.CLOCK, ConfigAction.SUB_CONFIG, ConfigSection.LIMIT_TIME, null,
-                i18n.translate(player, "Configure Time Limit").color(NamedTextColor.GOLD), null);
+                i18n.translate(player, "Configure Time Limit").color(NamedTextColor.GOLD), limitTimeTitle().color(NamedTextColor.YELLOW));
         // TODO group diff time
         var diff = ItemStack.of(ItemTypes.REPEATER, 1);
         // TODO grouping
@@ -374,10 +394,13 @@ public class ConfigurationMenu implements SlotClickHandler {
                 var togglePlayer = slotItem.require(VigilData.PLAYER);
                 data.toggleFilterPlayer(togglePlayer);
                 if (cfgOp == ConfigOp.ADD) {
-                    var reportConf = vigilReportPlayerConfigurationInventory();
-                    openReadonly(player, reportConf, Component.text("Player Filter"));
+                    var reportConf = vigilCauseFilterPlayerConfigInventory();
+                    openReadonly(player, reportConf, causeFilterPlayersTitle());
                 } else {
                     slot.poll();
+                    if (data.playerFilters().isEmpty()) {
+                        openReadonly(player, vigilCauseFilterAddPlayerConfigInventory(), causeFilterAddPlayerTitle());
+                    }
                 }
             }
         }
@@ -488,15 +511,24 @@ public class ConfigurationMenu implements SlotClickHandler {
             }
             case PLAYERS -> {
                 if (cfgOp == ConfigOp.ADD || data.playerFilters().isEmpty()) {
-                    var reportConf = vigilReportAddPlayerConfigurationInventory();
-                    openReadonly(player, reportConf, i18n.translate(player, "Add Player Filter"));
+                    var reportConf = vigilCauseFilterAddPlayerConfigInventory();
+                    openReadonly(player, reportConf, causeFilterAddPlayerTitle());
                 } else if (cfgOp == ConfigOp.SUB) {
-                    var reportConf = vigilReportPlayerConfigurationInventory();
-                    openReadonly(player, reportConf, i18n.translate(player, "Player Filter"));
+                    var reportConf = vigilCauseFilterPlayerConfigInventory();
+                    openReadonly(player, reportConf, causeFilterPlayersTitle());
                 }
 
             }
         }
+    }
+
+    private Component causeFilterAddPlayerTitle() {
+        return causeFilterPlayersTitle().append(Component.space()).append(i18n.translate(player, "Add"));
+    }
+
+    private Component causeFilterPlayersTitle() {
+        return i18n.translate(player, "Cause Filter: Players ({txt})",
+                Component.text(data.playerFilters().size(), NamedTextColor.DARK_GREEN));
     }
 
     private Component limitTimeTitle() {
