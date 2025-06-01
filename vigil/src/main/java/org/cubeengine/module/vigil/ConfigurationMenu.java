@@ -233,7 +233,7 @@ public class ConfigurationMenu implements SlotClickHandler {
     private ViewableInventory.Custom vigilCauseFilterPlayerConfigInventory() {
         var builder = ViewableInventory.builder().type(ContainerTypes.GENERIC_9X3);
 
-        final GameProfile plusProfile = GameProfile.of(UUID.fromString("c0bbeabc-c17a-45af-995c-6d5b6e048442"), "Chat Plus").withProperty(
+        final GameProfile plusProfile = GameProfile.of(UUID.fromString("c0bbeabc-c17a-45af-995c-6d5b6e048442"), "ChatPlus").withProperty(
                 ProfileProperty.of(ProfileProperty.TEXTURES,
                         "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzQzOGQwOGJkMDQwNWMwNWY0N2VhODZkNjY2NDM0MzRmZGQyZThjNDZmZjFlNmY4ODJiYjliZjg5MWM3ZDNhNSJ9fX0="));
         var plusHead = ItemStack.of(ItemTypes.PLAYER_HEAD, 1);
@@ -340,17 +340,18 @@ public class ConfigurationMenu implements SlotClickHandler {
 
         var limit = buildItem(ItemTypes.CLOCK, ConfigAction.SUB_CONFIG, ConfigSection.LIMIT_TIME, null,
                 i18n.translate(player, "Configure Time Limit").color(NamedTextColor.GOLD), limitTimeTitle().color(NamedTextColor.YELLOW));
-        // TODO group diff time
-        var diff = ItemStack.of(ItemTypes.REPEATER, 1);
+// TODO time grouping
+//        var diff = buildItem(ItemTypes.REPEATER, ConfigAction.SUB_CONFIG, ConfigSection.GROUP_TIME, null,
+//                i18n.translate(player, "Configure temporal grouping"));
         // TODO grouping
-        var grouping = ItemStack.of(ItemTypes.LEAD, 1);
+//        var grouping = ItemStack.of(ItemTypes.LEAD, 1);
 
         return ViewableInventory.builder().type(ContainerTypes.GENERIC_3X3)
                 .dummySlots(1, Vector2i.from(0, 0)).item(areaMode)
                 //                .dummySlots(1, Vector2i.from(1, 0)).item(areaModeRadius)
                 //                .dummySlots(1, Vector2i.from(2, 0)).item(areaModeArea)
-                .dummySlots(1, Vector2i.from(1, 1)).item(grouping)
-                .dummySlots(1, Vector2i.from(2, 1)).item(diff)
+//                .dummySlots(1, Vector2i.from(1, 1)).item(grouping)
+//                .dummySlots(1, Vector2i.from(2, 1)).item(diff)
                 .dummySlots(1, Vector2i.from(0, 1)).item(reports)
                 .dummySlots(1, Vector2i.from(2, 2)).item(limit)
                 .dummySlots(1, Vector2i.from(0, 2)).item(players)
@@ -519,8 +520,13 @@ public class ConfigurationMenu implements SlotClickHandler {
                 }
 
             }
+            case GROUP_TIME -> {
+                var conf = vigilReportConfigurationTimeGrouping();
+                openReadonly(player, conf, causeTimeGroupingTitle());
+            }
         }
     }
+
 
     private Component causeFilterAddPlayerTitle() {
         return causeFilterPlayersTitle().append(Component.space()).append(i18n.translate(player, "Add"));
@@ -529,6 +535,16 @@ public class ConfigurationMenu implements SlotClickHandler {
     private Component causeFilterPlayersTitle() {
         return i18n.translate(player, "Cause Filter: Players ({txt})",
                 Component.text(data.playerFilters().size(), NamedTextColor.DARK_GREEN));
+    }
+
+    private ViewableInventory.Custom vigilReportConfigurationTimeGrouping() {
+        var builder = ViewableInventory.builder().type(ContainerTypes.GENERIC_9X3);
+        return builder.completeStructure().plugin(plugin).build();
+    }
+
+    private Component causeTimeGroupingTitle() {
+        // TODO
+        return i18n.translate(player, "Grouping: {txt}", Component.text(null, NamedTextColor.DARK_GREEN));
     }
 
     private Component limitTimeTitle() {

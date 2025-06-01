@@ -21,5 +21,6 @@ public enum ConfigSection implements EnumSerializable {
     AREA_MODE,
     REPORTS,
     PLAYERS,
-    LIMIT_TIME
+    LIMIT_TIME,
+    GROUP_TIME
 }
