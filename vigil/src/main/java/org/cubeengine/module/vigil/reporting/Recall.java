@@ -181,7 +181,7 @@ public class Recall {
             case DAMAGE -> {
                 // TODO check if translation of damage type available?
                 var damageTypeName = RegistryTypes.DAMAGE_TYPE.get().findValue(defaultCauser.resourceKey()).map(Nameable::name)
-                        .map(msgId -> Component.translatable(msgId).asComponent().append(Component.text(msgId)))
+                        .map(msgId -> (Component) Component.translatable(msgId).asComponent().append(Component.text(msgId)))
                         .orElse(Component.text(defaultCauser.resourceKey().asString()));
 
                 yield damageTypeName.color(NamedTextColor.GOLD);

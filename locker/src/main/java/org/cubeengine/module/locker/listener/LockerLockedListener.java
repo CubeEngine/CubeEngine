@@ -185,8 +185,9 @@ public class LockerLockedListener
     {
         Set<Vector3i> checked = new HashSet<>();
         // TODO missing original data
-        event.filterAffectedLocations(loc -> !lockerManager.handleBlockBreak(loc.createSnapshot(), null, true, checked));
-        event.filterEntities(entity -> !lockerManager.handleEntityDamage(entity, null));
+        // TODO immutable underlying collection
+        //event.filterAffectedLocations(loc -> !lockerManager.handleBlockBreak(loc.createSnapshot(), null, true, checked));
+        //event.filterEntities(entity -> !lockerManager.handleEntityDamage(entity, null));
     }
 
     public ServerPlayer findDamageSource(DamageSource source)
