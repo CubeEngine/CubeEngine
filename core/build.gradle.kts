@@ -5,10 +5,7 @@ plugins {
 
 dependencies {
     // Configurations
-    api("org.cubeengine:reflect-yaml:3.0.1") {
-        // we use the version pulled by minecraft
-//        exclude("org.yaml", "snakeyaml")
-    }
+    api("org.cubeengine:reflect-yaml:3.0.1")
     // Translations
     api("org.cubeengine:i18n:1.0.4")
     // Message formatting
