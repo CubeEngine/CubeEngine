@@ -129,13 +129,17 @@ public class BlueMapPlus
     @Listener
     public void onChangeBorder(ChangeWorldBorderEvent.World event)
     {
-        final var bmWorld = BlueMapAPI.getInstance().get().getWorld(event.world());
-        if (bmWorld.isPresent())
+        var blueMap = BlueMapAPI.getInstance().orElse(null);
+        if (blueMap != null)
         {
-            for (final BlueMapMap map : bmWorld.get().getMaps())
+            final var bmWorld = blueMap.getWorld(event.world());
+            if (bmWorld.isPresent())
             {
-                this.updateBlueMapBorder(map, event.world().key().toString(), event.newBorder().orElse(null));
+                for (final BlueMapMap map : bmWorld.get().getMaps())
+                {
+                    this.updateBlueMapBorder(map, event.world().key().toString(), event.newBorder().orElse(null));
 
+                }
             }
         }
     }
