@@ -7,6 +7,8 @@ dependencies {
     implementation("net.dv8tion:JDA:5.3.0") {
         exclude(module="opus-java")
         exclude(group = "com.fasterxml.jackson.core", module = "jackson-core")
+        exclude(group = "com.fasterxml.jackson.core", module = "jackson-databind")
+        exclude(group = "com.google.errorprone", module = "error_prone_annotations")
         exclude("org.slf4j")
         exclude("com.google.code.gson")
     }
