@@ -20,7 +20,7 @@ val archs = listOf("x86_32", "x86_64", "aarch64")
 
 dependencies {
     compileOnly(project(":roles"))
-    val libDataChannelVersion = "0.21.2.1-SNAPSHOT"
+    val libDataChannelVersion = "0.23.2.0"
     implementation(group = "tel.schich", name = "libdatachannel-java", version = libDataChannelVersion) {
         exclude("org.slf4j")
     }
