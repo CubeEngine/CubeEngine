@@ -83,13 +83,13 @@ public class Roles
     }
 
     @Listener
-    public void onProvidePermissionService(ProvideServiceEvent<PermissionService> event)
+    public void onProvidePermissionService(ProvideServiceEvent.EngineScoped<PermissionService, Server> event)
     {
         event.suggest(this::getService);
     }
 
     @Listener
-    public void onProvideContextCalculatorService(ProvideServiceEvent<ContextService> event)
+    public void onProvideContextCalculatorService(ProvideServiceEvent.EngineScoped<ContextService, Server> event)
     {
         event.suggest(this::getService);
     }
