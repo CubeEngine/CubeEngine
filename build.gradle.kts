@@ -33,7 +33,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        val jacksonVersion = "2.18.2"
+        val jacksonVersion = "2.21.0"
         classpath("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
         classpath("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     }
