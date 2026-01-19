@@ -36,11 +36,11 @@ dependencies {
     }
 
     // Testing
-    val junitVersion = "5.11.3"
+    val junitVersion = "6.0.2"
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.slf4j:slf4j-simple:2.0.16")
+    testImplementation("org.slf4j:slf4j-simple:2.0.17")
     testImplementation("org.spongepowered:spongeapi:$spongeVersion")
 }
 

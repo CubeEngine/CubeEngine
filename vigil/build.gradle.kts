@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation("org.postgresql:postgresql:42.7.5")
-    implementation("com.zaxxer:HikariCP:6.2.1")
+    implementation("org.postgresql:postgresql:42.7.9")
+    implementation("com.zaxxer:HikariCP:7.0.2")
 
 }
